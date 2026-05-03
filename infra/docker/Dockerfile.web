@@ -1,0 +1,32 @@
+# AdVanta AI — frontend (React + Vite) production image.
+# Builds the SPA and serves it through nginx.
+
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# pnpm via Corepack — fastest install path for monorepo workspaces.
+RUN corepack enable
+
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY apps/web/package.json apps/web/package.json
+COPY packages packages
+
+RUN pnpm install --frozen-lockfile=false
+
+COPY apps/web apps/web
+
+ARG VITE_API_BASE_URL
+ARG VITE_APP_NAME=AdVanta\ AI
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_APP_NAME=$VITE_APP_NAME
+
+RUN pnpm --filter @advanta/web build
+
+
+FROM nginx:1.27-alpine AS runtime
+
+COPY infra/nginx/spa.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+
+EXPOSE 80

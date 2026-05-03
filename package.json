@@ -1,0 +1,16 @@
+{
+  "name": "advanta-ai",
+  "version": "0.0.1",
+  "private": true,
+  "description": "AdVanta AI — AI Growth Command Center for paid ads, SEO/GEO, and website conversion.",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @advanta/web dev",
+    "build:web": "pnpm --filter @advanta/web build",
+    "lint:web": "pnpm --filter @advanta/web lint",
+    "typecheck:web": "pnpm --filter @advanta/web typecheck"
+  }
+}

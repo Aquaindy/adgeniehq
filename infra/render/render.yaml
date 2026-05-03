@@ -1,0 +1,172 @@
+# Render blueprint for AdVanta AI.
+# https://render.com/docs/blueprint-spec
+
+databases:
+  - name: advanta-postgres
+    plan: starter
+    databaseName: advanta_ai
+    user: advanta
+
+services:
+  - type: redis
+    name: advanta-redis
+    plan: starter
+    ipAllowList: []  # internal-only
+
+  - type: web
+    name: advanta-api
+    runtime: docker
+    dockerfilePath: ./infra/docker/Dockerfile.api
+    dockerContext: .
+    plan: standard
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: advanta-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: advanta-redis
+          type: redis
+          property: connectionString
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        sync: false  # set manually with a Fernet key
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_ID_STARTER
+        sync: false
+      - key: STRIPE_PRICE_ID_PRO
+        sync: false
+      - key: STRIPE_PRICE_ID_AGENCY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_ADS_DEVELOPER_TOKEN
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      - key: PAGESPEED_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: INBOUND_EMAIL_DOMAIN
+        sync: false
+      - key: INBOUND_EMAIL_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: WORKERS_ENABLED
+        value: "1"
+
+  # Background worker — picks up slow tasks queued from the api service.
+  # `preDeployCommand` runs alembic before swap so the worker never boots
+  # against a schema older than its task code expects. Alembic is idempotent
+  # so it's safe for both this and the api service to run it; whichever
+  # deploys first applies the migrations.
+  - type: worker
+    name: advanta-worker
+    runtime: docker
+    dockerfilePath: ./infra/docker/Dockerfile.api
+    dockerContext: .
+    plan: standard
+    autoDeploy: true
+    preDeployCommand: alembic upgrade head
+    # `--beat` runs the periodic-task scheduler in the same process as the
+    # worker. Fine at single-replica scale; if you scale out the worker,
+    # break this into two services (one with --beat, one without).
+    dockerCommand: celery -A app.core.celery_app.celery_app worker --beat --loglevel=info --concurrency=4
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: advanta-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: advanta-redis
+          type: redis
+          property: connectionString
+      - key: APP_SECRET_KEY
+        sync: false  # mirror the value used by advanta-api
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_ADS_DEVELOPER_TOKEN
+        sync: false
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: INBOUND_EMAIL_DOMAIN
+        sync: false
+
+  - type: web
+    name: advanta-web
+    runtime: docker
+    dockerfilePath: ./infra/docker/Dockerfile.web
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_APP_NAME
+        value: AdVanta AI

@@ -1,0 +1,2663 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AdVanta AI — Tester Handoff</title>
+  <style>
+    /* ------------------------------------------------------------ */
+    /* Brand-aligned tokens (Grape Jelly #3E2F84)                   */
+    /* ------------------------------------------------------------ */
+    :root {
+      --grape: #3e2f84;
+      --grape-700: #3e2f84;
+      --grape-600: #4e36a3;
+      --grape-500: #6244c2;
+      --grape-100: #eeeafe;
+      --grape-50: #f4f1fb;
+      --ink: #111827;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --cloud: #f9fafb;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font: 15px/1.55 -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+      color: var(--slate-700);
+      background: var(--cloud);
+    }
+    a { color: var(--grape-700); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+    }
+    code {
+      background: var(--grape-100);
+      color: var(--grape-700);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    pre {
+      background: var(--ink);
+      color: #e5e7eb;
+      padding: 12px 14px;
+      border-radius: 12px;
+      overflow-x: auto;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+    h1, h2, h3, h4 { color: var(--ink); margin: 0 0 8px; }
+    h1 { font-size: 30px; letter-spacing: -0.01em; }
+    h2 { font-size: 22px; margin-top: 0; }
+    h3 { font-size: 17px; }
+    h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-500); margin-top: 16px; margin-bottom: 6px; }
+    hr { border: 0; border-top: 1px solid var(--slate-100); margin: 24px 0; }
+
+    /* ------------------------------------------------------------ */
+    /* Layout                                                        */
+    /* ------------------------------------------------------------ */
+    .page { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--slate-200);
+    }
+    .topbar-inner {
+      max-width: 980px; margin: 0 auto;
+      display: flex; align-items: center; gap: 14px;
+      padding: 10px 20px;
+      flex-wrap: wrap;
+    }
+    .topbar-logo {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-weight: 600; color: var(--ink);
+    }
+    .logo-mark {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg, #3e2f84 0%, #6244c2 50%, #7c3aed 100%);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 14px; height: 14px; }
+
+    .progress-wrap {
+      flex: 1; min-width: 220px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--slate-500);
+    }
+    .progress-bar {
+      flex: 1; height: 6px; border-radius: 3px;
+      background: var(--slate-100); overflow: hidden;
+    }
+    .progress-bar > span {
+      display: block; height: 100%;
+      background: linear-gradient(90deg, var(--grape-500), var(--grape-700));
+      width: 0;
+      transition: width 0.18s ease;
+    }
+    .filter-pills {
+      display: inline-flex; gap: 4px;
+      background: var(--slate-100);
+      padding: 3px;
+      border-radius: 999px;
+    }
+    .filter-pills button {
+      border: 0; background: transparent;
+      font: inherit; font-size: 12px; font-weight: 500;
+      padding: 4px 10px; border-radius: 999px;
+      color: var(--slate-500);
+      cursor: pointer;
+    }
+    .filter-pills button.active {
+      background: white; color: var(--grape-700);
+      box-shadow: 0 1px 2px rgba(17,24,39,0.06);
+    }
+    .filter-pills button:hover { color: var(--ink); }
+
+    .card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin: 14px 0;
+      box-shadow: 0 1px 2px rgba(17,24,39,0.04);
+    }
+    .card.tight { padding: 14px 18px; }
+    .card.callout {
+      background: var(--grape-50);
+      border-color: var(--grape-100);
+    }
+    .card.warn {
+      background: #fef3c7;
+      border-color: #fcd34d;
+    }
+    .card.danger {
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Hero                                                          */
+    /* ------------------------------------------------------------ */
+    .hero {
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(800px 280px at 20% -10%, rgba(124,58,237,0.18), transparent 60%),
+        radial-gradient(600px 220px at 90% 20%, rgba(98,68,194,0.18), transparent 60%),
+        var(--grape-50);
+      border: 1px solid var(--grape-100);
+      border-radius: 18px;
+      padding: 30px 28px;
+      margin-bottom: 18px;
+    }
+    .hero h1 { color: var(--ink); margin: 0; }
+    .hero .pill {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--grape-700);
+      background: white; border: 1px solid var(--grape-100);
+      padding: 4px 10px; border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .hero p { font-size: 16px; color: var(--slate-500); }
+
+    /* ------------------------------------------------------------ */
+    /* Sections + test cases                                         */
+    /* ------------------------------------------------------------ */
+    .section {
+      margin-top: 26px; padding-top: 6px;
+      scroll-margin-top: 80px;
+    }
+    .section h2 {
+      font-size: 22px; margin: 0 0 4px;
+      display: flex; align-items: baseline; gap: 10px;
+    }
+    .section h2 .count {
+      font-size: 12px; font-weight: 500; color: var(--slate-400);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .section .lead { color: var(--slate-500); font-size: 14px; margin: 0 0 12px; }
+
+    details.case {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 14px;
+      margin-top: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.15s ease;
+    }
+    details.case[open] { box-shadow: 0 4px 16px rgba(17,24,39,0.06); }
+    details.case > summary {
+      list-style: none; cursor: pointer;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap;
+    }
+    details.case > summary::-webkit-details-marker { display: none; }
+
+    .case-id {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px; color: var(--grape-700);
+      background: var(--grape-100);
+      padding: 3px 8px; border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .case-title {
+      font-weight: 600; color: var(--ink); flex: 1;
+      min-width: 180px;
+    }
+    .case-tag {
+      font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 3px 8px; border-radius: 999px;
+      background: var(--slate-100); color: var(--slate-500);
+    }
+    .case-tag.functional { background: var(--grape-100); color: var(--grape-700); }
+    .case-tag.ui        { background: #ecfdf5; color: #047857; }
+    .case-tag.negative  { background: #fee2e2; color: #b91c1c; }
+    .case-tag.security  { background: #fef3c7; color: #b45309; }
+    .case-tag.exploratory { background: #ede9fe; color: var(--grape-700); }
+
+    .case-status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--slate-200);
+      flex-shrink: 0;
+    }
+    .case-status-dot[data-status="pass"]    { background: var(--success); }
+    .case-status-dot[data-status="fail"]    { background: var(--danger); }
+    .case-status-dot[data-status="blocked"] { background: var(--warning); }
+    .case-status-dot[data-status="skipped"] { background: var(--slate-400); }
+
+    .case-body {
+      padding: 0 18px 18px 18px;
+      border-top: 1px solid var(--slate-100);
+    }
+    .case-body p { margin: 8px 0; }
+    .case-body ol, .case-body ul { padding-left: 22px; }
+    .case-body ol li, .case-body ul li { margin: 4px 0; }
+    .case-body .demo {
+      margin-top: 8px; background: var(--cloud);
+      border: 1px solid var(--slate-100);
+      border-radius: 10px; padding: 10px 12px;
+      font-size: 13px;
+    }
+    .case-body .demo code { display: inline-block; }
+
+    .case-actions {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--slate-200);
+      display: grid; gap: 8px;
+      grid-template-columns: 200px 1fr;
+    }
+    .case-actions select, .case-actions textarea {
+      font: inherit; font-size: 13px;
+      padding: 8px 10px;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      background: white;
+      color: var(--ink);
+    }
+    .case-actions textarea {
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+    .case-actions select:focus, .case-actions textarea:focus {
+      outline: none; border-color: var(--grape-500);
+      box-shadow: 0 0 0 3px var(--grape-100);
+    }
+
+    /* TOC */
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px;
+    }
+    .toc a {
+      padding: 8px 10px;
+      border: 1px solid var(--slate-100);
+      border-radius: 10px;
+      background: white;
+      color: var(--slate-700);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .toc a:hover {
+      border-color: var(--grape-100);
+      background: var(--grape-50);
+      color: var(--grape-700);
+      text-decoration: none;
+    }
+    .toc a .toc-count {
+      font-size: 11px;
+      color: var(--slate-400);
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    /* Misc */
+    .grid-2 { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 720px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .case-actions { grid-template-columns: 1fr; }
+    }
+    kbd {
+      display: inline-block; padding: 1px 6px; border-radius: 4px;
+      background: var(--slate-100); border: 1px solid var(--slate-200);
+      font: 12px/1.2 "SF Mono", Menlo, Consolas, monospace;
+      color: var(--ink);
+    }
+    .stat-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      font-size: 12px;
+    }
+    .stat {
+      padding: 6px 10px; border-radius: 999px;
+      background: white; border: 1px solid var(--slate-200);
+      font-weight: 600;
+    }
+    .stat.pass    { color: var(--success); border-color: #bbf7d0; }
+    .stat.fail    { color: var(--danger);  border-color: #fecaca; }
+    .stat.blocked { color: var(--warning); border-color: #fde68a; }
+    .stat.skipped { color: var(--slate-500); }
+    .stat.pending { color: var(--ink); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 14px; border-radius: 12px;
+      font: inherit; font-weight: 600; font-size: 13px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn.primary  { background: var(--grape-700); color: white; }
+    .btn.primary:hover { background: var(--grape-600); text-decoration: none; }
+    .btn.secondary { background: white; color: var(--ink); border-color: var(--slate-200); }
+    .btn.secondary:hover { background: var(--slate-100); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Print: keep it readable on paper */
+    @media print {
+      .topbar, .filter-pills, .case-actions { display: none !important; }
+      details.case > summary { cursor: default; }
+      details.case { break-inside: avoid; box-shadow: none; }
+      details.case[open] { box-shadow: none; }
+      details:not([open]) > .case-body { display: none; }
+      body { background: white; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- Sticky topbar with progress + filter pills                       -->
+  <!-- ============================================================== -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="topbar-logo"><span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L12 4.5 L19 19"/><path d="M8.2 14.5 H15.8"/></svg></span> AdVanta AI · Tester Handoff</span>
+      <div class="progress-wrap">
+        <span id="progress-label">0 / 0 addressed</span>
+        <div class="progress-bar"><span id="progress-fill"></span></div>
+      </div>
+      <div class="filter-pills" role="tablist" aria-label="Filter cases">
+        <button data-filter="all" class="active">All</button>
+        <button data-filter="pending">Pending</button>
+        <button data-filter="pass">Pass</button>
+        <button data-filter="fail">Fail</button>
+        <button data-filter="blocked">Blocked</button>
+      </div>
+      <button id="reset-progress" class="btn secondary" title="Wipe local progress">Reset</button>
+      <button id="export-summary" class="btn primary" title="Download a markdown summary">Export report</button>
+    </div>
+  </div>
+
+  <main class="page">
+
+    <!-- ============================================================ -->
+    <!-- Hero                                                          -->
+    <!-- ============================================================ -->
+    <div class="hero">
+      <span class="pill">QA Build · v0.0.1</span>
+      <h1>Test plan for the AdVanta AI growth platform.</h1>
+      <p style="margin-top:10px; max-width:62ch;">
+        This document is a self-contained tester handoff. Each section is a feature area; each case has explicit
+        steps, expected results, and copy-pasteable demo inputs. Mark each one Pass / Fail / Blocked / Skipped as
+        you go — your selections are saved in this browser. Click <strong>Export report</strong> at the top right
+        when you're done to download a Markdown summary you can email back.
+      </p>
+      <p style="margin-top:6px; color:var(--slate-500); font-size:13px;">
+        Open this file directly in any modern browser. No internet needed for the document itself; you'll need a
+        running AdVanta instance (see <a href="#environment">Environment</a>) to actually run the tests.
+      </p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Environment & quickstart                                      -->
+    <!-- ============================================================ -->
+    <section id="environment" class="section">
+      <h2>Environment <span class="count">read me first</span></h2>
+      <p class="lead">Before opening the first test case, confirm the running app endpoints and which optional integrations are wired up in this build.</p>
+
+      <div class="card">
+        <h3>App URLs</h3>
+        <p>The dev environment is currently bound to non-default ports because port 8000 is held by another local project (writemaster-ai).</p>
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+          <tr><td style="padding:4px 8px; color:var(--slate-500);">Frontend (UI)</td><td><a href="http://localhost:5173" target="_blank">http://localhost:5173</a></td></tr>
+          <tr><td style="padding:4px 8px; color:var(--slate-500);">Backend (API base)</td><td><a href="http://localhost:8002/api/v1" target="_blank">http://localhost:8002/api/v1</a></td></tr>
+          <tr><td style="padding:4px 8px; color:var(--slate-500);">Health check</td><td><a href="http://localhost:8002/api/v1/health" target="_blank">http://localhost:8002/api/v1/health</a> → returns <code>{"status":"ok"}</code></td></tr>
+          <tr><td style="padding:4px 8px; color:var(--slate-500);">Public blog API</td><td><a href="http://localhost:8002/api/v1/public/blog" target="_blank">http://localhost:8002/api/v1/public/blog</a></td></tr>
+          <tr><td style="padding:4px 8px; color:var(--slate-500);">OpenAPI / Swagger</td><td><a href="http://localhost:8002/api/v1/docs" target="_blank">http://localhost:8002/api/v1/docs</a></td></tr>
+        </table>
+        <p style="margin-top:10px;">If the production deployment uses different URLs, mentally substitute them everywhere below — the cases reference paths (<code>/blog/posts</code>, <code>/api/v1/auth/login</code>, etc.), not absolute URLs.</p>
+      </div>
+
+      <div class="card warn">
+        <h3>What requires extra environment variables</h3>
+        <p>Several features are wired to refuse cleanly (<code>503 service_unavailable</code>) when their secrets aren't set, instead of silently faking results. If you hit a 503 on one of these, that's expected — log it as Skipped + note "needs env config".</p>
+        <ul>
+          <li><strong>Google OAuth login</strong> — needs <code>GOOGLE_LOGIN_CLIENT_ID</code>, <code>GOOGLE_LOGIN_CLIENT_SECRET</code>, <code>GOOGLE_LOGIN_REDIRECT_URI</code>. Without these, <code>/auth/google/start</code> returns 503 and the "Continue with Google" button leads to an error redirect.</li>
+          <li><strong>OpenAI / LLM features</strong> (content generation, AI Assistant, market intel, ICP/persona, refresh, ad creatives) — without <code>OPENAI_API_KEY</code> they return a clearly-labelled <em>deterministic stub</em> instead of an LLM result. Functionality still works for testing the flows.</li>
+          <li><strong>Stripe billing</strong> — needs <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, <code>STRIPE_PRICE_ID_*</code>. Without these, <code>/billing/checkout-session</code> returns 503.</li>
+          <li><strong>Connected ad / analytics platforms</strong> (Google Ads, Meta, LinkedIn, GA4, Search Console) — each requires its own client ID + secret. Without them, the "Connect" button returns 503 and integrations stay in disconnected state. UI flows up to that point still work.</li>
+          <li><strong>Provider webhooks</strong> — need <code>GOOGLE_ADS_WEBHOOK_SECRET</code> / <code>META_ADS_WEBHOOK_SECRET</code> / <code>LINKEDIN_ADS_WEBHOOK_SECRET</code>. Tested via curl, not the UI.</li>
+          <li><strong>Inbound email parsing</strong> — needs <code>INBOUND_EMAIL_SECRET</code>.</li>
+          <li><strong>Public blog archive</strong> — needs <code>MARKETING_WORKSPACE_SLUG</code> set to one of your created workspaces' slugs to flip <code>/blog</code> from "coming soon" to a real archive.</li>
+          <li><strong>Background workers</strong> — Celery is off by default in dev (<code>WORKERS_ENABLED=false</code>); tasks dispatch synchronously. Don't worry about Redis / worker processes for this pass.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Suggested test accounts</h3>
+        <p>Register these as you go. Same password on each, easy to recall: <code>Tester-9-Validate</code> (≥8 chars, satisfies <code>/auth/register</code>'s only rule).</p>
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+          <thead><tr style="text-align:left; color:var(--slate-500); font-size:12px;">
+            <th>Account</th><th>Email</th><th>Workspace role</th><th>Use for</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Owner</td><td><code>qa-owner@advanta.test</code></td><td>Owner</td><td>All flows. The first user you register becomes Owner of the workspace they create.</td></tr>
+            <tr><td>Admin</td><td><code>qa-admin@advanta.test</code></td><td>Admin</td><td>Approving recommendations + medium-risk actions; cannot toggle Autopilot.</td></tr>
+            <tr><td>Marketer</td><td><code>qa-marketer@advanta.test</code></td><td>Marketer</td><td>Content creation, A/B test design, blog editing.</td></tr>
+            <tr><td>Viewer</td><td><code>qa-viewer@advanta.test</code></td><td>Viewer</td><td>Negative role tests — should be blocked from approvals + edits.</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px;">Roles other than Owner come from invitations (TC-WS-004). Until invitations are accepted, they sign in to an empty state without a workspace.</p>
+      </div>
+
+      <div class="card">
+        <h3>How to use this document</h3>
+        <ol>
+          <li>Open each test case below by clicking its row.</li>
+          <li>Follow the steps. Compare actual behavior to "Expected result".</li>
+          <li>Set the status: <em>Pass</em> / <em>Fail</em> / <em>Blocked</em> / <em>Skipped</em>. Add a short note if something's off.</li>
+          <li>Use the filter pills at the top to narrow the list (e.g. show only Failures).</li>
+          <li>When you're done, click <strong>Export report</strong> to download a Markdown summary — that's what to email back.</li>
+        </ol>
+        <p>Your selections persist in this browser via localStorage. Resetting clears them.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Table of contents                                             -->
+    <!-- ============================================================ -->
+    <section class="section">
+      <h2>Sections <span class="count">jump to</span></h2>
+      <div class="toc" id="toc"></div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 1. Public marketing site                                      -->
+    <!-- ============================================================ -->
+    <section id="public" class="section" data-section-name="Public marketing site">
+      <h2>1 · Public marketing site</h2>
+      <p class="lead">Pages that should work without an account. Hit them in an incognito window.</p>
+
+      <details class="case" data-id="TC-PUB-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-PUB-001</span>
+          <span class="case-title">Landing page renders end-to-end</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>The full landing page (<code>/welcome</code>, also serves at <code>/</code> for unauthenticated users) shows every section without console errors.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>In an incognito window, open <a href="http://localhost:5173/welcome" target="_blank">http://localhost:5173/welcome</a>.</li>
+            <li>Scroll all the way down. Open DevTools console — note any errors.</li>
+            <li>Resize the window from full-width down to 375px wide (mobile). Confirm nothing overflows horizontally.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <ul>
+            <li>Hero with "Turn ad chaos into intelligent growth." gradient headline.</li>
+            <li>Trust band listing six platform names (Google Ads, Meta Ads, LinkedIn Ads, Google Analytics 4, Search Console, Stripe).</li>
+            <li>Agent grid with four cards: Paid Ads, SEO &amp; GEO, Website, Master Orchestrator.</li>
+            <li>Platform overview with bullets + a "Recommendations" preview card.</li>
+            <li>Three-mode safety band (Advisor / Approval [highlighted] / Autopilot).</li>
+            <li>How-it-works strip (Connect / Plan / Approve).</li>
+            <li>Production-guarantees grid (4 cards).</li>
+            <li>Pricing teaser, FAQ accordion (6 expandable items), final grape-gradient CTA.</li>
+            <li>Footer with four columns of internal links — every link should work.</li>
+            <li>Console: zero errors. Mobile width: clean reflow, no horizontal scroll.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-PUB-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-PUB-002</span>
+          <span class="case-title">All footer links route to working pages</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the landing-page footer, click each link in turn (open in a new tab so you don't lose place).</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Every link returns HTTP 200 and shows the corresponding page (no 404s, no broken layouts):</p>
+          <ul>
+            <li>Product → Overview, Pricing, Blog</li>
+            <li>Get started → Create your workspace, Sign in, Forgot password</li>
+            <li>Legal → Terms of service, Privacy policy</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-PUB-003" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-PUB-003</span>
+          <span class="case-title">Pricing page</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/pricing" target="_blank">http://localhost:5173/pricing</a>.</li>
+            <li>Confirm the four-tier comparison renders: Free, Starter, Pro, Agency.</li>
+            <li>Click the CTA on each tier — the Free tier should send you to <code>/register</code>; paid tiers route to <code>/register</code> too at this stage (Stripe checkout requires login).</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Tiers shown side by side; included features clearly listed; the Pro tier visually called out as recommended.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-PUB-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-PUB-004</span>
+          <span class="case-title">Blog archive — coming-soon state</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>When <code>MARKETING_WORKSPACE_SLUG</code> is unset (the default), <code>/blog</code> renders the coming-soon explainer + "topics on deck" preview. <strong>No fabricated posts should appear.</strong></p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/blog" target="_blank">http://localhost:5173/blog</a>.</li>
+            <li>Open <a href="http://localhost:8002/api/v1/public/blog" target="_blank">http://localhost:8002/api/v1/public/blog</a> in a new tab — should return <code>[]</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Hero, then a "Coming soon" panel, then a 6-card "Topics on deck" preview. Each topic card has a "Coming soon" footer label — no fake author bylines, no fake dates, no fake post bodies.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-PUB-005" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-PUB-005</span>
+          <span class="case-title">Blog detail — unknown slug shows friendly 404</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/blog/this-does-not-exist" target="_blank">http://localhost:5173/blog/this-does-not-exist</a>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Friendly empty state titled "That post doesn't exist (or hasn't been published)." with a "Browse the archive" button. No raw error, no 500, no React crash screen.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 2. Authentication                                             -->
+    <!-- ============================================================ -->
+    <section id="auth" class="section" data-section-name="Authentication">
+      <h2>2 · Authentication</h2>
+      <p class="lead">Register, login, refresh, logout, password reset, and Google OAuth.</p>
+
+      <details class="case" data-id="TC-AUTH-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AUTH-001</span>
+          <span class="case-title">Register — happy path</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/register" target="_blank">/register</a>.</li>
+            <li>Fill the form with the demo data below and submit.</li>
+            <li>You should land on <code>/workspaces</code> (the workspace selector) — not the dashboard.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Name: <code>Quinn Owner</code></div>
+            <div>Email: <code>qa-owner@advanta.test</code></div>
+            <div>Password: <code>Tester-9-Validate</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>HTTP 201 from the API; you're auto-signed-in (refresh-token cookie set + access token in memory); router moves to <code>/workspaces</code>.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-002" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-AUTH-002</span>
+          <span class="case-title">Register — short password rejected</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>On <code>/register</code>, enter password <code>short</code> (5 chars).</li>
+            <li>Submit.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>422 from the API (visible in network tab); inline validation error shown on the form. No user record is created.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AUTH-003</span>
+          <span class="case-title">Login + session persists across reload</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>TC-AUTH-001 passed (you have a registered owner account).</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign out from the profile page.</li>
+            <li>Open <a href="http://localhost:5173/login" target="_blank">/login</a>, sign in with the credentials from TC-AUTH-001.</li>
+            <li>Once on the dashboard / workspace selector, hard-reload the page (<kbd>⌘⇧R</kbd>).</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>After reload you stay signed in. The hidden <code>advanta_refresh</code> cookie (path scoped to <code>/api/v1/auth</code>) is exchanged for a new access token automatically — verify in DevTools Network → look for a <code>POST /auth/refresh</code> 200 response on bootstrap.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AUTH-004</span>
+          <span class="case-title">Forgot password → reset flow</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>Server never reveals whether the email is registered. Reset token is short-lived and single-use.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/forgot-password" target="_blank">/forgot-password</a>.</li>
+            <li>Enter <code>qa-owner@advanta.test</code>. Submit.</li>
+            <li>You should see a generic "If that email is registered, we sent a link" success message — without confirming whether the address exists.</li>
+            <li>The link itself is in the API logs (no real SMTP in dev). Open the backend console; look for a line containing <code>password_reset.requested</code> with the token. Or check the API response in DevTools.</li>
+            <li>Open <code>/reset-password?token={that-token}</code> and complete the form with a new password (e.g. <code>NewPass-9-Validate</code>).</li>
+            <li>Sign in with the new password.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Initial submission always 204; never reveals account existence. Reset-confirm endpoint returns the user, sign-in works with the new password, the old one is invalid.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-005" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-AUTH-005</span>
+          <span class="case-title">Forgot password — unknown email looks identical to known</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/forgot-password</code>, submit <code>nobody@advanta.test</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Same 204 + same generic success copy as for a known address. Crucial for not leaking which emails are registered.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-006" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AUTH-006</span>
+          <span class="case-title">Logout clears session</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign in.</li>
+            <li>Open the Profile page (<code>/settings/profile</code>) and click "Sign out".</li>
+            <li>Try opening <code>/agents</code> in the same window.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>You're redirected back to <code>/login</code>. Refresh-cookie cleared (DevTools → Application → Cookies). API calls now return 401 until you sign in again.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AUTH-007" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AUTH-007</span>
+          <span class="case-title">Google sign-in (config-gated)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/login</code>.</li>
+            <li>Click "Continue with Google".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>If the three Google env vars are set, you're sent to Google's consent screen. If not, the page redirects back with <code>?error=google_login_not_configured</code> and the login form shows a friendly inline error — log this case as <em>Skipped</em> with the note "Google OAuth env vars not configured" (this is expected default behavior).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 3. 2FA                                                        -->
+    <!-- ============================================================ -->
+    <section id="twofa" class="section" data-section-name="Two-factor authentication">
+      <h2>3 · Two-factor authentication (TOTP)</h2>
+      <p class="lead">Install a TOTP authenticator (Google Authenticator, 1Password, Authy) on your phone before starting.</p>
+
+      <details class="case" data-id="TC-2FA-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-2FA-001</span>
+          <span class="case-title">Enable 2FA — full enrollment lifecycle</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign in as the Owner. Open <code>/settings/profile</code>.</li>
+            <li>In the "Two-factor authentication" card, click <strong>Enable 2FA</strong>.</li>
+            <li>The card now shows a base32 secret + an <code>otpauth://</code> provisioning URI. In your authenticator app, scan or enter the secret.</li>
+            <li>Type the 6-digit code from the app into the form and click <strong>Confirm and enable</strong>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <ul>
+            <li>The card flips to "TOTP-2FA is on. You'll be asked for a 6-digit code each sign-in."</li>
+            <li>An amber "Recovery codes" panel appears with <strong>exactly 8</strong> codes. <strong>Copy these.</strong> They will not be shown again — only their SHA-256 hashes are stored.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-2FA-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-2FA-002</span>
+          <span class="case-title">Login now requires 2FA code</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign out.</li>
+            <li>Sign in with email + password only (no OTP).</li>
+            <li>Then sign in with email + password + the current 6-digit OTP from your app.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>The first attempt returns 401 with code <code>two_factor_required</code> — the form silently reveals an additional "2FA code" field. The second attempt succeeds.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-2FA-003" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-2FA-003</span>
+          <span class="case-title">Wrong OTP rejected with friendly error</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign out.</li>
+            <li>Try to sign in with email + password + a deliberately wrong code <code>000000</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>401 with code <code>two_factor_invalid_code</code>. Form shows "That 2FA code didn't work — try the next one." OTP field stays visible.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-2FA-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-2FA-004</span>
+          <span class="case-title">Recovery code works exactly once</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign out.</li>
+            <li>Sign in using one of the recovery codes from TC-2FA-001 in place of the OTP.</li>
+            <li>Sign out again.</li>
+            <li>Try to sign in using the <em>same</em> recovery code a second time.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>First attempt: success. Second attempt: 401 <code>two_factor_invalid_code</code> — codes are single-use. You should still have 7 remaining recovery codes.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-2FA-005" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-2FA-005</span>
+          <span class="case-title">Disable 2FA</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign in (with OTP).</li>
+            <li>On <code>/settings/profile</code>, in the 2FA card, enter a current OTP into the disable form and submit.</li>
+            <li>Sign out, sign back in without an OTP.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Disable returns 204; card flips back to "Add a second factor…". Login no longer prompts for an OTP.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 4. Workspaces & members                                       -->
+    <!-- ============================================================ -->
+    <section id="workspaces" class="section" data-section-name="Workspaces &amp; members">
+      <h2>4 · Workspaces &amp; members</h2>
+      <p class="lead">Multi-tenant scaffolding. Every other test from here on requires a workspace.</p>
+
+      <details class="case" data-id="TC-WS-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WS-001</span>
+          <span class="case-title">Create workspace makes you Owner</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign in as <code>qa-owner@advanta.test</code>.</li>
+            <li>On <code>/workspaces</code>, click "Create workspace" and enter the demo name.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Workspace name: <code>Acme QA Workspace</code></div>
+          <h4>Expected result</h4>
+          <ul>
+            <li>HTTP 201; the new workspace appears in the list with status <code>active</code> and your role <code>owner</code>.</li>
+            <li>The slug should be auto-derived from the name (e.g. <code>acme-qa-workspace</code> with a short suffix).</li>
+            <li>Selecting it routes you to the dashboard.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-WS-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WS-002</span>
+          <span class="case-title">Switch between workspaces</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Create a second workspace named <code>Beta QA Workspace</code>.</li>
+            <li>From the dashboard top bar, switch to it via the workspace switcher.</li>
+            <li>Switch back to Acme QA Workspace.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Each switch refreshes the dashboard against the new workspace. Cross-workspace data does not leak (e.g. recommendations / drafts shown belong only to the active workspace).</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-WS-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WS-003</span>
+          <span class="case-title">Members list shows the Owner</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>API: <code>GET /workspaces/{ws_id}/members</code> via the OpenAPI docs at <a href="http://localhost:8002/api/v1/docs" target="_blank">/docs</a> (Authorize with your bearer token first).</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>One row, your email, role <code>owner</code>, status <code>active</code>.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-WS-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WS-004</span>
+          <span class="case-title">Invite a member (pending invitation row)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the OpenAPI docs, run <code>POST /workspaces/{ws_id}/members/invite</code> with <code>{ email, role: "marketer" }</code>.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Email: <code>qa-marketer@advanta.test</code><br/>Role: <code>marketer</code></div>
+          <h4>Expected result</h4>
+          <p>200 with <code>{ email, role: "marketer", status: "pending", expires_at: "…" }</code>. Hashed-at-rest invitation token is never returned to the client.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-WS-005" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-WS-005</span>
+          <span class="case-title">Cannot demote the sole Owner</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Get your member id from <code>GET /workspaces/{ws_id}/members</code>.</li>
+            <li>Try to <code>PATCH /workspaces/{ws_id}/members/{member_id}</code> with <code>{ role: "admin" }</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>409 with code <code>cannot_demote_sole_owner</code>. Your role stays <code>owner</code>.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 5. Onboarding                                                 -->
+    <!-- ============================================================ -->
+    <section id="onboarding" class="section" data-section-name="Onboarding &amp; Growth DNA">
+      <h2>5 · Onboarding &amp; Growth DNA</h2>
+      <p class="lead">Multi-step wizard that captures business context. Several agents skip cleanly until this is filled in.</p>
+
+      <details class="case" data-id="TC-ONB-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-ONB-001</span>
+          <span class="case-title">Complete onboarding wizard</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the dashboard, click "Onboarding" in the sidebar.</li>
+            <li>Walk every step, filling demo data below.</li>
+            <li>On the final step, submit.</li>
+          </ol>
+          <h4>Demo data (paste into the matching fields)</h4>
+          <div class="demo">
+            <div>Business name: <code>Acme Cloud</code></div>
+            <div>Website URL: <code>https://acme.example</code></div>
+            <div>Industry: <code>B2B SaaS</code></div>
+            <div>Target audience: <code>Series A founders running B2B SaaS in North America</code></div>
+            <div>Offer: <code>AdVanta is the AI growth command center that turns chaotic ad spend into measurable pipeline by deploying specialized agents across paid media, SEO, and website conversion.</code></div>
+            <div>Pain points: <code>Ads waste, slow weekly reporting, agency cycle-time.</code></div>
+            <div>Primary conversion goal: <code>Demo request</code></div>
+            <div>Monthly ad budget (USD): <code>5000</code></div>
+            <div>Geographic target: <code>US, Canada</code></div>
+            <div>Current ad platforms: <code>Google Ads, Meta Ads</code></div>
+            <div>Landing page URL: <code>https://acme.example/pricing</code></div>
+            <div>Analytics status: <code>configured</code></div>
+            <div>Competitors: <code>RivalCo (https://rival.example)</code></div>
+            <div>Brand voice: <code>Confident, executive, calm. No emojis.</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>Wizard completes; the workspace's onboarding profile is now <code>completed_at</code>-stamped. Several previously locked agents unlock.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-ONB-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-ONB-002</span>
+          <span class="case-title">Generate Growth DNA Profile</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the sidebar, open "Growth DNA".</li>
+            <li>Click "Generate".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>A scored profile renders: funnel readiness (0–100), paid-ads readiness (0–100), narrative summary, recommended first campaigns, 30-day plan. Without an LLM key the profile is computed from explicit rules — <strong>no hallucinated metrics</strong>.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 6. Dashboard / Command Center                                 -->
+    <!-- ============================================================ -->
+    <section id="dashboard" class="section" data-section-name="Command Center">
+      <h2>6 · Command Center (dashboard)</h2>
+
+      <details class="case" data-id="TC-DASH-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-DASH-001</span>
+          <span class="case-title">Honest empty states for unconnected accounts</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>Per the production rule "no fabricated metrics": until you connect a real platform, dashboards show <strong>connect buttons or empty states</strong>, never fake charts. This is a defining behavior of the app.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>From the dashboard root <code>/</code>, scan every section.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Tiles for spend / ROAS / CPA / leads either show real values (zeros if calculable) or a clearly-labeled "Connect Google Ads / Meta / LinkedIn" CTA. There must <strong>not</strong> be fake numbers like "$1,234" or "+47% ROAS" anywhere.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-DASH-002" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-DASH-002</span>
+          <span class="case-title">Sidebar nav opens every section</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click each item in the left sidebar in order: Command Center, Growth DNA, Onboarding, Agents, Recommendations, Campaigns, Creatives, Blog, Content, SEO &amp; GEO, Outreach, A/B tests, Website, Integrations, Reports, Autopilot, Billing, Profile, API keys.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Every link routes to a working page (no 404, no white screen). Active item is visually highlighted in the sidebar.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 7. Agents                                                     -->
+    <!-- ============================================================ -->
+    <section id="agents" class="section" data-section-name="Agents">
+      <h2>7 · Agents</h2>
+      <p class="lead">Twelve specialist agents + the Master Orchestrator. Each runs synchronously and persists tasks, outputs, and recommendations.</p>
+
+      <details class="case" data-id="TC-AGT-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-001</span>
+          <span class="case-title">Agent catalog lists all 12 agents</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/agents</code> in the sidebar.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Twelve agent cards: Website audit, Onboarding insight, Paid Ads, SEO audit, Landing page audit, Content writer, Market intelligence, ICP &amp; persona, Creative strategy, Campaign builder, Tracking &amp; attribution, Master Orchestrator. Each card shows title, description, "Run" button.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AGT-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-002</span>
+          <span class="case-title">Run Onboarding Insight — produces gap recommendations</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>Onboarding completed (TC-ONB-001).</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>From <code>/agents</code>, click "Run" on Onboarding Insight.</li>
+            <li>Open the new run from the runs list.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Status: <code>succeeded</code>. Output payload contains <code>gap_count</code> and <code>scores</code>. One or more recommendations were created — visible on <code>/recommendations</code>. With a fully-completed onboarding, gap_count may be 0; with intentional gaps (skip a step), gaps appear with risk levels.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AGT-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-003</span>
+          <span class="case-title">Run Paid Ads agent — empty-state recommendation</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run Paid Ads from <code>/agents</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Run succeeds. Without any synced campaigns, the agent emits exactly one recommendation of type <code>paid_ads.no_campaigns</code> with risk <code>medium</code>, telling you to connect an ad platform. <strong>No fake campaign data.</strong></p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AGT-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-004</span>
+          <span class="case-title">Master Orchestrator delegates to sub-agents</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run "Master Orchestrator" with input payload <code>{ "goal": "research" }</code>.</li>
+          </ol>
+          <h4>Demo data (input payload field)</h4>
+          <div class="demo"><code>{ "goal": "research" }</code></div>
+          <h4>Expected result</h4>
+          <p>Output payload includes <code>plan_source: "goal:research"</code> and <code>plan: ["market_intelligence", "icp_persona"]</code>. Two new sub-runs appear in the runs list with those types. Their <code>triggered_by_user_id</code> is your own.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AGT-005" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-005</span>
+          <span class="case-title">Market Intelligence — competitor matrix</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run Market Intelligence.</li>
+            <li>Open the run, scroll to skill outputs.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>One <code>competitor_inventory</code> output (your one competitor from onboarding) and one <code>positioning_matrix</code> output. With no LLM key, <code>matrix_source</code> is <code>deterministic</code> — that's expected.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AGT-006" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AGT-006</span>
+          <span class="case-title">Tracking &amp; Attribution — score reflects connected accounts</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run Tracking &amp; Attribution.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Output payload has <code>score</code> between 0 and 100. With nothing connected, score should be at most ~25 (the part driven by onboarding self-reports). Recommendations include <code>tracking.missing_ga4</code> (high risk) and <code>tracking.no_ad_platform</code> (high risk).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 8. Recommendations                                            -->
+    <!-- ============================================================ -->
+    <section id="recommendations" class="section" data-section-name="Recommendations &amp; approvals">
+      <h2>8 · Recommendations &amp; approvals</h2>
+
+      <details class="case" data-id="TC-REC-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REC-001</span>
+          <span class="case-title">Recommendations list shows agent outputs</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>You've run a few agents (TC-AGT-002 through TC-AGT-006).</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/recommendations</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>List includes recommendations from every agent you ran. Each card shows: title, risk pill (low / medium / high), source agent, and Approve / Reject buttons. Status filter works.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-REC-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REC-002</span>
+          <span class="case-title">Approve a low-risk recommendation</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Pick a low-risk recommendation; click into its detail page.</li>
+            <li>Click "Approve".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Status changes to <code>approved</code>. Audit trail card now shows the approval event tagged with your user, IP, and User-Agent. If the recommendation has no executable action, no execution row is created.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-REC-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REC-003</span>
+          <span class="case-title">Reject with reason</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open another recommendation, click Reject, provide a reason.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Reason: <code>Not relevant for our current quarter.</code></div>
+          <h4>Expected result</h4>
+          <p>Status flips to <code>rejected</code>. The reason is captured on the audit row.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-REC-004" data-tag="security">
+        <summary>
+          <span class="case-id">TC-REC-004</span>
+          <span class="case-title">Risk-level role gating</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>Low risk → Marketer or higher. Medium risk → Admin or higher. High risk → Owner only.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Sign in as a Marketer (after accepting their invitation in TC-WS-004).</li>
+            <li>Find a high-risk recommendation; try to Approve.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>403 with code <code>permission_denied</code> and message indicating Owner is required.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 9. Integrations                                               -->
+    <!-- ============================================================ -->
+    <section id="integrations" class="section" data-section-name="Integrations">
+      <h2>9 · Integrations</h2>
+
+      <details class="case" data-id="TC-INT-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-INT-001</span>
+          <span class="case-title">Integrations Center renders disconnect state</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open the Integrations page from the sidebar.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Six provider cards: Google Ads, Meta Ads, LinkedIn Ads, Google Analytics 4, Search Console, Stripe. Each shows status <code>not connected</code> and a "Connect" button.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-INT-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-INT-002</span>
+          <span class="case-title">"Connect" button kicks off real OAuth (config-gated)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Connect" on Google Ads.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>If the platform's OAuth client env vars are set, you're redirected to that platform's consent page. If not, you'll see a friendly inline error citing the missing env var — log as <em>Skipped</em> with a note.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 10. Campaigns + ad hierarchy + creatives                      -->
+    <!-- ============================================================ -->
+    <section id="campaigns" class="section" data-section-name="Campaigns / ads / creatives">
+      <h2>10 · Campaigns, ads, creatives</h2>
+
+      <details class="case" data-id="TC-CAMP-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-CAMP-001</span>
+          <span class="case-title">Campaigns list — empty state</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/campaigns</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>No fabricated campaigns. Empty state with a button to connect an ad platform.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-CAMP-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-CAMP-002</span>
+          <span class="case-title">Creatives library — list + filters</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>Run the Creative Strategy agent at least once (<code>/agents</code> → "Creative Strategy" with input payload <code>{"creative_type": "search_ad"}</code>) so the workspace has at least one AI-generated creative.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/creatives</code>.</li>
+            <li>Use the Type filter to pick "Search ad", then Source filter to "AI-generated".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>List shows creatives produced by the agent with badges showing type + source. Filters narrow correctly.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-CAMP-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-CAMP-003</span>
+          <span class="case-title">Edit an AI-generated creative</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click any AI-generated creative in the list.</li>
+            <li>In the modal, change the Headline. Save.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">New headline: <code>Cut wasted spend in 30 days</code></div>
+          <h4>Expected result</h4>
+          <p>Modal closes; the row reflects the new headline. Audit log has a <code>creative.updated</code> entry showing the diff. <code>type</code> and <code>source</code> are <strong>not</strong> editable from the form (the schema strips them).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 11. Content drafts                                            -->
+    <!-- ============================================================ -->
+    <section id="content" class="section" data-section-name="Content drafts">
+      <h2>11 · Content drafts</h2>
+      <p class="lead">Generic content surface (ad copy, landing page copy, email, social, blog). The blog post platform (next section) sits on top of this.</p>
+
+      <details class="case" data-id="TC-CON-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-CON-001</span>
+          <span class="case-title">Generate a blog post draft (LLM or stub)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/content</code> from the sidebar.</li>
+            <li>Click "Generate" / "New" → pick type <code>blog_post</code>, fill the topic.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Topic: <code>How AdVanta cuts wasted ad spend without cutting reach</code></div>
+            <div>Keywords: <code>paid ads, wasted spend, optimization</code></div>
+            <div>Audience: <code>Series A founders</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>A new draft row appears with status <code>draft</code>. With an OPENAI_API_KEY: an actual generated body. Without: a clearly-stubbed body that says "[edit me]" — both are valid for testing the flow.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-CON-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-CON-002</span>
+          <span class="case-title">Refresh from URL</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the content drafts list, click "Refresh from URL".</li>
+            <li>Use a real public blog post URL.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">URL: <code>https://example.com/blog/some-post</code></div>
+          <h4>Expected result</h4>
+          <p>A new draft is created with body lineage stored in <code>seo_metadata.refreshed_from</code>. If fetching the URL fails (404 / network), the request returns a clean error — not a 500.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 12. Blog platform                                             -->
+    <!-- ============================================================ -->
+    <section id="blog" class="section" data-section-name="Blog platform">
+      <h2>12 · Blog platform <span class="count">flagship feature</span></h2>
+      <p class="lead">Three-tab editor (Editor / AI Assistant / Settings), drag-drop image uploads, slug + excerpt + cover image, lifecycle to public archive at <code>/blog</code>.</p>
+
+      <details class="case" data-id="TC-BLOG-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-001</span>
+          <span class="case-title">Dashboard blog list + filters</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/blog/posts</code> from the sidebar.</li>
+            <li>If empty, you'll see "No posts yet. Click New post to start." Otherwise the list is grouped by status.</li>
+            <li>Switch the status dropdown to "Draft".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>List shows only blog_post drafts. Each row: title, slug code-pill (if set), excerpt preview, "Updated …" timestamp, and a status pill on the right.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-002</span>
+          <span class="case-title">Create a new post — empty draft + redirect to editor</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "New post".</li>
+            <li>Enter the demo title; click "Create + edit".</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Working title: <code>How AdVanta cuts wasted ad spend</code></div>
+          <h4>Expected result</h4>
+          <p>HTTP 200. You're redirected to <code>/blog/posts/{draft_id}</code> with the editor open on the Editor tab. Title is pre-populated; body is the placeholder <code>"Start writing here…"</code>.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-003</span>
+          <span class="case-title">Editor tab — markdown editing with live preview</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>On the Editor tab, replace the body with the demo markdown below.</li>
+            <li>Click "Save".</li>
+          </ol>
+          <h4>Demo data (paste into the body textarea)</h4>
+          <pre>## Why this matters
+
+Most growth teams don't have a wasted-spend problem — they have a *visibility* problem. Half the budget is mis-attributed; the other half pays for impressions that never converted.
+
+## The 3-step audit
+
+1. Pull every active campaign across **Google**, **Meta**, and **LinkedIn**.
+2. Cross-reference with GA4 conversions on a 28-day window.
+3. Surface campaigns whose CPA is above your blended threshold.
+
+## What AdVanta does about it
+
+The Paid Ads agent runs the whole loop and proposes pause / budget-reduce changes you approve before they ship.</pre>
+          <h4>Expected result</h4>
+          <p>The right-side preview renders headings, an ordered list, bold + italic spans, exactly as you'd expect. Save returns 200; "saved {time}" timestamp appears.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-004</span>
+          <span class="case-title">Insert image via button</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>On the Editor tab, click "Insert image" in the Compose card header.</li>
+            <li>Pick any local PNG / JPEG / WebP / GIF file under 5 MB.</li>
+            <li>Wait for "Uploading…" to clear.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>The body gains a markdown image line: <code>![filename](/uploads/blog-images/{ws}/{hash}.png)</code> at the cursor. Preview shows the rendered image. The URL works in a new tab.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-005" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-005</span>
+          <span class="case-title">Drag-drop image into the textarea</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Drag any image file from your desktop straight into the body textarea.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Same outcome as TC-BLOG-004 — uploaded + image-markdown inserted at cursor.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-006" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-BLOG-006</span>
+          <span class="case-title">Image upload — non-image and oversize rejected</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Try uploading a <code>.txt</code> file via the Insert image button.</li>
+            <li>Try uploading an image larger than 5 MB.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>First case: 415 with code <code>unsupported_image_type</code>; UI shows "Allowed types: image/gif, image/jpeg, image/png, image/webp". Second case: 413 with code <code>image_too_large</code>; UI shows the cap. Body is unchanged.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-007" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-007</span>
+          <span class="case-title">AI Assistant — generate outline</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Switch to the AI Assistant tab.</li>
+            <li>Leave selection empty; type the demo instructions.</li>
+            <li>Click "Outline".</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Instructions: <code>Cover the audit, the 3-step plan, and one worked example. End with a takeaway.</code></div>
+          <h4>Expected result</h4>
+          <p>A "Suggestions" card appears on the right with rendered markdown showing 5–8 sections (heading + 1-line summary each). Source badge reads <code>AI</code> if an LLM key is set, <code>stub (no LLM key)</code> otherwise — both are valid for testing the flow. Click "Append to body" to verify the outline is dropped at the end of the body.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-008" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-008</span>
+          <span class="case-title">AI Assistant — refine selection</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>On the AI Assistant tab, paste a paragraph from your draft into the "Selection" field.</li>
+            <li>Set instructions, click "Refine selection".</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Selection: <code>Most growth teams don't have a wasted-spend problem — they have a visibility problem.</code></div>
+            <div>Instructions: <code>Make it more concrete; include one number.</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>A "refine" suggestion card appears with the rewritten passage. "Append to body" works and "Discard" removes the card.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-009" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-009</span>
+          <span class="case-title">AI Assistant — suggest title + suggest meta apply correctly</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Suggest title" — confirm the suggestion card lists 5 candidate titles.</li>
+            <li>Click "Use first as title" — verify the post title at the top of the page updates.</li>
+            <li>Click "Suggest meta" — confirm a card with <code>meta_title</code> + <code>meta_description</code> appears.</li>
+            <li>Click "Apply to settings" — switch to the Settings tab and confirm those two fields are populated.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>All four interactions land their respective fields. <code>meta_description</code> is always ≤155 chars even from the deterministic stub.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-010" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-010</span>
+          <span class="case-title">Settings tab — slug, excerpt, cover image, keywords</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Switch to Settings. Fill the demo values.</li>
+            <li>Click "Upload cover image"; pick an image file.</li>
+            <li>Click "Save".</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Slug: <code>cut-wasted-spend</code></div>
+            <div>Excerpt: <code>A 3-step audit to find — and fix — the campaigns burning your budget without conversions.</code></div>
+            <div>Keywords: <code>paid-ads, optimization, audit</code></div>
+            <div>Meta title: <code>How AdVanta cuts wasted ad spend</code></div>
+            <div>Meta description: <code>A simple 3-step audit your team can run today to find — and fix — campaigns that are burning budget without conversions.</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>All fields persist. Cover image preview appears in the Settings tab and at the top of the live preview on the Editor tab. Keywords are split on commas.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-011" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-011</span>
+          <span class="case-title">Approve → Publish lifecycle</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the editor header, click "Approve". Confirm the status pill flips to <code>approved</code>.</li>
+            <li>Click "Publish".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Status flips to <code>published</code>. <code>published_at</code> set to now. The slug stays as the one you set; if you'd left slug blank, publish would auto-generate one from the title (<code>how-advanta-cuts-wasted-ad-spend</code>) and a 280-char excerpt from the body.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-012" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-012</span>
+          <span class="case-title">Public archive shows the post (after env config)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>Set <code>MARKETING_WORKSPACE_SLUG</code> in the API <code>.env</code> to your workspace slug (find it in the URL of any dashboard page or via <code>GET /workspaces</code>). Restart the API.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <a href="http://localhost:5173/blog" target="_blank">/blog</a> in an incognito window.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>The card grid renders with your published post. Cover image, title, excerpt, two keyword pills, and the published date are visible on the card.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-013" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BLOG-013</span>
+          <span class="case-title">Public detail page renders body markdown</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the archive, click your post.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>URL is <code>/blog/cut-wasted-spend</code>. Header has keywords, title, excerpt, cover image. Body shows headings + ordered list + bold/italic — same shape as the Editor preview. Footer has "Back to all posts" and "Try AdVanta free" buttons.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BLOG-014" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-BLOG-014</span>
+          <span class="case-title">Slug uniqueness enforced inside a workspace</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Create another draft and try to set its slug to <code>cut-wasted-spend</code> in the Settings tab.</li>
+            <li>Click Save.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>409 (or visible inline error) — the partial-unique index on (<code>workspace_id</code>, <code>slug</code>) blocks the duplicate. The first post's slug is unchanged.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 13. Outreach                                                  -->
+    <!-- ============================================================ -->
+    <section id="outreach" class="section" data-section-name="Outreach">
+      <h2>13 · Backlink outreach</h2>
+
+      <details class="case" data-id="TC-OUT-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-OUT-001</span>
+          <span class="case-title">Manually add a prospect</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/outreach</code>.</li>
+            <li>Click "Add prospect" (or use the OpenAPI docs <code>POST /backlink-prospects</code>).</li>
+            <li>Submit the demo data.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Domain: <code>example-press.test</code></div>
+            <div>Page URL: <code>https://example-press.test/saas-tools-2026</code></div>
+            <div>Contact email: <code>editor@example-press.test</code></div>
+            <div>Contact name: <code>Pat Editor</code></div>
+            <div>Relevance score: <code>78</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>Row appears in the prospects list with status <code>new</code>.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-OUT-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-OUT-002</span>
+          <span class="case-title">Draft an outreach email</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open the prospect's detail page.</li>
+            <li>Click "Draft outreach". Provide a brief.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Brief: <code>Pitch a guest post on cutting wasted ad spend; reference our new blog post.</code></div>
+          <h4>Expected result</h4>
+          <p>An email row appears in status <code>draft</code> with subject + body. Reply-To includes a per-message HMAC token. Body ends with an unsubscribe footer.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 14. SEO & GEO                                                 -->
+    <!-- ============================================================ -->
+    <section id="seo" class="section" data-section-name="SEO &amp; GEO">
+      <h2>14 · SEO &amp; GEO</h2>
+
+      <details class="case" data-id="TC-SEO-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-SEO-001</span>
+          <span class="case-title">SEO project view — empty state</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/seo</code> from the sidebar.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Site URL is the one you provided in onboarding. Keywords list is empty (until Search Console connects + syncs); UI shows "Connect Search Console" CTA — no fake keyword data.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 15. Website / landing pages                                   -->
+    <!-- ============================================================ -->
+    <section id="website" class="section" data-section-name="Website &amp; landing pages">
+      <h2>15 · Website intelligence &amp; landing pages</h2>
+
+      <details class="case" data-id="TC-WEB-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WEB-001</span>
+          <span class="case-title">Landing-page audit runs against a real URL</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/website</code>.</li>
+            <li>Add a landing page (use a real public URL).</li>
+            <li>Run audit.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">URL: <code>https://example.com</code></div>
+          <h4>Expected result</h4>
+          <p>Three scores produced: conversion (0–100), mobile UX (0–100), page speed (0–100). Recommendations may appear if any score is below threshold. Empty / unreachable URLs surface a clean error, not a 500.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 16. A/B tests                                                 -->
+    <!-- ============================================================ -->
+    <section id="abtests" class="section" data-section-name="A/B tests">
+      <h2>16 · A/B tests</h2>
+
+      <details class="case" data-id="TC-AB-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AB-001</span>
+          <span class="case-title">Create a landing-page A/B test</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/ab-tests</code>.</li>
+            <li>Click "New test"; pick "Landing page" target. Add two variants and submit.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Name: <code>Hero copy v1 vs v2</code></div>
+            <div>Hypothesis: <code>Specific value props beat generic ones.</code></div>
+            <div>Objective: <code>conversion_rate</code></div>
+            <div>Variant A (control): <code>https://acme.example/?v=a</code> · Hero "Turn ad chaos into intelligent growth"</div>
+            <div>Variant B: <code>https://acme.example/?v=b</code> · Hero "Cut wasted ad spend by next quarter"</div>
+            <div>Traffic split: <code>0.5 / 0.5</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>Test created with status <code>ready</code> and two variants summing to 1.0 traffic share.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AB-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AB-002</span>
+          <span class="case-title">Generate variants — traffic share rebalances to sum to 1.0</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>On the test detail page, click "Generate 2 more variants".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Test now has 4 variants, each at ~0.25 traffic share, summing to ~1.0 (within 0.01). The launch path won't reject the test.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-AB-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-AB-003</span>
+          <span class="case-title">Launch + record metrics + declare winner</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Launch" on the test (landing-page tests don't require a connected ad account).</li>
+            <li>Record sample metrics for each variant: visitors + conversions.</li>
+            <li>Click "Declare winner" on the variant with the higher conversion rate.</li>
+          </ol>
+          <h4>Demo data (manual record-metrics for each variant)</h4>
+          <div class="demo">
+            <div>Variant A: visits <code>2200</code>, conversions <code>110</code> (5.0%)</div>
+            <div>Variant B: visits <code>2100</code>, conversions <code>147</code> (7.0%)</div>
+          </div>
+          <h4>Expected result</h4>
+          <p>Significance gate: with these numbers the two-proportion z-test should pass (p &lt; 0.05). Winner is recorded; test status flips to <code>completed</code>; <code>ended_at</code> set. With insufficient sample size, the API returns 409 with code <code>ab_test_underpowered</code> — that's a valid outcome of a different shape.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 17. Reports                                                   -->
+    <!-- ============================================================ -->
+    <section id="reports" class="section" data-section-name="Reports">
+      <h2>17 · Reports</h2>
+
+      <details class="case" data-id="TC-REP-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REP-001</span>
+          <span class="case-title">Generate a weekly report</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/reports</code>.</li>
+            <li>Click "Generate weekly".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>A report row appears with status <code>generated</code>. Click in to see sections: Summary, Top recommendations, Agent activity, Paid ads, SEO &amp; GEO, Landing pages, Provider writes, Content drafts, Outreach, A/B tests, Growth DNA — each gated on whether it has data.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-REP-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REP-002</span>
+          <span class="case-title">Download report as PDF</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>From the report detail page, click "Download PDF".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>A real PDF downloads (not HTML, not blank). First bytes <code>%PDF-</code>. Open it: every section above that had data on the web view also shows in the PDF.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-REP-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-REP-003</span>
+          <span class="case-title">Download report as CSV</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Download CSV".</li>
+            <li>Open in a spreadsheet.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Multi-section CSV with markers: <code># top_recommendations</code>, <code># executions</code>, <code># content_drafts</code>, <code># outreach</code>, <code># ab_tests</code> — each followed by its rows.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 18. Billing                                                   -->
+    <!-- ============================================================ -->
+    <section id="billing" class="section" data-section-name="Billing">
+      <h2>18 · Billing</h2>
+
+      <details class="case" data-id="TC-BIL-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-BIL-001</span>
+          <span class="case-title">Billing status — Free plan default + LLM spend tile</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/billing</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Plan: Free. Subscription status: <code>none</code>. Usage strip: agent runs / landing pages / team members / LLM spend tiles. The <strong>LLM spend</strong> tile shows <code>$0.00</code> + token count (tokens >= 0 if you've run any agent that called the LLM, even a stub LLM call records 0 cost).</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-BIL-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-BIL-002</span>
+          <span class="case-title">Stripe checkout button (config-gated)</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Upgrade" / "Start Pro".</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>If Stripe env vars are set, a Stripe Checkout URL is returned + a redirect happens. If not, 503 with code <code>billing_not_configured</code> — log as Skipped with a note.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 19. Autopilot                                                 -->
+    <!-- ============================================================ -->
+    <section id="autopilot" class="section" data-section-name="Autopilot">
+      <h2>19 · Autopilot Mode</h2>
+
+      <details class="case" data-id="TC-APT-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-APT-001</span>
+          <span class="case-title">Default mode is OFF</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/autopilot</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Mode dropdown: <code>off</code>. Stop-loss: all-clear. Preview list shows every OPEN recommendation with reason <code>not_autopilot</code> + "manual" pill.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-APT-002" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-APT-002</span>
+          <span class="case-title">Cannot enter Autopilot without complete guardrails</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Set Mode to "autopilot" without filling spend caps / allowed action types.</li>
+            <li>Save.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>422 with code <code>autopilot_config_invalid</code> and a message listing the missing fields. Mode stays at its previous value.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-APT-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-APT-003</span>
+          <span class="case-title">Configure + enable Autopilot</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Fill the demo guardrails. Set mode to <code>autopilot</code>. Save.</li>
+            <li>Refresh the Preview list.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">
+            <div>Mode: <code>autopilot</code></div>
+            <div>Max daily spend increase (cents): <code>50000</code> ($500)</div>
+            <div>Max daily spend total (cents): <code>200000</code> ($2,000)</div>
+            <div>Max % increase per change: <code>20</code></div>
+            <div>Min recent conversions: <code>5</code></div>
+            <div>Risk ceiling: <code>medium</code></div>
+            <div>Allowed action types (one per line): <code>paid_ads.budget_unset</code>, <code>paid_ads.scale_up</code></div>
+          </div>
+          <h4>Expected result</h4>
+          <p>Save returns 200. Preview now shows each open rec with a per-rule verdict (e.g. "would auto-approve", or specific block reasons like <code>action_not_allowed:&lt;type&gt;</code>).</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-APT-004" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-APT-004</span>
+          <span class="case-title">Stop-loss kill switch</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>With autopilot enabled, click "Engage stop-loss".</li>
+            <li>Refresh Preview.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Status pill flips to "stop-loss ACTIVE". Every preview row now shows reason starting with <code>stop_loss_active:</code>. No rec would auto-approve.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 20. API keys                                                  -->
+    <!-- ============================================================ -->
+    <section id="apikeys" class="section" data-section-name="API keys">
+      <h2>20 · API keys</h2>
+
+      <details class="case" data-id="TC-KEY-001" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-KEY-001</span>
+          <span class="case-title">Mint a key — plaintext shown exactly once</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/settings/api-keys</code>.</li>
+            <li>Mint a key with the demo label, role <code>marketer</code>.</li>
+            <li>Copy the plaintext (it'll start with <code>ak_</code>).</li>
+            <li>Close the success panel; refresh the page.</li>
+          </ol>
+          <h4>Demo data</h4>
+          <div class="demo">Label: <code>QA test key</code></div>
+          <h4>Expected result</h4>
+          <p>Key row appears in the listing showing the prefix only (<code>ak_xxxxxxxx</code>) — never the secret. Refreshing makes the plaintext unrecoverable; the listing API never returns it.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-KEY-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-KEY-002</span>
+          <span class="case-title">Use the key to call the API programmatically</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Replace <code>WS_ID</code> + <code>YOUR_KEY</code> in the curl below.</li>
+          </ol>
+          <pre>curl -i http://localhost:8002/api/v1/workspaces/WS_ID/agents \
+  -H "Authorization: ApiKey YOUR_KEY"</pre>
+          <h4>Expected result</h4>
+          <p>HTTP 200 with the agent catalog. The <code>last_used_at</code> on the key row updates within seconds. Wrong key → 401.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-KEY-003" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-KEY-003</span>
+          <span class="case-title">Revoked key returns 401</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Click "Revoke" on the row.</li>
+            <li>Re-run the curl from TC-KEY-002.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>401 <code>not_authenticated</code>. Listing now shows the key with <code>revoked</code> status pill.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-KEY-004" data-tag="security">
+        <summary>
+          <span class="case-id">TC-KEY-004</span>
+          <span class="case-title">Workspace scoping — key from workspace A rejected in workspace B</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Mint a key in workspace A.</li>
+            <li>Try to use it against workspace B (any endpoint scoped to a workspace id).</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>404 with code <code>workspace_not_found</code> ("API key is not authorized for this workspace.").</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 21. Admin                                                     -->
+    <!-- ============================================================ -->
+    <section id="admin" class="section" data-section-name="Admin">
+      <h2>21 · Admin (superuser only)</h2>
+
+      <details class="case" data-id="TC-ADM-001" data-tag="security">
+        <summary>
+          <span class="case-id">TC-ADM-001</span>
+          <span class="case-title">Non-superuser cannot reach /admin</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>As an Owner (not superuser), browse to <code>/admin</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>You're redirected away (e.g. back to <code>/</code>). The Admin item should not appear in the sidebar for non-superusers.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-ADM-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-ADM-002</span>
+          <span class="case-title">Superuser overview — every tile populated</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>Promote your owner to superuser via SQL: <code>UPDATE users SET is_superuser = true WHERE email = 'qa-owner@advanta.test';</code> Then sign out + back in.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Open <code>/admin</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Eighteen counters show real numbers (most can be 0) — Users, Superusers, Workspaces, Paid workspaces, Agent runs total + 7d, Open recs, Integrations connected, Landing pages, Reports 7d, Executions total, Exec ok 7d, Content drafts, Drafts published 7d, Outreach sent 7d, Prospects, A/B tests active, A/B done 7d. Workspaces table + Users table list real rows. None of these numbers are fabricated.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 22. Provider webhooks (curl test)                             -->
+    <!-- ============================================================ -->
+    <section id="webhooks" class="section" data-section-name="Provider webhooks">
+      <h2>22 · Provider webhooks</h2>
+
+      <details class="case" data-id="TC-WHK-001" data-tag="security">
+        <summary>
+          <span class="case-id">TC-WHK-001</span>
+          <span class="case-title">HMAC signature required</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Pre-conditions</h4>
+          <p>Set <code>GOOGLE_ADS_WEBHOOK_SECRET=test-google-ads-secret</code> in the API <code>.env</code>; restart.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>Run the curl below — this is a request without a signature.</li>
+          </ol>
+          <pre>curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
+  -H "Content-Type: application/json" \
+  -d '{"event_type":"campaign.status_changed"}'</pre>
+          <h4>Expected result</h4>
+          <p>HTTP 401 with detail "Missing webhook signature." A <em>different</em> response (200 or 200 ack) here would mean the auth gate is broken — flag it as a Fail.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-WHK-002" data-tag="functional">
+        <summary>
+          <span class="case-id">TC-WHK-002</span>
+          <span class="case-title">Valid HMAC accepted; unknown account 200-acked</span>
+          <span class="case-tag functional">Functional</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run the bash script below in a terminal.</li>
+          </ol>
+          <pre>SECRET="test-google-ads-secret"
+BODY='{"event_type":"campaign.status_changed","account_id":"unknown-acct","campaign_id":"x","status":"paused"}'
+SIG=$(echo -n "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | sed 's/^.* //')
+curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
+  -H "Content-Type: application/json" \
+  -H "X-Provider-Signature: $SIG" \
+  -d "$BODY"</pre>
+          <h4>Expected result</h4>
+          <p>200 with body <code>{"matched": false, "reason": "unrecognized_account"}</code> — the webhook is authenticated but the account doesn't belong to any workspace, so the change is silently ignored (we don't want providers retrying forever).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 23. Mobile responsiveness                                     -->
+    <!-- ============================================================ -->
+    <section id="mobile" class="section" data-section-name="Mobile / responsive">
+      <h2>23 · Mobile &amp; responsiveness</h2>
+
+      <details class="case" data-id="TC-MOB-001" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-MOB-001</span>
+          <span class="case-title">Marketing pages on a 375px viewport</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Open DevTools → device toolbar → 375px wide (iPhone).</li>
+            <li>Browse: landing, pricing, blog (archive + a detail), terms, privacy.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>No horizontal scroll. All buttons reachable without zoom. Hero sections stack cleanly. Cards reflow to single column at narrow widths.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-MOB-002" data-tag="ui">
+        <summary>
+          <span class="case-id">TC-MOB-002</span>
+          <span class="case-title">Dashboard on a tablet (≈ 768px)</span>
+          <span class="case-tag ui">UI</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Set viewport to 768px wide.</li>
+            <li>Browse: command center, recommendations, blog editor, autopilot config.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Two-column layouts collapse to single column where appropriate; sidebar adapts (drawer on smaller widths).</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- 24. Cross-cutting / negative                                  -->
+    <!-- ============================================================ -->
+    <section id="negative" class="section" data-section-name="Cross-cutting / negative">
+      <h2>24 · Cross-cutting &amp; negative</h2>
+
+      <details class="case" data-id="TC-NEG-001" data-tag="security">
+        <summary>
+          <span class="case-id">TC-NEG-001</span>
+          <span class="case-title">Workspace isolation — cannot read another workspace's data</span>
+          <span class="case-tag security">Security</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Note the IDs of two workspaces you own.</li>
+            <li>Sign in as a Marketer member of <strong>only one</strong> of them.</li>
+            <li>Try <code>GET /workspaces/{other_id}/recommendations</code>.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>404 <code>workspace_not_found</code> — never a 200 with cross-tenant data, never a 403 that confirms the workspace exists.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-NEG-002" data-tag="negative">
+        <summary>
+          <span class="case-id">TC-NEG-002</span>
+          <span class="case-title">Malformed Authorization header rejected</span>
+          <span class="case-tag negative">Negative</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>Steps</h4>
+          <ol>
+            <li>Run: <code>curl -i http://localhost:8002/api/v1/auth/me -H "Authorization: garbled"</code></li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>401 with code <code>not_authenticated</code> and message "Malformed Authorization header." or "Unsupported authorization scheme."</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-NEG-003" data-tag="exploratory">
+        <summary>
+          <span class="case-id">TC-NEG-003</span>
+          <span class="case-title">No fabricated data anywhere</span>
+          <span class="case-tag exploratory">Exploratory</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>Production rule (CLAUDE.md §1): no hardcoded users, fake metrics, demo campaigns, fake customer logos, or fabricated charts. Hunt for any of these on a fresh workspace.</p>
+          <h4>Steps</h4>
+          <ol>
+            <li>With a workspace that has zero connected platforms and no agent runs, browse every dashboard page.</li>
+            <li>Look for: dollar amounts, percentages, click counts, customer names, fake "as featured in" media logos, fake testimonials with attributed names, fake bar/line charts.</li>
+          </ol>
+          <h4>Expected result</h4>
+          <p>Each "missing data" surface should be a clearly-labeled empty state with a connect CTA, an em-dash, or a "Loading…" indicator — never a fake number or chart.</p>
+        </div>
+      </details>
+
+      <details class="case" data-id="TC-NEG-004" data-tag="exploratory">
+        <summary>
+          <span class="case-id">TC-NEG-004</span>
+          <span class="case-title">Open exploratory pass — anything unusual</span>
+          <span class="case-tag exploratory">Exploratory</span>
+          <span class="case-status-dot"></span>
+        </summary>
+        <div class="case-body">
+          <h4>What this verifies</h4>
+          <p>Free-form. Try unexpected inputs: very long titles, emoji, accented characters, paste-bombs, rapid double-clicks, browser back/forward, opening multiple editor tabs of the same draft simultaneously, copying URLs across users.</p>
+          <h4>Expected result</h4>
+          <p>No 500s. No data leakage. Reasonable error messages. Note anything surprising in the textarea below — this is the most useful kind of feedback.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Submission                                                    -->
+    <!-- ============================================================ -->
+    <section id="finish" class="section" data-section-name="Submit your report">
+      <h2>25 · Submit your report</h2>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="stat-row" id="stat-row">
+          <span class="stat pending">— pending</span>
+          <span class="stat pass">— pass</span>
+          <span class="stat fail">— fail</span>
+          <span class="stat blocked">— blocked</span>
+          <span class="stat skipped">— skipped</span>
+        </div>
+        <p style="margin-top:14px;">Click <strong>Export report</strong> at the top of the page. A Markdown file (<code>advanta-test-run.md</code>) will download — that's the artifact to send back. It contains: each case ID, the status you chose, your notes, and a header with the date you ran this pass.</p>
+      </div>
+
+      <div class="card callout">
+        <h3>What to include in your follow-up email</h3>
+        <ol>
+          <li>The exported Markdown file.</li>
+          <li>Browser version + OS you tested on.</li>
+          <li>Any 5xx errors you hit (with the <code>X-Request-Id</code> from the response header — visible in DevTools Network).</li>
+          <li>Cases logged as Blocked + the env-var that was missing.</li>
+          <li>Anything surprising you noticed during exploratory testing (TC-NEG-004).</li>
+        </ol>
+      </div>
+
+      <p style="text-align:center; color:var(--slate-400); font-size:12px; margin-top:30px;">
+        Generated 2026-04-26 · AdVanta AI Growth Command Center · v0.0.1
+      </p>
+    </section>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- JS: localStorage persistence + filters + export                 -->
+  <!-- ============================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      const STORAGE_KEY = "advanta-tester-handoff-v1";
+      const state = loadState();
+
+      // -----------------------------------------------------------------
+      // Find every test case and wire up status + notes inputs.
+      // -----------------------------------------------------------------
+      const cases = Array.from(document.querySelectorAll("details.case"));
+      cases.forEach(initCase);
+
+      function initCase(el) {
+        const id = el.dataset.id;
+        const body = el.querySelector(".case-body");
+
+        // Inject status + notes form (keeps the markup readable above).
+        const actions = document.createElement("div");
+        actions.className = "case-actions";
+        actions.innerHTML = `
+          <select data-status>
+            <option value="">— pending</option>
+            <option value="pass">Pass</option>
+            <option value="fail">Fail</option>
+            <option value="blocked">Blocked</option>
+            <option value="skipped">Skipped</option>
+          </select>
+          <textarea data-notes placeholder="Notes for this case (what you observed, screenshots references, request-ids, etc.)"></textarea>
+        `;
+        body.appendChild(actions);
+
+        const sel = actions.querySelector("[data-status]");
+        const notes = actions.querySelector("[data-notes]");
+        const dot = el.querySelector(".case-status-dot");
+
+        // Restore.
+        const saved = state[id] || {};
+        if (saved.status) sel.value = saved.status;
+        if (saved.notes) notes.value = saved.notes;
+        applyDot(dot, saved.status);
+
+        sel.addEventListener("change", () => {
+          state[id] = state[id] || {};
+          state[id].status = sel.value || undefined;
+          applyDot(dot, sel.value);
+          persist();
+          updateProgress();
+          applyFilter();
+        });
+        notes.addEventListener("input", () => {
+          state[id] = state[id] || {};
+          state[id].notes = notes.value || undefined;
+          persist();
+        });
+      }
+
+      function applyDot(dot, status) {
+        if (!dot) return;
+        if (status) dot.dataset.status = status;
+        else dot.removeAttribute("data-status");
+      }
+
+      function loadState() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        } catch {
+          return {};
+        }
+      }
+      function persist() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      // -----------------------------------------------------------------
+      // Progress bar + summary tile counts.
+      // -----------------------------------------------------------------
+      function updateProgress() {
+        const total = cases.length;
+        const counts = { pass: 0, fail: 0, blocked: 0, skipped: 0 };
+        let addressed = 0;
+        cases.forEach((el) => {
+          const id = el.dataset.id;
+          const s = (state[id] && state[id].status) || "";
+          if (s) {
+            addressed++;
+            if (s in counts) counts[s]++;
+          }
+        });
+        document.getElementById("progress-label").textContent =
+          `${addressed} / ${total} addressed`;
+        document.getElementById("progress-fill").style.width =
+          total === 0 ? "0%" : `${(addressed / total) * 100}%`;
+
+        // Bottom summary tiles.
+        const row = document.getElementById("stat-row");
+        if (row) {
+          const pending = total - addressed;
+          row.innerHTML = `
+            <span class="stat pending">${pending} pending</span>
+            <span class="stat pass">${counts.pass} pass</span>
+            <span class="stat fail">${counts.fail} fail</span>
+            <span class="stat blocked">${counts.blocked} blocked</span>
+            <span class="stat skipped">${counts.skipped} skipped</span>
+          `;
+        }
+      }
+
+      // -----------------------------------------------------------------
+      // Filter pills (All / Pending / Pass / Fail / Blocked).
+      // -----------------------------------------------------------------
+      let currentFilter = "all";
+      document.querySelectorAll(".filter-pills button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".filter-pills button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentFilter = btn.dataset.filter;
+          applyFilter();
+        });
+      });
+
+      function applyFilter() {
+        cases.forEach((el) => {
+          const id = el.dataset.id;
+          const s = (state[id] && state[id].status) || "";
+          let visible = true;
+          if (currentFilter === "pending") visible = !s;
+          else if (currentFilter !== "all") visible = s === currentFilter;
+          el.classList.toggle("hidden", !visible);
+        });
+        // Hide a section heading entirely if every case in it is hidden.
+        document.querySelectorAll("section.section").forEach((sec) => {
+          const sectionCases = sec.querySelectorAll("details.case");
+          if (sectionCases.length === 0) return;
+          const anyVisible = Array.from(sectionCases).some(
+            (el) => !el.classList.contains("hidden"),
+          );
+          sec.classList.toggle("hidden", !anyVisible && currentFilter !== "all");
+        });
+      }
+
+      // -----------------------------------------------------------------
+      // TOC: list every section with a name + case count.
+      // -----------------------------------------------------------------
+      const toc = document.getElementById("toc");
+      document.querySelectorAll("section.section[data-section-name]").forEach((sec) => {
+        const name = sec.dataset.sectionName;
+        const id = sec.id;
+        const n = sec.querySelectorAll("details.case").length;
+        const a = document.createElement("a");
+        a.href = "#" + id;
+        a.innerHTML = `<span>${name}</span><span class="toc-count">${n}</span>`;
+        toc.appendChild(a);
+      });
+
+      // -----------------------------------------------------------------
+      // Reset + Export.
+      // -----------------------------------------------------------------
+      document.getElementById("reset-progress").addEventListener("click", () => {
+        if (!confirm("Reset all statuses + notes? This can't be undone.")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      });
+
+      document.getElementById("export-summary").addEventListener("click", () => {
+        const lines = [];
+        lines.push(`# AdVanta AI — test run report`);
+        lines.push("");
+        lines.push(`Generated: ${new Date().toISOString()}`);
+        lines.push("");
+
+        // Summary numbers.
+        const total = cases.length;
+        const counts = { pass: 0, fail: 0, blocked: 0, skipped: 0 };
+        cases.forEach((el) => {
+          const s = (state[el.dataset.id] && state[el.dataset.id].status) || "";
+          if (s in counts) counts[s]++;
+        });
+        const addressed = counts.pass + counts.fail + counts.blocked + counts.skipped;
+        lines.push(`## Summary`);
+        lines.push("");
+        lines.push(`- Total cases: **${total}**`);
+        lines.push(`- Addressed: **${addressed}** (${total ? Math.round((addressed / total) * 100) : 0}%)`);
+        lines.push(`- Pass: **${counts.pass}**`);
+        lines.push(`- Fail: **${counts.fail}**`);
+        lines.push(`- Blocked: **${counts.blocked}**`);
+        lines.push(`- Skipped: **${counts.skipped}**`);
+        lines.push(`- Pending: **${total - addressed}**`);
+        lines.push("");
+
+        // Detailed results, grouped by section.
+        document
+          .querySelectorAll("section.section[data-section-name]")
+          .forEach((sec) => {
+            const cases = sec.querySelectorAll("details.case");
+            if (cases.length === 0) return;
+            lines.push(`## ${sec.dataset.sectionName}`);
+            lines.push("");
+            lines.push(`| Case | Title | Status | Notes |`);
+            lines.push(`| --- | --- | --- | --- |`);
+            cases.forEach((c) => {
+              const id = c.dataset.id;
+              const title = c.querySelector(".case-title").textContent;
+              const s = (state[id] && state[id].status) || "pending";
+              const note = ((state[id] && state[id].notes) || "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+              lines.push(`| ${id} | ${title} | ${s} | ${note} |`);
+            });
+            lines.push("");
+          });
+
+        const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "advanta-test-run.md";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      });
+
+      // -----------------------------------------------------------------
+      // Initial paint.
+      // -----------------------------------------------------------------
+      updateProgress();
+      applyFilter();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+# Production-shaped local stack. Use real managed Postgres + Redis in production.
+#
+# Bring up:
+#   docker compose -f docker-compose.prod.yml up --build
+#
+# Migrate:
+#   docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: advanta
+      POSTGRES_PASSWORD: advanta
+      POSTGRES_DB: advanta_ai
+    volumes:
+      - advanta_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U advanta -d advanta_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - advanta_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql+psycopg://advanta:advanta@postgres:5432/advanta_ai
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
+      FRONTEND_URL: http://localhost:8080
+      BACKEND_URL: http://localhost:8000
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?set APP_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  # Background worker. Set WORKERS_ENABLED=1 on the api service to dispatch
+  # slow tasks (long ad-test launches, LLM calls, scheduled outreach sends)
+  # here instead of running them inline in the request handler.
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.api
+    restart: unless-stopped
+    command: ["celery", "-A", "app.core.celery_app.celery_app", "worker", "--beat", "--loglevel=info", "--concurrency=4"]
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DATABASE_URL: postgresql+psycopg://advanta:advanta@postgres:5432/advanta_ai
+      REDIS_URL: redis://redis:6379/0
+      APP_SECRET_KEY: ${APP_SECRET_KEY:?set APP_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.web
+      args:
+        VITE_API_BASE_URL: http://localhost:8000/api/v1
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  advanta_pg:
+  advanta_redis:

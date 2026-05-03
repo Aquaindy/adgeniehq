@@ -1,0 +1,2001 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AdVanta AI — Documentation</title>
+  <style>
+    /* ------------------------------------------------------------ */
+    /* Brand-aligned tokens (Grape Jelly #3E2F84)                   */
+    /* ------------------------------------------------------------ */
+    :root {
+      --grape: #3e2f84;
+      --grape-700: #3e2f84;
+      --grape-600: #4e36a3;
+      --grape-500: #6244c2;
+      --grape-100: #eeeafe;
+      --grape-50: #f4f1fb;
+      --ink: #111827;
+      --slate-700: #334155;
+      --slate-500: #64748b;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --cloud: #f9fafb;
+      --success: #16a34a;
+      --warning: #f59e0b;
+      --danger: #dc2626;
+      --sidebar-w: 268px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font: 15px/1.62 -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+      color: var(--slate-700);
+      background: white;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--grape-700); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+    }
+    code {
+      font-size: 0.86em;
+      background: var(--grape-100);
+      color: var(--grape-700);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    pre {
+      background: var(--ink);
+      color: #e5e7eb;
+      padding: 14px 16px;
+      border-radius: 12px;
+      overflow-x: auto;
+      line-height: 1.5;
+      font-size: 13px;
+      margin: 12px 0;
+    }
+    pre code {
+      background: none; color: inherit; padding: 0; border-radius: 0; font-size: inherit;
+    }
+    h1, h2, h3, h4 { color: var(--ink); font-weight: 600; line-height: 1.25; }
+    h1 { font-size: 32px; letter-spacing: -0.01em; margin: 0 0 6px; }
+    h2 {
+      font-size: 22px; margin: 38px 0 8px;
+      padding-top: 4px; scroll-margin-top: 80px;
+    }
+    h3 {
+      font-size: 17px; margin: 22px 0 6px;
+      scroll-margin-top: 80px;
+    }
+    h4 {
+      font-size: 13px; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--slate-500);
+      margin: 16px 0 6px; font-weight: 600;
+    }
+    p { margin: 8px 0; }
+    ul, ol { padding-left: 22px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    hr { border: 0; border-top: 1px solid var(--slate-100); margin: 28px 0; }
+    kbd {
+      display: inline-block; padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--slate-100); border: 1px solid var(--slate-200);
+      font: 12px/1.2 "SF Mono", Menlo, Consolas, monospace;
+      color: var(--ink);
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Top bar                                                       */
+    /* ------------------------------------------------------------ */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--slate-200);
+    }
+    .topbar-inner {
+      display: flex; align-items: center; gap: 18px;
+      padding: 11px 24px;
+    }
+    .logo {
+      display: inline-flex; align-items: center; gap: 9px;
+      font-weight: 600; color: var(--ink); flex-shrink: 0;
+    }
+    .logo-mark {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg, #3e2f84 0%, #6244c2 50%, #7c3aed 100%);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: white;
+      flex-shrink: 0;
+    }
+    .logo-mark svg { width: 14px; height: 14px; }
+    .logo-text { font-size: 15px; }
+    .logo-tag {
+      font-size: 10px; font-weight: 600;
+      color: var(--grape-700); background: var(--grape-100);
+      padding: 2px 7px; border-radius: 999px;
+      margin-left: 4px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .search-wrap { flex: 1; max-width: 360px; }
+    .search-wrap input {
+      width: 100%; font: inherit; font-size: 14px;
+      padding: 9px 12px 9px 34px;
+      border-radius: 10px; border: 1px solid var(--slate-200);
+      background: var(--cloud)
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='7'/><path d='M21 21l-4.3-4.3'/></svg>")
+        no-repeat 11px center;
+      color: var(--ink);
+    }
+    .search-wrap input:focus {
+      outline: none; border-color: var(--grape-500);
+      background-color: white;
+      box-shadow: 0 0 0 3px var(--grape-100);
+    }
+    .topbar-actions {
+      display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 13px; border-radius: 10px;
+      font: inherit; font-weight: 600; font-size: 13px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn.primary  { background: var(--grape-700); color: white; }
+    .btn.primary:hover { background: var(--grape-600); text-decoration: none; }
+    .btn.secondary { background: white; color: var(--ink); border-color: var(--slate-200); }
+    .btn.secondary:hover { background: var(--slate-100); }
+
+    .menu-toggle {
+      display: none;
+      background: white; border: 1px solid var(--slate-200);
+      width: 36px; height: 36px; border-radius: 9px;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .menu-toggle svg { width: 18px; height: 18px; stroke: var(--slate-700); }
+
+    /* ------------------------------------------------------------ */
+    /* Layout                                                        */
+    /* ------------------------------------------------------------ */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+      gap: 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 60px; align-self: start;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      border-right: 1px solid var(--slate-100);
+      padding: 18px 14px 28px;
+    }
+    .sidebar h4 {
+      margin: 14px 8px 6px;
+      font-size: 11px; letter-spacing: 0.08em;
+    }
+    .sidebar a {
+      display: block;
+      padding: 6px 10px; margin: 1px 0;
+      border-radius: 7px;
+      color: var(--slate-700);
+      font-size: 14px;
+    }
+    .sidebar a:hover {
+      background: var(--grape-50); color: var(--grape-700);
+      text-decoration: none;
+    }
+    .sidebar a.active {
+      background: var(--grape-100); color: var(--grape-700);
+      font-weight: 600;
+    }
+    .sidebar a.sub {
+      padding-left: 20px; font-size: 13px;
+      color: var(--slate-500);
+    }
+    .sidebar a.sub:hover { color: var(--grape-700); }
+
+    .content {
+      padding: 24px 32px 80px;
+      max-width: 800px;
+    }
+    .content > section { padding-bottom: 12px; }
+
+    /* ------------------------------------------------------------ */
+    /* Hero                                                          */
+    /* ------------------------------------------------------------ */
+    .hero {
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(700px 220px at 10% -10%, rgba(124,58,237,0.18), transparent 60%),
+        radial-gradient(500px 180px at 92% 30%, rgba(98,68,194,0.18), transparent 60%),
+        var(--grape-50);
+      border: 1px solid var(--grape-100);
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 12px;
+    }
+    .hero h1 { color: var(--ink); margin: 0; }
+    .hero .pill {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--grape-700);
+      background: white; border: 1px solid var(--grape-100);
+      padding: 4px 10px; border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .hero p { font-size: 16px; color: var(--slate-500); }
+
+    /* ------------------------------------------------------------ */
+    /* Cards / callouts                                              */
+    /* ------------------------------------------------------------ */
+    .callout {
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 14px 0;
+      background: white;
+    }
+    .callout.info  { border-color: var(--grape-100); background: var(--grape-50); color: var(--grape-700); }
+    .callout.warn  { border-color: #fcd34d; background: #fef3c7; color: #92400e; }
+    .callout.note  { border-color: var(--slate-200); background: var(--cloud); color: var(--slate-700); }
+    .callout.danger { border-color: #fca5a5; background: #fee2e2; color: #991b1b; }
+    .callout-title {
+      font-weight: 600; color: inherit;
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .definition {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px 18px;
+      margin: 12px 0;
+    }
+    .definition dt { font-weight: 600; color: var(--ink); }
+    .definition dd { margin: 0; color: var(--slate-700); }
+
+    .feature-card {
+      border: 1px solid var(--slate-100);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 10px 0;
+      background: white;
+    }
+    .feature-card h3 { margin: 0 0 4px; }
+    .feature-card .meta {
+      font-size: 12px; color: var(--slate-500);
+      margin-bottom: 10px;
+    }
+    .feature-grid {
+      display: grid; gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 720px) {
+      .feature-grid { grid-template-columns: 1fr; }
+      .definition { grid-template-columns: 1fr; gap: 4px; }
+    }
+
+    table.spec {
+      width: 100%; border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+    table.spec th {
+      text-align: left;
+      font-weight: 600; color: var(--slate-500);
+      font-size: 12px; text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--slate-200);
+    }
+    table.spec td {
+      padding: 10px;
+      border-bottom: 1px solid var(--slate-100);
+      vertical-align: top;
+    }
+
+    .anchor-link {
+      color: var(--slate-400); margin-left: 6px;
+      opacity: 0; transition: opacity 0.15s;
+      text-decoration: none;
+    }
+    h2:hover .anchor-link, h3:hover .anchor-link { opacity: 1; }
+
+    .pill-tag {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 999px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .pill-tag.role-owner   { background: #fef3c7; color: #92400e; }
+    .pill-tag.role-admin   { background: var(--grape-100); color: var(--grape-700); }
+    .pill-tag.role-mkt     { background: #ecfeff; color: #155e75; }
+    .pill-tag.role-anal    { background: #ecfdf5; color: #065f46; }
+    .pill-tag.role-view    { background: var(--slate-100); color: var(--slate-700); }
+    .pill-tag.risk-low     { background: #ecfdf5; color: #065f46; }
+    .pill-tag.risk-medium  { background: #fef3c7; color: #92400e; }
+    .pill-tag.risk-high    { background: #fee2e2; color: #991b1b; }
+
+    /* ------------------------------------------------------------ */
+    /* Mobile                                                        */
+    /* ------------------------------------------------------------ */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed; top: 60px; left: 0;
+        width: 280px;
+        background: white;
+        z-index: 30;
+        height: calc(100vh - 60px);
+        transform: translateX(-100%);
+        transition: transform 0.18s ease;
+        border-right: 1px solid var(--slate-100);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .menu-toggle { display: inline-flex; }
+      .content { padding: 18px 18px 80px; }
+    }
+
+    /* ------------------------------------------------------------ */
+    /* Print                                                         */
+    /* ------------------------------------------------------------ */
+    @media print {
+      .topbar, .sidebar, .menu-toggle { display: none !important; }
+      .layout { grid-template-columns: 1fr; }
+      .content { padding: 0; max-width: none; }
+      h2 { break-before: page; }
+      a { color: inherit; }
+      pre { background: #f5f5f5; color: #111; border: 1px solid #ddd; }
+    }
+
+    .hidden { display: none !important; }
+    .empty-state {
+      text-align: center; padding: 30px 20px;
+      color: var(--slate-500);
+    }
+
+    .toc-section-title { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================== -->
+  <!-- Top bar                                                          -->
+  <!-- ============================================================== -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <a href="#welcome" class="logo">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L12 4.5 L19 19"/><path d="M8.2 14.5 H15.8"/></svg></span>
+        <span class="logo-text">AdVanta AI</span>
+        <span class="logo-tag">Docs</span>
+      </a>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Search docs…" autocomplete="off" aria-label="Search documentation"/>
+      </div>
+      <div class="topbar-actions">
+        <a href="http://localhost:5173/welcome" class="btn secondary" target="_blank" rel="noopener">Open app</a>
+        <a href="#quickstart" class="btn primary">Get started</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- ============================================================ -->
+    <!-- Sidebar TOC                                                   -->
+    <!-- ============================================================ -->
+    <aside class="sidebar" id="sidebar">
+      <h4>Get started</h4>
+      <a href="#welcome">Welcome</a>
+      <a href="#quickstart">Quickstart (5 min)</a>
+      <a href="#environment">Environment &amp; URLs</a>
+
+      <h4>Concepts</h4>
+      <a href="#concept-workspace">Workspaces &amp; members</a>
+      <a href="#concept-roles">Roles &amp; permissions</a>
+      <a href="#concept-agents">Agents</a>
+      <a href="#concept-recommendations">Recommendations &amp; approvals</a>
+      <a href="#concept-modes">Three modes (Advisor / Approval / Autopilot)</a>
+      <a href="#concept-audit">Audit log</a>
+      <a href="#concept-limits">Plan limits &amp; metering</a>
+
+      <h4>Agent reference</h4>
+      <a href="#agent-orchestrator">Master Orchestrator</a>
+      <a href="#agent-paid-ads">Paid Ads</a>
+      <a href="#agent-seo-geo">SEO &amp; GEO</a>
+      <a href="#agent-website">Website Audit</a>
+      <a href="#agent-landing">Landing Page Audit</a>
+      <a href="#agent-market-intel">Market Intelligence</a>
+      <a href="#agent-icp">ICP &amp; Persona</a>
+      <a href="#agent-creative">Creative Strategy</a>
+      <a href="#agent-campaign-builder">Campaign Builder</a>
+      <a href="#agent-tracking">Tracking &amp; Attribution</a>
+      <a href="#agent-content">Content Writer</a>
+      <a href="#agent-onboarding-insight">Onboarding Insight</a>
+
+      <h4>How-to guides</h4>
+      <a href="#howto-onboarding">Complete onboarding</a>
+      <a href="#howto-connect">Connect a provider</a>
+      <a href="#howto-approve">Approve a recommendation</a>
+      <a href="#howto-autopilot">Configure Autopilot</a>
+      <a href="#howto-2fa">Set up 2FA</a>
+      <a href="#howto-api-keys">Mint &amp; use API keys</a>
+      <a href="#howto-blog">Write &amp; publish a blog post</a>
+      <a href="#howto-ab-test">Run an A/B test</a>
+      <a href="#howto-reports">Generate a report</a>
+      <a href="#howto-google-login">Sign in with Google</a>
+
+      <h4>Settings</h4>
+      <a href="#settings-profile">Profile</a>
+      <a href="#settings-workspace">Workspace settings</a>
+      <a href="#settings-billing">Billing</a>
+      <a href="#settings-llm-cost">LLM dollar cost</a>
+      <a href="#settings-admin">Admin console</a>
+
+      <h4>Reference</h4>
+      <a href="#reference-security">Security model</a>
+      <a href="#reference-api">API reference</a>
+      <a href="#reference-errors">Error codes</a>
+      <a href="#reference-integrations">Provider matrix</a>
+      <a href="#reference-webhooks">Provider webhooks</a>
+
+      <h4>Help</h4>
+      <a href="#faq">FAQ</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#changelog">What's new</a>
+      <a href="#support">Support</a>
+    </aside>
+
+    <main class="content">
+
+      <!-- ============================================================ -->
+      <!-- Welcome                                                       -->
+      <!-- ============================================================ -->
+      <section id="welcome">
+        <div class="hero">
+          <span class="pill">Documentation · v0.0.1</span>
+          <h1>AdVanta AI — your growth command center.</h1>
+          <p style="margin-top:10px;">
+            AdVanta is an operating layer for marketing teams. Specialized AI agents
+            read your real ad accounts, GA4, and website, surface wasted spend, draft
+            creative, run A/B tests, and apply approved changes back to the platforms —
+            with every action gated by a configurable approval flow and a permanent audit
+            trail.
+          </p>
+        </div>
+
+        <p>
+          This is the user manual. If you're a developer integrating against the API,
+          jump to <a href="#reference-api">API reference</a>. If you've never seen the app,
+          start with <a href="#quickstart">Quickstart</a> — it gets you to your first
+          agent run in under five minutes.
+        </p>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>Approval-gated by default</h3>
+            <p class="meta">No silent spend changes</p>
+            <p>Every recommendation is yours to approve or reject. When you flip on
+            Autopilot, you set explicit guardrails — daily spend caps, % caps per change,
+            conversion thresholds, and a stop-loss kill switch.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Real OAuth, real data</h3>
+            <p class="meta">No demo content, ever</p>
+            <p>If a platform isn't connected, you see a Connect button — never a fake
+            chart. Tokens are encrypted at rest with Fernet; provider mutations capture
+            prior-state for one-click revert.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Twelve specialist agents</h3>
+            <p class="meta">Plus a Master Orchestrator</p>
+            <p>Each agent owns one slice of growth (paid, SEO, conversion, content,
+            tracking). The Master Orchestrator chains them by goal so a single click
+            can audit the whole stack.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Production-grade plumbing</h3>
+            <p class="meta">From day one</p>
+            <p>Workspace isolation, RBAC, 2FA, API keys, Stripe billing, plan-aware
+            quotas, dollar-cost LLM tracking, audit log on every action — all in the
+            base build, not a future tier.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Quickstart                                                    -->
+      <!-- ============================================================ -->
+      <section id="quickstart">
+        <h2>Quickstart <a href="#quickstart" class="anchor-link">#</a></h2>
+        <p>
+          Five minutes from sign-up to your first AI-generated recommendation. Every step
+          can be undone — feel free to mess around.
+        </p>
+
+        <h3>1 · Create an account</h3>
+        <p>
+          Open <a href="http://localhost:5173/register" target="_blank">/register</a>,
+          enter your email and a password (≥ 8 characters). Or click <strong>Continue
+          with Google</strong> if your admin has wired Google login.
+        </p>
+
+        <h3>2 · Create your workspace</h3>
+        <p>
+          You land on the workspace selector after registration. Click <strong>Create
+          workspace</strong> — name it after your team or company. The first user becomes
+          its <span class="pill-tag role-owner">Owner</span>.
+        </p>
+        <div class="callout note">
+          <div class="callout-title">Why workspaces?</div>
+          Every record in AdVanta — campaigns, drafts, recs, audit rows — belongs to one
+          workspace. Members get role-gated access; data never leaks across workspaces.
+          One person can belong to many workspaces with different roles in each.
+        </div>
+
+        <h3>3 · Complete onboarding</h3>
+        <p>
+          From the dashboard, open <strong>Onboarding</strong>. The wizard collects:
+          business name, website, industry, target audience, offer, primary conversion
+          goal, monthly ad budget, geographic targets, current ad platforms, brand voice,
+          and 1–3 competitors. Every agent reads from this profile.
+        </p>
+        <p>
+          Click <strong>Generate Growth DNA Profile</strong> on the next step.
+          You'll get scored funnel- and paid-ads-readiness, a 30-day plan, and a
+          shortlist of campaigns to run first.
+        </p>
+
+        <h3>4 · Run your first agent</h3>
+        <p>
+          Open <strong>Agents</strong> in the sidebar. Click <strong>Run</strong> on
+          <em>Onboarding Insight</em> — it returns instantly with gap-analysis
+          recommendations. Or pick <em>Master Orchestrator</em> with the input
+          payload <code>{"goal": "research"}</code> to chain Market Intelligence
+          and ICP / Persona automatically.
+        </p>
+
+        <h3>5 · Review &amp; approve</h3>
+        <p>
+          Open <strong>Recommendations</strong>. Each card shows a risk pill
+          (<span class="pill-tag risk-low">low</span> / <span class="pill-tag risk-medium">medium</span>
+          / <span class="pill-tag risk-high">high</span>), source agent, and Approve /
+          Reject. Click into one, read the suggested action, then approve. Every action
+          is captured in the audit log.
+        </p>
+
+        <div class="callout info">
+          <div class="callout-title">That's it.</div>
+          You're ready to connect platforms (<a href="#howto-connect">guide</a>),
+          configure Autopilot (<a href="#howto-autopilot">guide</a>), or write your
+          first blog post (<a href="#howto-blog">guide</a>).
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Environment                                                   -->
+      <!-- ============================================================ -->
+      <section id="environment">
+        <h2>Environment &amp; URLs <a href="#environment" class="anchor-link">#</a></h2>
+        <p>
+          The dev / preview build runs on these ports by default. Production deployments
+          will publish their own URLs — substitute them everywhere.
+        </p>
+        <table class="spec">
+          <tr><th>What</th><th>URL</th></tr>
+          <tr><td>App (UI)</td><td><a href="http://localhost:5173">http://localhost:5173</a></td></tr>
+          <tr><td>API base</td><td><code>http://localhost:8002/api/v1</code></td></tr>
+          <tr><td>Health probe</td><td><code>/api/v1/health</code> → <code>{"status":"ok"}</code></td></tr>
+          <tr><td>OpenAPI / Swagger UI</td><td><code>/api/v1/docs</code></td></tr>
+          <tr><td>Public blog API</td><td><code>/api/v1/public/blog</code> + <code>/api/v1/public/blog/{slug}</code></td></tr>
+          <tr><td>Static uploads</td><td><code>/uploads/blog-images/{workspace}/{file}</code></td></tr>
+        </table>
+
+        <h3>Optional environment variables</h3>
+        <p>
+          Several features are config-gated. Until the matching env var is set, the
+          feature returns a friendly 503 (or a deterministic stub) — never silent fake
+          data. Ask whoever runs your deployment to confirm what's enabled.
+        </p>
+        <table class="spec">
+          <tr><th>Feature</th><th>Required env vars</th></tr>
+          <tr>
+            <td>Sign in with Google</td>
+            <td><code>GOOGLE_LOGIN_CLIENT_ID</code>, <code>GOOGLE_LOGIN_CLIENT_SECRET</code>, <code>GOOGLE_LOGIN_REDIRECT_URI</code></td>
+          </tr>
+          <tr>
+            <td>LLM-backed agents (Content Writer, Market Intelligence, ICP, Creative Strategy, Refresh, Blog AI Assistant)</td>
+            <td><code>OPENAI_API_KEY</code> (or compatible). Without it, agents fall back to clearly-tagged deterministic stubs.</td>
+          </tr>
+          <tr>
+            <td>Stripe billing</td>
+            <td><code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, <code>STRIPE_PRICE_ID_*</code></td>
+          </tr>
+          <tr>
+            <td>Connected platforms (each)</td>
+            <td>Per-platform OAuth client id + secret (Google Ads, Meta, LinkedIn, GA4, Search Console).</td>
+          </tr>
+          <tr>
+            <td>Inbound email parsing</td>
+            <td><code>INBOUND_EMAIL_DOMAIN</code>, <code>INBOUND_EMAIL_SECRET</code></td>
+          </tr>
+          <tr>
+            <td>Provider webhooks</td>
+            <td><code>GOOGLE_ADS_WEBHOOK_SECRET</code>, <code>META_ADS_WEBHOOK_SECRET</code>, <code>LINKEDIN_ADS_WEBHOOK_SECRET</code></td>
+          </tr>
+          <tr>
+            <td>Public blog at <code>/blog</code></td>
+            <td><code>MARKETING_WORKSPACE_SLUG</code> — set to the slug of the workspace whose published blog posts should appear on the public site.</td>
+          </tr>
+          <tr>
+            <td>Background workers</td>
+            <td><code>WORKERS_ENABLED=true</code> + <code>CELERY_BROKER_URL</code>. Off by default; tasks run synchronously.</td>
+          </tr>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- CONCEPTS                                                      -->
+      <!-- ============================================================ -->
+      <section id="concept-workspace">
+        <h2>Workspaces &amp; members <a href="#concept-workspace" class="anchor-link">#</a></h2>
+        <p>
+          A workspace is the top-level tenant — the unit of data isolation, billing, and
+          permissions. Everything you create (campaigns, drafts, recommendations, A/B
+          tests, audit rows, API keys, even uploaded images) belongs to exactly one
+          workspace.
+        </p>
+        <p>
+          You can be a member of many workspaces with a different role in each. The
+          workspace switcher at the top of the dashboard scopes every page to one
+          workspace at a time.
+        </p>
+        <h3>Inviting members</h3>
+        <p>
+          Owners + Admins can invite via the OpenAPI route <code>POST /workspaces/{id}/members/invite</code>
+          (a UI surface lives in workspace settings). The invitee receives a hashed
+          single-use token in an email; once they accept, they appear in the members list
+          with the role you assigned.
+        </p>
+        <p>
+          Invitations expire 7 days after they're issued. The token is SHA-256 hashed at
+          rest; the plaintext exists only in the email.
+        </p>
+        <div class="callout note">
+          The sole-Owner protection: you can't demote the last Owner of a workspace. Add a
+          second Owner first, then transfer.
+        </div>
+      </section>
+
+      <section id="concept-roles">
+        <h2>Roles &amp; permissions <a href="#concept-roles" class="anchor-link">#</a></h2>
+        <p>
+          Five roles, ordered most → least privileged. Risk-level role gating is enforced
+          on the recommendation approval path so high-impact actions can't slip through
+          a junior account.
+        </p>
+        <table class="spec">
+          <tr>
+            <th>Role</th>
+            <th>What they can do</th>
+          </tr>
+          <tr>
+            <td><span class="pill-tag role-owner">Owner</span></td>
+            <td>Everything, including: workspace settings, billing, deleting the workspace, toggling Autopilot mode, approving high-risk recommendations, minting API keys, configuring 2FA enforcement.</td>
+          </tr>
+          <tr>
+            <td><span class="pill-tag role-admin">Admin</span></td>
+            <td>Run agents, approve medium-risk recommendations, edit recommendation copy, manage members, run reports.</td>
+          </tr>
+          <tr>
+            <td><span class="pill-tag role-mkt">Marketer</span></td>
+            <td>Run agents, approve low-risk recommendations, write &amp; edit content drafts (including blog posts), upload images, design A/B tests.</td>
+          </tr>
+          <tr>
+            <td><span class="pill-tag role-anal">Analyst</span></td>
+            <td>Read-only insights — dashboards, recommendations, agent run details, reports. No mutations.</td>
+          </tr>
+          <tr>
+            <td><span class="pill-tag role-view">Viewer</span></td>
+            <td>Dashboards only.</td>
+          </tr>
+        </table>
+
+        <h3>Risk → role floor</h3>
+        <table class="spec">
+          <tr><th>Risk level</th><th>Required role</th></tr>
+          <tr><td><span class="pill-tag risk-low">low</span></td><td>Marketer or higher</td></tr>
+          <tr><td><span class="pill-tag risk-medium">medium</span></td><td>Admin or higher</td></tr>
+          <tr><td><span class="pill-tag risk-high">high</span></td><td>Owner only</td></tr>
+        </table>
+      </section>
+
+      <section id="concept-agents">
+        <h2>Agents <a href="#concept-agents" class="anchor-link">#</a></h2>
+        <p>
+          An agent is a self-contained piece of growth expertise — paid ads, SEO,
+          conversion, content, tracking — that reads your real workspace data, runs in a
+          single transaction, and produces three kinds of output:
+        </p>
+        <ul>
+          <li><strong>Tasks</strong> — every step the agent ran, with input + output payloads + timestamps. Visible on the run detail page.</li>
+          <li><strong>Skill outputs</strong> — structured JSON the agent produced for downstream consumption (used by reports, the Orchestrator, and the dashboard).</li>
+          <li><strong>Recommendations</strong> — human-facing items routed through the approval flow.</li>
+        </ul>
+        <p>
+          Every run is metered against your plan's <code>AGENT_RUN</code> quota and
+          (when LLM calls happen) the <code>LLM_CALL</code> token meter. See
+          <a href="#concept-limits">plan limits</a>.
+        </p>
+        <p>
+          See <a href="#agent-orchestrator">Agent reference</a> for what each one reads,
+          writes, and skips.
+        </p>
+      </section>
+
+      <section id="concept-recommendations">
+        <h2>Recommendations &amp; approvals <a href="#concept-recommendations" class="anchor-link">#</a></h2>
+        <p>
+          Every visible suggestion in AdVanta is a <strong>recommendation</strong> with a
+          clear lifecycle:
+        </p>
+        <ul>
+          <li><code>open</code> — produced by an agent, awaiting human review.</li>
+          <li><code>approved</code> — a member with the right role pressed Approve.
+          If the rec carries an executable action (e.g. pause campaign, change budget),
+          the change is applied to the connected provider as part of the same
+          transaction.</li>
+          <li><code>rejected</code> — explicitly dismissed; the reason is captured.</li>
+          <li><code>executed</code> — provider-side change confirmed.</li>
+          <li><code>archived</code> — soft-deleted; out of the active list.</li>
+        </ul>
+        <p>
+          Each approval / rejection creates an <a href="#concept-audit">audit row</a>
+          tagged with the actor, IP, user-agent, and a JSON diff of what changed.
+        </p>
+        <h3>Editable fields</h3>
+        <p>
+          Admins can edit the user-facing copy (<code>title</code>, <code>summary</code>,
+          <code>expected_impact</code>, <code>suggested_action</code>) on a recommendation
+          before approving. Risk level + recommendation type are immutable — they're
+          part of the agent's structured output.
+        </p>
+        <h3>Reverting an executed recommendation</h3>
+        <p>
+          Provider mutations capture the prior state on the way out. From the recommendation
+          detail page, click <strong>Revert</strong> on the execution row — the previous
+          state is replayed back to the platform. Audit-logged as a separate row with
+          <code>is_revert=true</code>.
+        </p>
+      </section>
+
+      <section id="concept-modes">
+        <h2>Three modes <a href="#concept-modes" class="anchor-link">#</a></h2>
+        <p>
+          AdVanta runs in one of three modes per workspace. New workspaces default to
+          <strong>Approval</strong>.
+        </p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>Advisor</h3>
+            <p class="meta">Recommendations only</p>
+            <p>Agents analyze and propose. Nothing reaches a connected provider, ever.
+            Use this when you want the insights without giving up control of any
+            outbound writes.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Approval (default)</h3>
+            <p class="meta">Recommendations + manual approve flow</p>
+            <p>Agents propose. A human approves. We write to the provider with prior-state
+            captured. Every action is audit-logged.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Autopilot</h3>
+            <p class="meta">With your guardrails</p>
+            <p>Auto-approves recommendations that pass every guardrail you've set
+            (spend cap, % cap, conversion threshold, allowed action types, risk
+            ceiling). Audit-logged as <code>SYSTEM</code>. One-click stop-loss flips
+            the kill switch instantly.</p>
+          </div>
+        </div>
+        <p>
+          Switching to Autopilot requires <strong>complete</strong> guardrails — the API
+          refuses with a 422 if any of <code>max_daily_spend_increase_cents</code>,
+          <code>max_daily_spend_total_cents</code>, <code>max_pct_increase_per_change</code>,
+          or <code>allowed_action_types</code> is missing. See the
+          <a href="#howto-autopilot">configuration guide</a>.
+        </p>
+      </section>
+
+      <section id="concept-audit">
+        <h2>Audit log <a href="#concept-audit" class="anchor-link">#</a></h2>
+        <p>
+          Every meaningful event in your workspace is captured. The audit log is
+          append-only, owned by the workspace, and visible to Admins + Owners.
+        </p>
+        <h4>What gets logged</h4>
+        <ul>
+          <li>Approvals, rejections, edits</li>
+          <li>Provider executions + reverts (with prior-state diff)</li>
+          <li>Autopilot decisions (tagged <code>SYSTEM</code>)</li>
+          <li>Provider webhook events</li>
+          <li>API key mints + revokes</li>
+          <li>2FA enable / confirm / disable</li>
+          <li>Member invitations + acceptances + role changes</li>
+          <li>Autopilot mode transitions</li>
+          <li>Content draft creates, edits, publishes</li>
+        </ul>
+        <h4>What's recorded per row</h4>
+        <ul>
+          <li>Actor type (<code>USER</code> / <code>AGENT</code> / <code>SYSTEM</code>) and id</li>
+          <li>Action (e.g. <code>recommendation.approved</code>, <code>autopilot.approved</code>, <code>creative.updated</code>)</li>
+          <li>Resource type + id</li>
+          <li>IP address + User-Agent</li>
+          <li>JSON metadata — typically the diff of what changed</li>
+          <li>Timestamp</li>
+        </ul>
+      </section>
+
+      <section id="concept-limits">
+        <h2>Plan limits &amp; metering <a href="#concept-limits" class="anchor-link">#</a></h2>
+        <p>
+          Each plan caps the rolling 30-day total of certain events. When you hit a cap,
+          the next call is refused with HTTP 402 and code <code>plan_limit_exceeded</code>
+          — never a surprise charge. The Billing page surfaces the live counters.
+        </p>
+        <table class="spec">
+          <tr><th>Counter</th><th>Triggered by</th></tr>
+          <tr><td><code>AGENT_RUN</code></td><td>Each successful agent invocation.</td></tr>
+          <tr><td><code>CONTENT_DRAFT</code></td><td>Each new content draft (manual or agent-generated).</td></tr>
+          <tr><td><code>OUTREACH_EMAIL_SENT</code></td><td>Each outbound outreach send.</td></tr>
+          <tr><td><code>AB_TEST_CREATED</code></td><td>Each new A/B test.</td></tr>
+          <tr><td><code>OUTBOUND_WRITE</code></td><td>Each provider mutation (pause campaign, change budget, etc.).</td></tr>
+          <tr><td><code>LLM_CALL</code></td><td>Each LLM completion. The meter records both <strong>tokens</strong> (for plan caps) and <strong>estimated USD micros</strong> (for the <a href="#settings-llm-cost">LLM dollar cost tile</a>).</td></tr>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- AGENT REFERENCE                                              -->
+      <!-- ============================================================ -->
+      <section id="agent-orchestrator">
+        <h2>Master Orchestrator <a href="#agent-orchestrator" class="anchor-link">#</a></h2>
+        <p>
+          Accepts a high-level goal and delegates to specialist agents in sequence.
+          Sub-runs are linked back via skill outputs so you can drill into each one
+          from the orchestrator's run detail.
+        </p>
+        <h4>Inputs (input_payload)</h4>
+        <ul>
+          <li><code>goal</code>: <code>"audit"</code> · <code>"research"</code> · <code>"improve_seo"</code> · <code>"improve_paid"</code> · <code>"improve_landing"</code> · <code>"icp"</code> · <code>"competitors"</code></li>
+          <li><code>agents</code> (optional): explicit list of agent types, overrides goal-based playbook.</li>
+        </ul>
+        <h4>Goal playbooks</h4>
+        <table class="spec">
+          <tr><th>Goal</th><th>Plan (sub-agents in order)</th></tr>
+          <tr><td><code>audit</code></td><td>onboarding_insight → paid_ads → seo_audit → landing_page_audit</td></tr>
+          <tr><td><code>research</code></td><td>market_intelligence → icp_persona</td></tr>
+          <tr><td><code>improve_seo</code></td><td>seo_audit</td></tr>
+          <tr><td><code>improve_paid</code></td><td>paid_ads</td></tr>
+          <tr><td><code>improve_landing</code></td><td>landing_page_audit</td></tr>
+        </table>
+      </section>
+
+      <section id="agent-paid-ads">
+        <h2>Paid Ads <a href="#agent-paid-ads" class="anchor-link">#</a></h2>
+        <p>
+          Reads synced campaign data and surfaces actionable wasted-spend signals.
+        </p>
+        <h4>Reads</h4>
+        <ul>
+          <li>All campaigns in the workspace (any provider).</li>
+          <li>Campaign status, daily / lifetime budget, end date, provider.</li>
+        </ul>
+        <h4>Recommendation types it produces</h4>
+        <ul>
+          <li><code>paid_ads.no_campaigns</code> (medium) — when no platforms are connected.</li>
+          <li><code>paid_ads.budget_unset</code> (medium) — active campaigns with no budget set.</li>
+          <li><code>paid_ads.stale_active</code> (high) — campaigns whose end_date has passed but status is still active.</li>
+          <li><code>paid_ads.single_platform</code> (low) — concentration risk: 3+ active campaigns all on one platform.</li>
+        </ul>
+        <h4>Skips when</h4>
+        <p>Never skips. With zero campaigns it surfaces a single "connect a platform" recommendation.</p>
+      </section>
+
+      <section id="agent-seo-geo">
+        <h2>SEO &amp; GEO <a href="#agent-seo-geo" class="anchor-link">#</a></h2>
+        <p>
+          Crawls your site, ingests Search Console signals, and produces a ranked
+          opportunity list.
+        </p>
+        <h4>Reads</h4>
+        <ul>
+          <li>The workspace's SEO project (site URL, last crawled, last GSC sync).</li>
+          <li>Keywords table with impressions × position headroom.</li>
+          <li>Crawl summary (page-level technical signals).</li>
+        </ul>
+        <h4>Outputs</h4>
+        <ul>
+          <li>Opportunity-scored keyword list.</li>
+          <li>Content gap recommendations.</li>
+          <li>Technical SEO fixes (missing meta, broken links, etc.).</li>
+        </ul>
+      </section>
+
+      <section id="agent-website">
+        <h2>Website Audit <a href="#agent-website" class="anchor-link">#</a></h2>
+        <p>
+          Fetches your site's homepage and runs lightweight HTML / SEO skill checks
+          against it. Used during onboarding to seed the first set of issues.
+        </p>
+        <h4>Skills it runs</h4>
+        <ul>
+          <li>Title tag presence + length</li>
+          <li>Meta description presence + length</li>
+          <li>Canonical link</li>
+          <li>Open Graph tags</li>
+          <li>Viewport meta (mobile readiness)</li>
+          <li>Heading hierarchy</li>
+        </ul>
+      </section>
+
+      <section id="agent-landing">
+        <h2>Landing Page Audit <a href="#agent-landing" class="anchor-link">#</a></h2>
+        <p>
+          Audits each landing page on file and produces three composite scores
+          (0–100): conversion, mobile UX, page speed. Recommendations target the lowest
+          score first.
+        </p>
+        <h4>Recommendation types</h4>
+        <ul>
+          <li><code>landing.cta_clarity</code></li>
+          <li><code>landing.above_fold_offer</code></li>
+          <li><code>landing.trust_signals</code></li>
+          <li><code>landing.form_friction</code></li>
+          <li><code>landing.mobile_breakpoint</code></li>
+        </ul>
+      </section>
+
+      <section id="agent-market-intel">
+        <h2>Market Intelligence <a href="#agent-market-intel" class="anchor-link">#</a></h2>
+        <p>
+          Builds a competitor matrix and surfaces positioning gaps from your onboarding
+          competitor list. LLM-enriched when an API key is configured; deterministic
+          skeleton otherwise.
+        </p>
+        <h4>Outputs</h4>
+        <ul>
+          <li><code>competitor_inventory</code> — the list as you provided it.</li>
+          <li><code>positioning_matrix</code> — per-competitor positioning summary, strengths, weaknesses, plus overall <code>gaps</code>.</li>
+        </ul>
+      </section>
+
+      <section id="agent-icp">
+        <h2>ICP &amp; Persona <a href="#agent-icp" class="anchor-link">#</a></h2>
+        <p>
+          Generates 2 buyer personas + a messaging matrix from your onboarding profile.
+          Each persona has: name, role, pain, buying trigger, top objection, awareness
+          stage, preferred channels.
+        </p>
+      </section>
+
+      <section id="agent-creative">
+        <h2>Creative Strategy <a href="#agent-creative" class="anchor-link">#</a></h2>
+        <p>
+          Produces ad-copy variants (headline, primary text, description, CTA, angle)
+          for the requested creative type. Persists each variant to the
+          <code>creatives</code> table with <code>source = ai_generated</code> so you can
+          review + edit + attach them to ads.
+        </p>
+        <h4>Inputs</h4>
+        <ul>
+          <li><code>creative_type</code>: <code>"search_ad"</code> · <code>"responsive_display"</code> · <code>"single_image"</code> · <code>"video"</code> · <code>"carousel"</code> · <code>"ugc"</code> · <code>"other"</code></li>
+        </ul>
+      </section>
+
+      <section id="agent-campaign-builder">
+        <h2>Campaign Builder <a href="#agent-campaign-builder" class="anchor-link">#</a></h2>
+        <p>
+          Turns strategy into a launch-ready blueprint: campaign name, objective, budget
+          split across ad groups, audience size, tracking checklist. The blueprint
+          surfaces as a <strong>high-risk</strong> recommendation requiring Owner
+          approval before any execution agent picks it up — no auto-launches.
+        </p>
+        <h4>Inputs</h4>
+        <ul>
+          <li><code>objective</code>: <code>"lead_gen"</code> · <code>"traffic"</code> · <code>"conversions"</code> · <code>"awareness"</code></li>
+          <li><code>platform</code>: <code>"google_ads"</code> · <code>"meta_ads"</code> · <code>"linkedin_ads"</code></li>
+          <li><code>budget_cents</code>: monthly cap (overrides onboarding default).</li>
+          <li><code>audience_size</code>: <code>"narrow"</code> · <code>"balanced"</code> · <code>"broad"</code></li>
+        </ul>
+      </section>
+
+      <section id="agent-tracking">
+        <h2>Tracking &amp; Attribution <a href="#agent-tracking" class="anchor-link">#</a></h2>
+        <p>
+          Inspects connected accounts and self-reported analytics status. Computes a
+          0–100 health score and emits a recommendation per missing piece (no GA4, no
+          Search Console, no ad platform, no primary conversion goal).
+        </p>
+        <h4>Score weights</h4>
+        <table class="spec">
+          <tr><th>Signal</th><th>Points</th></tr>
+          <tr><td>GA4 connected</td><td>30</td></tr>
+          <tr><td>Search Console connected</td><td>15</td></tr>
+          <tr><td>At least one ad platform connected</td><td>25</td></tr>
+          <tr><td>Onboarding analytics_status = "configured"</td><td>15</td></tr>
+          <tr><td>Primary conversion goal set</td><td>10</td></tr>
+          <tr><td>At least one landing page on file</td><td>5</td></tr>
+        </table>
+      </section>
+
+      <section id="agent-content">
+        <h2>Content Writer <a href="#agent-content" class="anchor-link">#</a></h2>
+        <p>
+          Generates blog posts, landing-page copy, ad copy, meta descriptions, emails,
+          or social posts. The output is saved as a <code>ContentDraft</code> row in
+          <code>draft</code> status; nothing is auto-published.
+        </p>
+        <h4>When you want a richer flow for blog posts specifically</h4>
+        <p>
+          Use the <a href="#howto-blog">blog editor</a> at <code>/blog/posts</code>.
+          Same underlying drafts, plus a three-tab editor (Editor / AI Assistant /
+          Settings), drag-drop image uploads, and a public archive at <code>/blog</code>.
+        </p>
+      </section>
+
+      <section id="agent-onboarding-insight">
+        <h2>Onboarding Insight <a href="#agent-onboarding-insight" class="anchor-link">#</a></h2>
+        <p>
+          The fastest agent. Reads your onboarding profile + the latest Growth DNA and
+          flags fields that, if sharpened, would most improve readiness scores.
+        </p>
+        <h4>Recommendation types</h4>
+        <ul>
+          <li><code>onboarding.gap.brand_voice</code> (low)</li>
+          <li><code>onboarding.gap.competitors</code> (low)</li>
+          <li><code>onboarding.gap.offer_description</code> (medium)</li>
+          <li><code>onboarding.gap.landing_page_urls</code> (high)</li>
+          <li><code>onboarding.gap.analytics_status</code> (high)</li>
+          <li><code>onboarding.gap.geographic_target</code> (medium)</li>
+        </ul>
+        <p>Skips cleanly when onboarding hasn't been completed — no fake gaps.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- HOW-TO GUIDES                                                 -->
+      <!-- ============================================================ -->
+      <section id="howto-onboarding">
+        <h2>Complete onboarding <a href="#howto-onboarding" class="anchor-link">#</a></h2>
+        <p>
+          Onboarding is the most important data you'll enter. Every agent reads from
+          it. Inaccurate answers reduce signal quality across the entire system.
+        </p>
+        <h3>Fields to fill carefully</h3>
+        <div class="definition">
+          <dt>Offer description</dt>
+          <dd>2–3 sentences naming who it's for, what it does, and the wedge. Below 80 characters and the Onboarding-Insight agent will flag it.</dd>
+          <dt>Brand voice</dt>
+          <dd>Tone, sentence-length preference, words to avoid, whether emojis are allowed. The Creative Strategy and Content Writer agents read this verbatim.</dd>
+          <dt>Competitors</dt>
+          <dd>1–3 direct competitors with URLs. Market Intelligence builds the matrix from this list.</dd>
+          <dt>Analytics status</dt>
+          <dd>Honest answer matters. <code>configured</code> implies GA4 + conversion events are wired up — agents will trust your data and propose ROAS-based actions. Anything else and the Tracking agent will recommend you fix it first.</dd>
+        </div>
+        <p>
+          You can edit these later from workspace settings. Re-running agents picks up
+          the new values automatically.
+        </p>
+      </section>
+
+      <section id="howto-connect">
+        <h2>Connect a provider <a href="#howto-connect" class="anchor-link">#</a></h2>
+        <p>
+          Connections use real OAuth flows. Tokens are encrypted at rest with Fernet;
+          the frontend never touches an access token directly.
+        </p>
+        <h3>Steps</h3>
+        <ol>
+          <li>Open <strong>Integrations</strong> in the sidebar.</li>
+          <li>Find the provider card. Click <strong>Connect</strong>.</li>
+          <li>You're redirected to the provider's consent screen. Approve.</li>
+          <li>You land back at <code>/integrations</code> with the card showing status <code>connected</code> and the account name.</li>
+        </ol>
+        <h3>What's needed for outbound writes</h3>
+        <p>
+          Reading data only requires the standard scopes. To <em>write</em> back to a
+          provider (pause campaigns, change budgets) the OAuth grant must include the
+          provider's write scope. AdVanta refuses to dispatch writes when the recorded
+          scopes don't carry it — you'll see a clear error and the recommendation
+          execution row will be marked <code>failed</code> with reason
+          <code>missing write scopes</code>.
+        </p>
+        <h3>Disconnecting</h3>
+        <p>
+          Click <strong>Disconnect</strong>. Tokens are deleted; future agent runs that
+          would have called the provider skip cleanly. Past audit rows are preserved.
+        </p>
+        <h3>Sync logs</h3>
+        <p>
+          Each provider sync writes a row to <code>sync_logs</code> — visible on the
+          integration detail page so you can see when the last successful pull
+          happened and what the result was.
+        </p>
+      </section>
+
+      <section id="howto-approve">
+        <h2>Approve a recommendation <a href="#howto-approve" class="anchor-link">#</a></h2>
+        <ol>
+          <li>Open <strong>Recommendations</strong>.</li>
+          <li>Click into a card. The detail page shows what the agent found, why it matters, expected impact, and the suggested action.</li>
+          <li>Optionally click <strong>Edit</strong> to refine the user-facing copy before approving.</li>
+          <li>Click <strong>Approve</strong>.</li>
+        </ol>
+        <p>
+          If the recommendation carries an executable action (most paid-ads + landing-page
+          recs do), the change is applied to the connected provider as part of the same
+          transaction. The execution row appears at the bottom of the detail page with
+          a snapshot diff (<code>prior_state</code>) and the provider's response. If the
+          provider call fails, the execution row is marked <code>failed</code> — the
+          approval still succeeds; you can retry once the underlying issue is fixed.
+        </p>
+        <p>
+          To revert an executed change, click <strong>Revert</strong> on the execution row.
+          The captured prior state is replayed back to the provider; a new execution row
+          with <code>is_revert=true</code> is created.
+        </p>
+      </section>
+
+      <section id="howto-autopilot">
+        <h2>Configure Autopilot <a href="#howto-autopilot" class="anchor-link">#</a></h2>
+        <p>
+          Autopilot is OFF by default and Owner-only. Treat it like a CI/CD release
+          gate: never enable it without complete guardrails.
+        </p>
+        <h3>Steps</h3>
+        <ol>
+          <li>Open <strong>Autopilot</strong> in the sidebar.</li>
+          <li>Set every guardrail (see the table below).</li>
+          <li>Switch <strong>Mode</strong> to <code>autopilot</code>.</li>
+          <li>Click <strong>Save</strong>. Refusal with code <code>autopilot_config_invalid</code> means at least one guardrail is missing; the message names which.</li>
+          <li>Open the <strong>Preview</strong> panel — every open recommendation shows what Autopilot would do right now, plus the rule it matched or violated.</li>
+        </ol>
+        <h3>Guardrails (every one is required for AUTOPILOT mode)</h3>
+        <table class="spec">
+          <tr><th>Field</th><th>What it does</th></tr>
+          <tr><td><code>max_daily_spend_increase_cents</code></td><td>Caps total budget added per day across all auto-approved changes.</td></tr>
+          <tr><td><code>max_daily_spend_total_cents</code></td><td>Hard ceiling on absolute daily spend after auto-approvals.</td></tr>
+          <tr><td><code>max_pct_increase_per_change</code></td><td>Refuses any single change that raises a campaign budget by more than X percent.</td></tr>
+          <tr><td><code>min_conversion_threshold</code></td><td>A budget-up change is only allowed when the campaign's recent conversions ≥ this number.</td></tr>
+          <tr><td><code>allowed_action_types</code></td><td>Recommendation types eligible for auto-approval. Empty list = nothing eligible.</td></tr>
+          <tr><td><code>risk_ceiling</code></td><td>Highest risk level eligible (low / medium / high). Recommendations above the ceiling stay manual.</td></tr>
+        </table>
+        <h3>Stop-loss</h3>
+        <p>
+          The Autopilot page has an emergency kill switch — when active, every auto-approval
+          is refused with reason <code>stop_loss_active</code>, regardless of guardrails.
+          Useful for incidents. Click again to clear.
+        </p>
+        <h3>Audit attribution</h3>
+        <p>
+          Auto-approvals are logged with <code>actor_type = SYSTEM</code> and action
+          <code>autopilot.approved</code>. The matched-rules list is captured in the
+          metadata so you can prove which guardrails passed.
+        </p>
+      </section>
+
+      <section id="howto-2fa">
+        <h2>Set up 2FA <a href="#howto-2fa" class="anchor-link">#</a></h2>
+        <p>
+          AdVanta uses TOTP-based 2FA. Use any authenticator app that supports the
+          <code>otpauth://</code> URI standard (Google Authenticator, 1Password, Authy,
+          Bitwarden).
+        </p>
+        <h3>Enroll</h3>
+        <ol>
+          <li>Open <strong>Profile</strong> in the sidebar.</li>
+          <li>In the Two-factor authentication card, click <strong>Enable 2FA</strong>.</li>
+          <li>The card shows a base32 secret + a provisioning URI. Add either to your authenticator app.</li>
+          <li>Type the current 6-digit code into the form. Click <strong>Confirm and enable</strong>.</li>
+          <li>You'll see <strong>8 recovery codes</strong>. Save them somewhere safe — they're shown exactly once.</li>
+        </ol>
+        <h3>Sign in with 2FA on</h3>
+        <p>
+          After your password, the API returns <code>two_factor_required</code>. The
+          login form reveals an OTP field; type the current code (or one of your unused
+          recovery codes) and submit.
+        </p>
+        <h3>Recovery codes</h3>
+        <p>
+          Each recovery code works once. Used codes are removed from your account
+          immediately. You start with 8; if you run out, disable + re-enable 2FA to
+          get a fresh batch.
+        </p>
+        <h3>Disable</h3>
+        <p>
+          On the Profile page, type a current OTP into the disable form. The secret
+          and recovery hashes are wiped.
+        </p>
+      </section>
+
+      <section id="howto-api-keys">
+        <h2>Mint &amp; use API keys <a href="#howto-api-keys" class="anchor-link">#</a></h2>
+        <p>
+          API keys give programmatic access to a single workspace. Keys are minted by
+          Owners only, scoped to a role floor, and the plaintext is shown exactly once.
+        </p>
+        <h3>Mint</h3>
+        <ol>
+          <li>Open <strong>API keys</strong> in the sidebar.</li>
+          <li>Click <strong>Mint key</strong>. Provide a label (e.g. "ci-ingest", "zapier"). Pick the role.</li>
+          <li>Copy the plaintext value. It looks like <code>ak_xxxxxxxx.yyyyyyyy…</code>. Refreshing the page makes it unrecoverable.</li>
+        </ol>
+        <h3>Use</h3>
+<pre><code>curl https://&lt;your-deploy&gt;/api/v1/workspaces/&lt;ws_id&gt;/agents \
+  -H "Authorization: ApiKey ak_xxxxxxxx.yyyyyyyy"</code></pre>
+        <p>
+          Any endpoint a normal session can hit, the API key can hit too — subject to
+          the role floor you set when minting. The key's <code>last_used_at</code>
+          timestamp updates within seconds of use.
+        </p>
+        <h3>Revoke</h3>
+        <p>
+          On the API keys page, click <strong>Revoke</strong>. Subsequent calls return
+          401 within a few seconds.
+        </p>
+        <h3>Cross-workspace requests are refused</h3>
+        <p>
+          A key minted in workspace A used against workspace B's URL returns 404
+          <code>workspace_not_found</code>. The same applies even if the user who
+          minted the key is a member of both — the key is scoped to one workspace.
+        </p>
+      </section>
+
+      <section id="howto-blog">
+        <h2>Write &amp; publish a blog post <a href="#howto-blog" class="anchor-link">#</a></h2>
+        <p>
+          AdVanta ships a full blog platform inside the dashboard. The same surface
+          customers use to draft + publish becomes the public archive at
+          <code>/blog</code>.
+        </p>
+        <h3>Create a post</h3>
+        <ol>
+          <li>Open <strong>Blog</strong> in the sidebar (route: <code>/blog/posts</code>).</li>
+          <li>Click <strong>New post</strong>. Enter a working title. Click <strong>Create + edit</strong>.</li>
+          <li>You land on the editor at <code>/blog/posts/{id}</code>.</li>
+        </ol>
+
+        <h3>Editor tab</h3>
+        <p>
+          Title field on top, body (markdown) below, live preview on the right. Two ways
+          to add images:
+        </p>
+        <ul>
+          <li>Drag-drop any image file (JPEG, PNG, WebP, GIF — under 5 MB) into the body textarea. It uploads + an image markdown line is inserted at the cursor.</li>
+          <li>Click <strong>Insert image</strong> in the Compose card header to use a file picker.</li>
+        </ul>
+        <p>The preview supports headings, ordered + unordered lists, bold, italic, inline code, code blocks, links, and images.</p>
+
+        <h3>AI Assistant tab</h3>
+        <p>
+          Five action buttons, each backed by the workspace's LLM budget. With no
+          <code>OPENAI_API_KEY</code> set, you get a clearly-tagged deterministic stub
+          instead of a hallucination.
+        </p>
+        <table class="spec">
+          <tr><th>Action</th><th>Use when</th></tr>
+          <tr><td><strong>Outline</strong></td><td>You need a section structure for the post. Returns 5–8 headings + 1-line summaries.</td></tr>
+          <tr><td><strong>Expand selection</strong></td><td>Paste a heading or bullet into Selection. Returns a paragraph (≤180 words).</td></tr>
+          <tr><td><strong>Refine selection</strong></td><td>Rewrite the selected passage for clarity / tone / length.</td></tr>
+          <tr><td><strong>Suggest title</strong></td><td>Returns 5 candidate titles ≤ 70 chars.</td></tr>
+          <tr><td><strong>Suggest meta</strong></td><td>Returns meta_title (≤60) + meta_description (≤155).</td></tr>
+        </table>
+        <p>
+          Each suggestion renders as a card. Use <strong>Append to body</strong>,
+          <strong>Use first as title</strong>, <strong>Apply to settings</strong>, or
+          <strong>Discard</strong>. Nothing is auto-applied — you stay in control.
+        </p>
+
+        <h3>Settings tab</h3>
+        <p>
+          Slug, excerpt, target URL, comma-separated keywords, cover image, plus full
+          SEO metadata (meta_title, meta_description, og_image, canonical_url).
+          Slug is normalized (lowercase, hyphenated) and unique within your workspace.
+        </p>
+
+        <h3>Approve → Publish</h3>
+        <p>
+          From the editor header: <strong>Approve</strong> moves the draft to
+          <code>approved</code>; <strong>Publish</strong> moves it to <code>published</code>
+          and sets <code>published_at</code>. If the slug or excerpt was blank,
+          publish auto-fills both — slug from the title, excerpt from the body's first
+          ~280 characters.
+        </p>
+
+        <h3>The public archive</h3>
+        <p>
+          To make published posts visible at the public marketing URL <code>/blog</code>,
+          the platform admin needs to set <code>MARKETING_WORKSPACE_SLUG</code> to your
+          workspace slug. Until then, <code>/blog</code> shows a coming-soon placeholder
+          (no fabricated posts).
+        </p>
+      </section>
+
+      <section id="howto-ab-test">
+        <h2>Run an A/B test <a href="#howto-ab-test" class="anchor-link">#</a></h2>
+        <h3>Create</h3>
+        <ol>
+          <li>Open <strong>A/B tests</strong> in the sidebar. Click <strong>New test</strong>.</li>
+          <li>Pick the target type:
+            <ul>
+              <li><strong>Landing page</strong> — variants are URLs. Visitors get assigned via the public traffic-split snippet (<code>/static/advanta-ab.js</code>).</li>
+              <li><strong>Ad</strong> — variants become campaigns on a connected provider when you launch.</li>
+            </ul>
+          </li>
+          <li>Add at least 2 variants with traffic shares that sum to 1.0. (Default is even split.)</li>
+        </ol>
+
+        <h3>Generate variants with AI</h3>
+        <p>
+          On the test detail page, click <strong>Generate variants</strong>. The
+          generator creates 1–4 new variants from your control payload and rebalances
+          traffic shares so the total still sums to 1.0.
+        </p>
+
+        <h3>Launch</h3>
+        <p>
+          Landing-page tests launch instantly (no provider write — just timestamp
+          variants). Ad tests call the provider once per variant; partial failures keep
+          the test in <code>READY</code> so you can retry.
+        </p>
+
+        <h3>Record metrics + declare a winner</h3>
+        <ol>
+          <li>For landing-page tests, conversions stream in via the public snippet automatically.</li>
+          <li>For ad tests, sync metrics from GA4 (<strong>Sync from GA4</strong> on the detail page) or paste manual numbers.</li>
+          <li>Click <strong>Declare winner</strong> on the leading variant. The two-proportion z-test must pass (<code>p &lt; 0.05</code>) and each variant must meet the minimum sample size — the API refuses with <code>ab_test_underpowered</code> or <code>ab_test_inconclusive</code> otherwise. Pass <code>force=true</code> only when you have off-platform context that justifies it.</li>
+        </ol>
+
+        <h3>Bandit strategies</h3>
+        <p>
+          <code>static</code>: each variant gets its declared traffic share for the
+          test's lifetime.<br/>
+          <code>thompson_sampling</code>: traffic dynamically funnels toward the
+          best-performing variant (Beta posterior, sampled per assignment) while still
+          exploring others.
+        </p>
+      </section>
+
+      <section id="howto-reports">
+        <h2>Generate a report <a href="#howto-reports" class="anchor-link">#</a></h2>
+        <p>
+          Reports aggregate every workspace activity into one shareable artifact —
+          executive-ready, never fabricated.
+        </p>
+        <h3>Generate</h3>
+        <ol>
+          <li>Open <strong>Reports</strong> in the sidebar.</li>
+          <li>Click <strong>Generate weekly</strong> (or daily / monthly).</li>
+          <li>Open the resulting row to see every section.</li>
+        </ol>
+        <h3>Sections (each gated on having data)</h3>
+        <ul>
+          <li>Summary — at-a-glance counters.</li>
+          <li>Top recommendations.</li>
+          <li>Agent activity.</li>
+          <li>Paid ads — totals by provider, budget gaps, stale active.</li>
+          <li>SEO &amp; GEO — top keywords with opportunity scores.</li>
+          <li>Landing pages — conversion / mobile / speed scores.</li>
+          <li>Provider writes — execution counts by status + provider.</li>
+          <li>Content drafts — counts by status + type.</li>
+          <li>Outreach — emails sent / replied / bounced + reply rate.</li>
+          <li>A/B tests — counts + completed-with-winner.</li>
+          <li>Growth DNA — funnel + paid-ads readiness scores.</li>
+        </ul>
+        <h3>Download</h3>
+        <ul>
+          <li><strong>PDF</strong> — every populated section, branded.</li>
+          <li><strong>CSV</strong> — multi-section format with <code>#</code> markers (<code># top_recommendations</code>, <code># executions</code>, <code># content_drafts</code>, <code># outreach</code>, <code># ab_tests</code>) so a downstream BI tool can split.</li>
+        </ul>
+      </section>
+
+      <section id="howto-google-login">
+        <h2>Sign in with Google <a href="#howto-google-login" class="anchor-link">#</a></h2>
+        <p>
+          On the login + register pages, click <strong>Continue with Google</strong>.
+          You'll be redirected to Google's consent screen, then back to AdVanta. New
+          accounts are created automatically; existing accounts with the same email
+          are linked by Google's stable <code>sub</code> identifier.
+        </p>
+        <p>
+          If your deployment hasn't set <code>GOOGLE_LOGIN_CLIENT_ID</code> /
+          <code>SECRET</code> / <code>REDIRECT_URI</code>, the button shows a friendly
+          inline error and login still works via email + password.
+        </p>
+        <p>
+          Google login does <em>not</em> grant ad-platform / analytics access — those
+          are separate connections handled per-provider in
+          <a href="#howto-connect">Integrations</a>. Login uses only <code>openid email
+          profile</code> scopes.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- SETTINGS                                                      -->
+      <!-- ============================================================ -->
+      <section id="settings-profile">
+        <h2>Profile <a href="#settings-profile" class="anchor-link">#</a></h2>
+        <p>
+          Personal account settings, separate from any workspace. Located at
+          <code>/settings/profile</code>.
+        </p>
+        <ul>
+          <li>Display name + email (read-only — change via password reset for now).</li>
+          <li><a href="#howto-2fa">Two-factor authentication</a> card.</li>
+          <li>Sign-out button (clears the refresh-token cookie + frontend state).</li>
+        </ul>
+      </section>
+
+      <section id="settings-workspace">
+        <h2>Workspace settings <a href="#settings-workspace" class="anchor-link">#</a></h2>
+        <p>Owners + Admins manage workspace details + membership here.</p>
+        <ul>
+          <li>Rename the workspace.</li>
+          <li>View + invite + revoke members.</li>
+          <li>Set the publish-webhook URL (for Content Drafts that publish to your own CMS).</li>
+        </ul>
+      </section>
+
+      <section id="settings-billing">
+        <h2>Billing <a href="#settings-billing" class="anchor-link">#</a></h2>
+        <p>
+          The Billing page (<code>/billing</code>) shows your active plan, the live
+          subscription status, and a usage strip with rolling 30-day counters:
+        </p>
+        <ul>
+          <li>Agent runs vs. plan cap.</li>
+          <li>Landing pages on file.</li>
+          <li>Team members.</li>
+          <li>LLM dollar spend (see below).</li>
+        </ul>
+        <p>
+          Click <strong>Upgrade</strong> to start Stripe Checkout (config-gated). When
+          you have an active subscription, the page also has a <strong>Manage billing</strong>
+          button that opens the Stripe customer portal.
+        </p>
+      </section>
+
+      <section id="settings-llm-cost">
+        <h2>LLM dollar cost <a href="#settings-llm-cost" class="anchor-link">#</a></h2>
+        <p>
+          Every LLM call records both the token total (for plan caps) and an estimated
+          USD cost (for visibility). The cost is computed from a per-model rate table at
+          call time — no recompute, no nightly rollup.
+        </p>
+        <p>
+          The Billing page shows the rolling-30-day total in dollars + tokens. If you
+          want a finer-grained view, query the <code>usage_events</code> table with
+          <code>event_type=LLM_CALL</code>; the per-call estimate lives in
+          <code>metadata.estimated_cost_usd_micros</code>.
+        </p>
+      </section>
+
+      <section id="settings-admin">
+        <h2>Admin console <a href="#settings-admin" class="anchor-link">#</a></h2>
+        <p>
+          The admin console at <code>/admin</code> is gated to users with
+          <code>is_superuser=true</code> on the User row — set manually via SQL on the
+          server. It's not exposed via the UI.
+        </p>
+        <p>It surfaces system-wide:</p>
+        <ul>
+          <li>18 counter tiles: users, superusers, workspaces, paid workspaces, agent runs (total + 7d), open recs, integrations connected, landing pages, reports, executions, content drafts, drafts published, outreach sent, prospects, A/B tests active + done, etc.</li>
+          <li>Workspaces table — newest first, with member count + plan.</li>
+          <li>Users table — every active account with its workspace count.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- REFERENCE                                                     -->
+      <!-- ============================================================ -->
+      <section id="reference-security">
+        <h2>Security model <a href="#reference-security" class="anchor-link">#</a></h2>
+        <h3>Authentication</h3>
+        <ul>
+          <li>JWT access tokens (30-minute default lifetime, configurable via <code>JWT_ACCESS_TOKEN_EXPIRE_MINUTES</code>).</li>
+          <li>HTTP-only refresh-token cookie scoped to <code>/api/v1/auth</code>, signed, 30-day default.</li>
+          <li>Passwords hashed with bcrypt.</li>
+          <li>Optional TOTP 2FA per user.</li>
+          <li>Optional Google OAuth login (no extra scopes — login only).</li>
+        </ul>
+        <h3>Authorization</h3>
+        <ul>
+          <li>Workspace isolation enforced at every endpoint via <code>get_current_member</code> — a request whose path workspace doesn't match a membership returns 404, never a 403 (which would confirm existence).</li>
+          <li>RBAC: 5 roles, ranked. <code>require_role_at_least</code> guards each mutation.</li>
+          <li>API keys: workspace-scoped, role-floored, never returned in plaintext after creation.</li>
+        </ul>
+        <h3>Token storage</h3>
+        <p>
+          OAuth tokens for connected providers (Google Ads, Meta, LinkedIn, GA4, Search
+          Console, Stripe) are encrypted at rest with Fernet using
+          <code>ENCRYPTION_KEY</code>. The frontend never sees a provider access token.
+        </p>
+        <h3>Audit log</h3>
+        <p>
+          Append-only. See <a href="#concept-audit">Audit log</a> for fields. Includes
+          IP and User-Agent on every row.
+        </p>
+        <h3>Rate limiting</h3>
+        <p>
+          Per-workspace + per-route limits enforced via Redis. When Redis isn't
+          reachable the middleware fails open with a warning log so the app stays
+          usable in dev.
+        </p>
+        <h3>Webhook signatures</h3>
+        <p>
+          Inbound provider webhooks are verified with HMAC-SHA256 against per-provider
+          shared secrets. Stripe webhooks use Stripe's standard signature scheme. See
+          <a href="#reference-webhooks">Provider webhooks</a>.
+        </p>
+      </section>
+
+      <section id="reference-api">
+        <h2>API reference <a href="#reference-api" class="anchor-link">#</a></h2>
+        <p>
+          The full machine-readable spec lives at <code>/api/v1/docs</code> (Swagger UI)
+          and <code>/api/v1/openapi.json</code>. This section captures the conventions.
+        </p>
+
+        <h3>Authentication</h3>
+        <p>Every authenticated endpoint accepts one of:</p>
+        <ul>
+          <li><code>Authorization: Bearer &lt;jwt_access_token&gt;</code> — for human session calls.</li>
+          <li><code>Authorization: ApiKey ak_&lt;prefix&gt;.&lt;secret&gt;</code> — for programmatic calls.</li>
+        </ul>
+
+        <h3>Common request headers</h3>
+        <ul>
+          <li><code>Content-Type: application/json</code> — for JSON bodies.</li>
+          <li><code>X-Provider-Signature: &lt;hex&gt;</code> — for provider webhooks.</li>
+          <li><code>X-Inbound-Secret: &lt;shared&gt;</code> — for inbound email webhooks.</li>
+          <li><code>Idempotency-Key: &lt;your-key&gt;</code> — supported on recommendation execution endpoints to prevent duplicate provider writes.</li>
+        </ul>
+
+        <h3>Error envelope</h3>
+        <p>Every non-2xx response carries:</p>
+<pre><code>{
+  "error": {
+    "code": "machine_readable_code",
+    "message": "Human-readable explanation",
+    "request_id": "uuid-v4"
+  }
+}</code></pre>
+        <p>
+          The <code>request_id</code> is also returned in the <code>X-Request-Id</code>
+          response header — quote it when reporting bugs.
+        </p>
+      </section>
+
+      <section id="reference-errors">
+        <h2>Error codes <a href="#reference-errors" class="anchor-link">#</a></h2>
+        <table class="spec">
+          <tr><th>HTTP</th><th>Code</th><th>Meaning</th></tr>
+          <tr><td>400</td><td><code>empty_upload</code></td><td>Image upload had no body.</td></tr>
+          <tr><td>401</td><td><code>not_authenticated</code></td><td>Missing / malformed / invalid token.</td></tr>
+          <tr><td>401</td><td><code>two_factor_required</code></td><td>Login succeeded but 2FA code not provided.</td></tr>
+          <tr><td>401</td><td><code>two_factor_invalid_code</code></td><td>OTP / recovery code didn't match.</td></tr>
+          <tr><td>401</td><td><code>invalid_token</code></td><td>JWT signature, type, or expiry failed.</td></tr>
+          <tr><td>402</td><td><code>plan_limit_exceeded</code></td><td>Workspace hit a 30-day quota.</td></tr>
+          <tr><td>403</td><td><code>permission_denied</code></td><td>Role too low for the action.</td></tr>
+          <tr><td>404</td><td><code>workspace_not_found</code></td><td>Workspace doesn't exist or you have no membership. Same code for both — no enumeration.</td></tr>
+          <tr><td>404</td><td><code>recommendation_not_found</code></td><td>Recommendation id outside this workspace.</td></tr>
+          <tr><td>404</td><td><code>blog_post_not_found</code></td><td>Public blog slug doesn't match a published post.</td></tr>
+          <tr><td>409</td><td><code>cannot_demote_sole_owner</code></td><td>Workspace must always have at least one Owner.</td></tr>
+          <tr><td>409</td><td><code>invalid_approval_state</code></td><td>Recommendation already approved / rejected.</td></tr>
+          <tr><td>409</td><td><code>ab_test_not_editable</code></td><td>Test is launched / completed and can't be modified.</td></tr>
+          <tr><td>409</td><td><code>ab_test_underpowered</code></td><td>Sample size too small to declare a winner.</td></tr>
+          <tr><td>413</td><td><code>image_too_large</code></td><td>Upload > 5 MB.</td></tr>
+          <tr><td>415</td><td><code>unsupported_image_type</code></td><td>Allowed: jpeg, png, webp, gif.</td></tr>
+          <tr><td>422</td><td><code>autopilot_config_invalid</code></td><td>Tried to enter AUTOPILOT mode without complete guardrails.</td></tr>
+          <tr><td>422</td><td><code>unknown_assist_action</code></td><td>Blog AI assist called with an action outside the allowed set.</td></tr>
+          <tr><td>502</td><td><code>provider_call_failed</code></td><td>Connected provider returned an error.</td></tr>
+          <tr><td>503</td><td><code>llm_not_configured</code></td><td>OPENAI_API_KEY (or equivalent) not set.</td></tr>
+          <tr><td>503</td><td><code>billing_not_configured</code></td><td>Stripe not configured.</td></tr>
+          <tr><td>503</td><td><code>provider_webhook_not_configured</code></td><td>Webhook secret env var missing.</td></tr>
+          <tr><td>503</td><td><code>google_login_not_configured</code></td><td>Google login env vars missing.</td></tr>
+        </table>
+      </section>
+
+      <section id="reference-integrations">
+        <h2>Provider matrix <a href="#reference-integrations" class="anchor-link">#</a></h2>
+        <table class="spec">
+          <tr><th>Provider</th><th>Used for</th><th>Read</th><th>Write</th></tr>
+          <tr><td>Google Ads</td><td>Campaigns, conversions</td><td>Yes</td><td>Yes (pause / budget / audience)</td></tr>
+          <tr><td>Meta Ads</td><td>Facebook + Instagram campaigns</td><td>Yes</td><td>Yes (pause / budget / audience)</td></tr>
+          <tr><td>LinkedIn Ads</td><td>B2B campaigns</td><td>Yes</td><td>Yes (pause / budget — narrower than Google/Meta)</td></tr>
+          <tr><td>Google Analytics 4</td><td>Conversion + funnel data</td><td>Yes</td><td>No (read-only)</td></tr>
+          <tr><td>Google Search Console</td><td>Search visibility, keyword opportunities</td><td>Yes</td><td>No (read-only)</td></tr>
+          <tr><td>Stripe</td><td>Billing</td><td>Yes</td><td>Customer + subscription mutations through Stripe Checkout / portal</td></tr>
+        </table>
+      </section>
+
+      <section id="reference-webhooks">
+        <h2>Provider webhooks <a href="#reference-webhooks" class="anchor-link">#</a></h2>
+        <p>
+          Connected platforms send notifications (campaign status changes, billing
+          alerts, etc.) to AdVanta. Each provider has its own webhook URL and shared
+          secret.
+        </p>
+        <table class="spec">
+          <tr><th>Provider</th><th>Webhook URL</th><th>Secret env var</th></tr>
+          <tr><td>Google Ads</td><td><code>POST /api/v1/provider-webhooks/google_ads</code></td><td><code>GOOGLE_ADS_WEBHOOK_SECRET</code></td></tr>
+          <tr><td>Meta Ads</td><td><code>POST /api/v1/provider-webhooks/meta_ads</code></td><td><code>META_ADS_WEBHOOK_SECRET</code></td></tr>
+          <tr><td>LinkedIn Ads</td><td><code>POST /api/v1/provider-webhooks/linkedin_ads</code></td><td><code>LINKEDIN_ADS_WEBHOOK_SECRET</code></td></tr>
+          <tr><td>Stripe</td><td><code>POST /api/v1/billing/webhook</code></td><td><code>STRIPE_WEBHOOK_SECRET</code></td></tr>
+        </table>
+
+        <h3>Verification</h3>
+        <p>Provider webhooks (non-Stripe) are signed with HMAC-SHA256 over the raw body:</p>
+<pre><code>signature = hmac_sha256(SECRET, raw_body).hex()
+# Header may be either:
+#   X-Provider-Signature: &lt;hex&gt;
+#   X-Provider-Signature: sha256=&lt;hex&gt;</code></pre>
+        <p>
+          Stripe uses the standard <code>Stripe-Signature</code> header (timestamp + v1
+          signature) — verified by Stripe's own SDK in our handler.
+        </p>
+
+        <h3>Behavior on unrecognized accounts</h3>
+        <p>
+          When a webhook authenticates correctly but the <code>account_id</code> doesn't
+          match any connected account in any workspace, the request is 200-acked with
+          <code>{"matched": false, "reason": "unrecognized_account"}</code>. This
+          prevents providers from retrying forever for accounts that have been
+          disconnected.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- FAQ                                                           -->
+      <!-- ============================================================ -->
+      <section id="faq">
+        <h2>FAQ <a href="#faq" class="anchor-link">#</a></h2>
+
+        <h3>Does AdVanta actually change my campaigns, or just suggest things?</h3>
+        <p>
+          Both, on your terms. By default every recommendation is suggestion-only until
+          you approve it. Once approved, the change is applied to the connected
+          provider — with prior state captured so any single write is reversible.
+          Autopilot Mode auto-approves recs that pass every guardrail you set; until
+          you turn it on, nothing ships without a human.
+        </p>
+
+        <h3>Where do my OAuth tokens live?</h3>
+        <p>
+          Encrypted at rest with Fernet, never exposed to the frontend, refreshed
+          automatically when the provider supports it. Provider calls happen
+          server-side; your browser never touches a provider access token.
+        </p>
+
+        <h3>Is the AI looking at my private data?</h3>
+        <p>
+          Only the workspace data you connect, and only when an agent is running for
+          that workspace. LLM calls are scoped per-prompt — no cross-customer training,
+          no embedding storage. We don't sell data.
+        </p>
+
+        <h3>What happens if I disconnect a provider?</h3>
+        <p>
+          Sync stops, recommendations for that platform freeze, and dashboards fall
+          back to honest empty states with a connect button. Tokens are deleted.
+          Audit history is preserved.
+        </p>
+
+        <h3>What's the difference between Approval and Autopilot?</h3>
+        <p>
+          Approval requires a human click on every change. Autopilot auto-approves
+          changes that pass every guardrail you've set (spend cap, % cap, conversion
+          threshold, allowed action types, risk ceiling). Autopilot is OFF by default
+          and Owner-only to enable.
+        </p>
+
+        <h3>Why is the AI Assistant showing "stub (no LLM key)"?</h3>
+        <p>
+          Your deployment doesn't have <code>OPENAI_API_KEY</code> set. The flow still
+          works for testing — you'll get a clearly-tagged deterministic placeholder
+          instead of an LLM-generated suggestion. Ask your admin to set the key.
+        </p>
+
+        <h3>Why does the public blog at /blog say "Coming soon"?</h3>
+        <p>
+          The deployment hasn't set <code>MARKETING_WORKSPACE_SLUG</code> to point at
+          one of your workspaces. Until it does, <code>/blog</code> shows the
+          placeholder — never fabricated posts. Set the env var to your workspace slug
+          and restart the API.
+        </p>
+
+        <h3>Can I export my data?</h3>
+        <p>
+          Yes. CSV exports for prospects, content drafts, and recommendation
+          executions live under <code>/workspaces/{ws}/&lt;resource&gt;.csv</code>.
+          Reports download as multi-section CSV or branded PDF.
+        </p>
+
+        <h3>How do I delete my workspace?</h3>
+        <p>
+          Contact <a href="mailto:privacy@advantaai.com">privacy@advantaai.com</a>.
+          Workspace deletes are processed within 30 days; encrypted backups age out
+          within 90 days.
+        </p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Glossary                                                      -->
+      <!-- ============================================================ -->
+      <section id="glossary">
+        <h2>Glossary <a href="#glossary" class="anchor-link">#</a></h2>
+        <div class="definition">
+          <dt>Agent</dt>
+          <dd>A specialist piece of growth expertise that runs against your workspace data and produces tasks, skill outputs, and recommendations.</dd>
+
+          <dt>AgentRun</dt>
+          <dd>One invocation of one agent. Has status (running / succeeded / failed), input + output payloads, model + token counts, and a triggering user.</dd>
+
+          <dt>AGE / GEO</dt>
+          <dd>Generative Engine Optimization — visibility on AI answer engines (ChatGPT, Perplexity, Gemini). Sister discipline to traditional SEO.</dd>
+
+          <dt>Audit log</dt>
+          <dd>Append-only record of every meaningful action in a workspace — approvals, executions, autopilot decisions, webhook events, key mints, 2FA changes. See <a href="#concept-audit">Audit log</a>.</dd>
+
+          <dt>Autopilot</dt>
+          <dd>Mode in which AdVanta auto-approves recommendations that pass every guardrail. Off by default; Owner-only to enable.</dd>
+
+          <dt>ContentDraft</dt>
+          <dd>The shared record type behind every piece of generated content — blog posts, ad copy, landing-page copy, emails, social posts. Has a status lifecycle (draft → approved → published / rejected / archived).</dd>
+
+          <dt>Creative</dt>
+          <dd>An ad-copy variant. Produced by the Creative Strategy agent (<code>source = ai_generated</code>) or pulled from a connected platform (<code>source = platform_synced</code>).</dd>
+
+          <dt>Execution</dt>
+          <dd>The act of applying an approved recommendation to a connected provider. Captures prior state so it can be reverted.</dd>
+
+          <dt>Growth DNA Profile</dt>
+          <dd>A scored snapshot of a workspace's growth readiness — funnel, paid ads — plus a 30-day plan. Generated from the onboarding profile.</dd>
+
+          <dt>Recommendation</dt>
+          <dd>A user-facing suggestion produced by an agent. Carries a risk level and an approval flow.</dd>
+
+          <dt>Skill output</dt>
+          <dd>Structured JSON an agent persisted as part of a run — used by reports, the dashboard, and downstream agents.</dd>
+
+          <dt>Workspace</dt>
+          <dd>The top-level tenant. Every record belongs to one. Members get role-gated access.</dd>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- What's new                                                    -->
+      <!-- ============================================================ -->
+      <section id="changelog">
+        <h2>What's new <a href="#changelog" class="anchor-link">#</a></h2>
+        <p>Recent additions, newest first.</p>
+
+        <h3>Blog platform (latest)</h3>
+        <ul>
+          <li>Three-tab editor (Editor / AI Assistant / Settings) at <code>/blog/posts/{id}</code>.</li>
+          <li>Drag-drop image upload with 5 MB cap + JPEG/PNG/WebP/GIF allowlist.</li>
+          <li>AI Assistant — outline / expand / refine / suggest title / suggest meta. Falls back to a clearly-tagged stub when no LLM key is set.</li>
+          <li>Slug + excerpt fields with auto-generation on publish.</li>
+          <li>Public archive at <code>/blog</code> + per-post detail at <code>/blog/{slug}</code>, gated on <code>MARKETING_WORKSPACE_SLUG</code>.</li>
+        </ul>
+
+        <h3>Autopilot Mode</h3>
+        <ul>
+          <li>Per-workspace config + 7-rule safety harness.</li>
+          <li>Stop-loss kill switch on the Autopilot page.</li>
+          <li>Audit-tagged auto-approvals (<code>actor_type = SYSTEM</code>).</li>
+          <li>Celery beat scan every 15 min when workers are enabled.</li>
+        </ul>
+
+        <h3>Three new specialist agents</h3>
+        <ul>
+          <li>Master Orchestrator — chains specialists by goal.</li>
+          <li>Market Intelligence — competitor matrix + positioning gaps.</li>
+          <li>ICP &amp; Persona — buyer personas + messaging matrix.</li>
+        </ul>
+
+        <h3>Provider webhooks</h3>
+        <ul>
+          <li>HMAC-SHA256-verified inbound notifications for Google Ads, Meta, LinkedIn.</li>
+          <li>Audit-logged with <code>actor_type = SYSTEM</code>.</li>
+        </ul>
+
+        <h3>Dollar-cost LLM tracking</h3>
+        <ul>
+          <li>Per-call USD-micros recorded on every LLM_CALL usage event.</li>
+          <li>Live total surfaced on the Billing page.</li>
+        </ul>
+
+        <h3>API keys + programmatic access</h3>
+        <ul>
+          <li>Workspace-scoped, role-floored, plaintext returned exactly once.</li>
+          <li>Authorization scheme: <code>ApiKey ak_&lt;prefix&gt;.&lt;secret&gt;</code>.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- Support                                                       -->
+      <!-- ============================================================ -->
+      <section id="support">
+        <h2>Support <a href="#support" class="anchor-link">#</a></h2>
+        <p>
+          For bugs, feature requests, or account questions:
+          <a href="mailto:privacy@advantaai.com">privacy@advantaai.com</a>.
+          When reporting a bug, please include:
+        </p>
+        <ul>
+          <li>The <code>X-Request-Id</code> header from the failing response (visible in DevTools → Network).</li>
+          <li>Your workspace id (visible in any dashboard URL).</li>
+          <li>Steps to reproduce.</li>
+          <li>The browser + OS you tested on.</li>
+        </ul>
+        <p style="margin-top:30px; color:var(--slate-400); font-size:12px; text-align:center;">
+          AdVanta AI · Documentation · v0.0.1 · Generated 2026-04-26
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- JS: search filter, mobile sidebar, active-section highlight     -->
+  <!-- ============================================================== -->
+  <script>
+    (function () {
+      "use strict";
+
+      // ---- Mobile sidebar toggle -----------------------------------
+      const sidebar = document.getElementById("sidebar");
+      const toggle = document.getElementById("menu-toggle");
+      toggle.addEventListener("click", () => sidebar.classList.toggle("open"));
+      // Close sidebar on link click (mobile).
+      sidebar.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => sidebar.classList.remove("open")),
+      );
+
+      // ---- Active-section highlight (scroll-spy) -------------------
+      const sections = Array.from(document.querySelectorAll("section[id]"));
+      const navLinks = Array.from(sidebar.querySelectorAll("a[href^='#']"));
+      const idToLink = new Map(
+        navLinks.map((a) => [a.getAttribute("href").slice(1), a]),
+      );
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const link = idToLink.get(entry.target.id);
+            if (!link) return;
+            if (entry.isIntersecting) {
+              navLinks.forEach((a) => a.classList.remove("active"));
+              link.classList.add("active");
+            }
+          });
+        },
+        { rootMargin: "-30% 0px -55% 0px", threshold: 0 },
+      );
+      sections.forEach((s) => observer.observe(s));
+
+      // ---- In-page search filter -----------------------------------
+      const searchInput = document.getElementById("search");
+      const layout = document.querySelector(".layout");
+
+      // Build an index: each section's id, link element, and lowercased text.
+      const index = sections.map((sec) => ({
+        id: sec.id,
+        section: sec,
+        link: idToLink.get(sec.id),
+        text: sec.textContent.toLowerCase(),
+      }));
+
+      function applyFilter(qRaw) {
+        const q = qRaw.trim().toLowerCase();
+        if (!q) {
+          // Reset.
+          index.forEach(({ section, link }) => {
+            section.classList.remove("hidden");
+            if (link) link.classList.remove("hidden");
+          });
+          removeEmptyState();
+          return;
+        }
+        let visibleCount = 0;
+        index.forEach(({ section, link, text }) => {
+          const match = text.includes(q);
+          section.classList.toggle("hidden", !match);
+          if (link) link.classList.toggle("hidden", !match);
+          if (match) visibleCount++;
+        });
+        // Hide sidebar group headings whose links are all hidden.
+        sidebar.querySelectorAll("h4").forEach((h) => {
+          let next = h.nextElementSibling;
+          let any = false;
+          while (next && next.tagName === "A") {
+            if (!next.classList.contains("hidden")) any = true;
+            next = next.nextElementSibling;
+          }
+          h.classList.toggle("hidden", !any);
+        });
+        // Empty state on the main content if nothing matched.
+        toggleEmptyState(visibleCount === 0, qRaw);
+      }
+
+      function toggleEmptyState(show, q) {
+        let el = document.getElementById("search-empty");
+        if (show && !el) {
+          el = document.createElement("div");
+          el.id = "search-empty";
+          el.className = "empty-state";
+          el.innerHTML =
+            '<h3 style="color:var(--slate-700);">No matches</h3><p>Nothing in these docs mentioned <code></code>. Try a different word.</p>';
+          document.querySelector(".content").appendChild(el);
+        }
+        if (el) {
+          if (show) {
+            el.querySelector("code").textContent = q;
+            el.style.display = "";
+          } else {
+            el.style.display = "none";
+          }
+        }
+      }
+      function removeEmptyState() {
+        const el = document.getElementById("search-empty");
+        if (el) el.style.display = "none";
+        sidebar.querySelectorAll("h4").forEach((h) => h.classList.remove("hidden"));
+      }
+
+      // Keyboard shortcut: / to focus search.
+      searchInput.addEventListener("input", (e) => applyFilter(e.target.value));
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "/" && document.activeElement !== searchInput) {
+          e.preventDefault();
+          searchInput.focus();
+        } else if (e.key === "Escape" && document.activeElement === searchInput) {
+          searchInput.value = "";
+          applyFilter("");
+          searchInput.blur();
+        }
+      });
+
+      // ---- Smooth scroll on anchor click ---------------------------
+      document.querySelectorAll('a[href^="#"]').forEach((a) => {
+        a.addEventListener("click", (e) => {
+          const id = a.getAttribute("href").slice(1);
+          const target = document.getElementById(id);
+          if (!target) return;
+          e.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", "#" + id);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

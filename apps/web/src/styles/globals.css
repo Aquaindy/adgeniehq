@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-cloud text-ink antialiased;
+    font-feature-settings: "cv11", "ss01", "ss03";
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-grape;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-white shadow-card border border-slate-100;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .pill-success {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .pill-warning {
+    @apply bg-amber-50 text-amber-700;
+  }
+
+  .pill-danger {
+    @apply bg-red-50 text-red-700;
+  }
+
+  .pill-grape {
+    @apply bg-grape-100 text-grape-700;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition;
+  }
+
+  .btn-primary {
+    @apply bg-grape text-white hover:bg-grape-800 active:bg-grape-900;
+  }
+
+  .btn-secondary {
+    @apply bg-grape-100 text-grape-700 hover:bg-grape-200;
+  }
+
+  .btn-ghost {
+    @apply text-slate-700 hover:bg-slate-100;
+  }
+}
