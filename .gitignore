@@ -52,5 +52,8 @@ out/
 # Local docker volumes
 infra/docker/data/
 
+# User-uploaded files (blog images). Ephemeral on Render; never source-controlled.
+apps/api/uploads/
+
 # Local-only docker overrides (machine-specific port remaps, etc.)
 docker-compose.override.yml
