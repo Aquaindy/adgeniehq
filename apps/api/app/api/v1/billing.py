@@ -91,6 +91,7 @@ def get_billing_status(
         ),
         has_billing_customer=customer is not None,
         stripe_configured=bool(os.getenv("STRIPE_SECRET_KEY", "").strip()),
+        subscription_source=(sub.source.value if sub else "stripe"),
     )
 
 

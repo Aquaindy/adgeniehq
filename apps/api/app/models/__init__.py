@@ -10,12 +10,17 @@ from app.models.ad_group import AdGroup, AdGroupStatus
 from app.models.agent_run import AgentRun, AgentRunStatus
 from app.models.api_key import ApiKey
 from app.models.agent_task import AgentTask, AgentTaskStatus
+from app.models.appsumo_code import AppSumoCode, AppSumoCodeStatus
 from app.models.approval import Approval, ApprovalStatus
 from app.models.audit_log import AuditActorType, AuditLog
 from app.models.autopilot_config import AutopilotConfig, AutopilotMode
 from app.models.backlink_prospect import BacklinkProspect, ProspectStatus
 from app.models.billing_customer import BillingCustomer
-from app.models.billing_subscription import BillingSubscription, SubscriptionStatus
+from app.models.billing_subscription import (
+    BillingSubscription,
+    SubscriptionSource,
+    SubscriptionStatus,
+)
 from app.models.campaign import Campaign, CampaignStatus
 from app.models.connected_account import ConnectedAccount, ConnectionStatus
 from app.models.content_draft import ContentDraft, ContentDraftStatus, ContentDraftType
@@ -59,6 +64,8 @@ __all__ = [
     "AgentTask",
     "ApiKey",
     "AgentTaskStatus",
+    "AppSumoCode",
+    "AppSumoCodeStatus",
     "Approval",
     "ApprovalStatus",
     "AuditActorType",
@@ -100,6 +107,7 @@ __all__ = [
     "ReportStatus",
     "SeoProject",
     "SkillOutput",
+    "SubscriptionSource",
     "SubscriptionStatus",
     "SyncLog",
     "SyncLogStatus",

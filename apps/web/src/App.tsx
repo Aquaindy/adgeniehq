@@ -24,6 +24,7 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
+import { AppSumoRedeemPage } from "@/features/appsumo/AppSumoRedeemPage";
 import { BlogPage } from "@/features/marketing/BlogPage";
 import { BlogPostPage } from "@/features/marketing/BlogPostPage";
 import { LandingPage } from "@/features/marketing/LandingPage";
@@ -85,6 +86,7 @@ export function App() {
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/appsumo/redeem" element={<AppSumoRedeemPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />

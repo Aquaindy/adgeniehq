@@ -128,6 +128,76 @@ PLANS: Final[dict[str, Plan]] = {
             llm_tokens_per_month=None,
         ),
     ),
+    # AppSumo lifetime tiers. Granted by redeeming codes (see appsumo_service),
+    # never sold through Stripe — so `price_id_env=None` and `is_public=False`
+    # (hidden from the pricing page + the billing UI's plan list). Codes stack:
+    # N redeemed codes = Tier N, capping at tier 3. Limits mirror the matching
+    # Stripe tier so plan-limit enforcement is identical; only the source and
+    # the lack of a recurring charge differ.
+    "appsumo_tier1": Plan(
+        code="appsumo_tier1",
+        display_name="AppSumo Lifetime — Tier 1",
+        description="Lifetime deal, Tier 1 (Starter-equivalent limits).",
+        price_id_env=None,
+        monthly_price_usd=None,
+        is_public=False,
+        limits=PlanLimits(
+            agent_runs_per_month=100,
+            landing_pages=10,
+            members=5,
+            content_drafts_per_month=50,
+            outreach_emails_per_month=200,
+            ab_tests_per_month=10,
+            outbound_writes_per_month=200,
+            llm_tokens_per_month=200_000,
+        ),
+    ),
+    "appsumo_tier2": Plan(
+        code="appsumo_tier2",
+        display_name="AppSumo Lifetime — Tier 2",
+        description="Lifetime deal, Tier 2 (Pro-equivalent limits).",
+        price_id_env=None,
+        monthly_price_usd=None,
+        is_public=False,
+        limits=PlanLimits(
+            agent_runs_per_month=500,
+            landing_pages=50,
+            members=15,
+            content_drafts_per_month=300,
+            outreach_emails_per_month=2000,
+            ab_tests_per_month=50,
+            outbound_writes_per_month=1000,
+            llm_tokens_per_month=1_500_000,
+        ),
+    ),
+    "appsumo_tier3": Plan(
+        code="appsumo_tier3",
+        display_name="AppSumo Lifetime — Tier 3",
+        description="Lifetime deal, Tier 3 (Agency-equivalent, unlimited).",
+        price_id_env=None,
+        monthly_price_usd=None,
+        is_public=False,
+        limits=PlanLimits(
+            agent_runs_per_month=None,
+            landing_pages=None,
+            members=100,
+            content_drafts_per_month=None,
+            outreach_emails_per_month=None,
+            ab_tests_per_month=None,
+            outbound_writes_per_month=None,
+            llm_tokens_per_month=None,
+        ),
+    ),
+}
+
+# AppSumo stacking ladder: number of redeemed codes -> plan code. Capping at
+# `APPSUMO_MAX_TIER` codes per workspace. Defined here so the plan limits and
+# the tier mapping stay in one place.
+APPSUMO_MAX_TIER: Final[int] = 3
+APPSUMO_TIER_PLAN: Final[dict[int, str]] = {
+    1: "appsumo_tier1",
+    2: "appsumo_tier2",
+    3: "appsumo_tier3",
 }
 
 

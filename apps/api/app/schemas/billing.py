@@ -49,6 +49,9 @@ class BillingStatus(BaseModel):
     usage: UsagePublic
     has_billing_customer: bool
     stripe_configured: bool
+    # "stripe" (recurring) or "appsumo" (lifetime deal). Lets the UI show a
+    # lifetime badge and hide Stripe upgrade/portal CTAs for AppSumo workspaces.
+    subscription_source: str = "stripe"
 
 
 class CheckoutRequest(BaseModel):

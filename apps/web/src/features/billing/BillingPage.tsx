@@ -67,6 +67,13 @@ export function BillingPage() {
           Upgrade to lift agent-run, landing-page, and team-size limits. Plan changes are
           processed by Stripe; webhook updates land here within seconds.
         </p>
+        <p className="mt-2 text-sm text-slate-500">
+          Have an AppSumo code?{" "}
+          <a href="/appsumo/redeem" className="font-medium text-grape-700 hover:underline">
+            Redeem it here
+          </a>
+          .
+        </p>
       </header>
 
       {banner ? (
@@ -127,20 +134,25 @@ function CurrentPlanCard({
   portalPending: boolean;
 }) {
   const { plan, usage } = status;
+  const isLifetime = status.subscription_source === "appsumo";
 
   return (
     <Card>
       <CardHeader
         title={`${plan.display_name} plan`}
         subtitle={
-          plan.monthly_price_usd === 0
-            ? "Free tier"
-            : plan.monthly_price_usd
-              ? `$${plan.monthly_price_usd}/month`
-              : undefined
+          isLifetime
+            ? "Lifetime · AppSumo — no recurring charge"
+            : plan.monthly_price_usd === 0
+              ? "Free tier"
+              : plan.monthly_price_usd
+                ? `$${plan.monthly_price_usd}/month`
+                : undefined
         }
         action={
-          status.has_billing_customer ? (
+          isLifetime ? (
+            <span className="pill pill-grape">Lifetime · AppSumo</span>
+          ) : status.has_billing_customer ? (
             <Button variant="secondary" onClick={onPortal} disabled={portalPending}>
               {portalPending ? "Opening…" : "Manage billing"}
             </Button>

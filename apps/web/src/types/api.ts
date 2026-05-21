@@ -741,6 +741,7 @@ export type BillingStatus = {
   usage: Usage;
   has_billing_customer: boolean;
   stripe_configured: boolean;
+  subscription_source: "stripe" | "appsumo";
 };
 
 export type CheckoutSessionResponse = { url: string };

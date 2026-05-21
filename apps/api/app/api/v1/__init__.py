@@ -6,6 +6,7 @@ from app.api.v1 import (
     admin,
     agents,
     api_keys,
+    appsumo,
     auth,
     autopilot,
     billing,
@@ -52,6 +53,8 @@ api_router.include_router(public_blog.router, prefix="/public", tags=["public-bl
 api_router.include_router(inbound.router, prefix="/inbound", tags=["inbound"])
 api_router.include_router(billing.workspace_router, prefix="/workspaces", tags=["billing"])
 api_router.include_router(billing.public_router, prefix="/billing", tags=["billing"])
+api_router.include_router(appsumo.workspace_router, prefix="/workspaces", tags=["appsumo"])
+api_router.include_router(appsumo.admin_router, prefix="/appsumo", tags=["appsumo"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(autopilot.router, prefix="/workspaces", tags=["autopilot"])
 api_router.include_router(api_keys.router, prefix="/workspaces", tags=["api-keys"])

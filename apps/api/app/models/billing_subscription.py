@@ -9,6 +9,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin
 
 
+class SubscriptionSource(StrEnum):
+    """Where the current plan grant comes from. `appsumo` rows are lifetime
+    deals with no Stripe customer and no recurring charge."""
+
+    STRIPE = "stripe"
+    APPSUMO = "appsumo"
+
+
 class SubscriptionStatus(StrEnum):
     """Stripe subscription status values plus our own `none` for free workspaces."""
 
@@ -36,10 +44,16 @@ class BillingSubscription(Base, TimestampMixin):
         unique=True,
         index=True,
     )
-    billing_customer_id: Mapped[UUID] = mapped_column(
+    # Nullable: AppSumo lifetime subscriptions have no Stripe customer.
+    billing_customer_id: Mapped[UUID | None] = mapped_column(
         PgUUID(as_uuid=True),
         ForeignKey("billing_customers.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    source: Mapped[SubscriptionSource] = mapped_column(
+        Enum(SubscriptionSource, name="subscription_source"),
         nullable=False,
+        default=SubscriptionSource.STRIPE,
     )
 
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(64), unique=True)
