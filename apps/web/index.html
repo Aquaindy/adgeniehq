@@ -12,22 +12,9 @@
     />
     <link rel="preconnect" href="https://rsms.me/" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-    <!-- Apply the saved/system theme before first paint to avoid a flash. -->
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem("advanta-theme");
-          var dark = stored
-            ? stored === "dark"
-            : window.matchMedia("(prefers-color-scheme: dark)").matches;
-          var root = document.documentElement;
-          root.classList.toggle("dark", dark);
-          root.style.colorScheme = dark ? "dark" : "light";
-        } catch (e) {
-          /* localStorage blocked — fall back to light */
-        }
-      })();
-    </script>
+    <!-- Theme bootstrap (runs before first paint). External so the CSP can keep
+         script-src strict — see infra/nginx/spa.conf. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body class="bg-cloud text-ink antialiased">
     <div id="root"></div>

@@ -29,7 +29,12 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "advanta.auth",
-      partialize: (state) => ({ accessToken: state.accessToken, user: state.user }),
+      // SECURITY: the access token is kept in MEMORY ONLY (never persisted to
+      // localStorage) so an XSS payload can't exfiltrate a live bearer token.
+      // We persist only the non-sensitive `user` for an instant UI hydrate; on
+      // boot, bootstrapAuth() re-mints the access token from the httpOnly
+      // refresh cookie. The refresh token itself is never visible to JS.
+      partialize: (state) => ({ user: state.user }),
     },
   ),
 );

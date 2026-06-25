@@ -448,6 +448,151 @@ class GoogleAdsProvider(GoogleProviderBase):
         }
 
     @classmethod
+    def create_ad_set(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        campaign_external_id: str,
+        payload: dict,
+    ) -> dict:
+        # Google's "ad set" is an ad group. Budget is campaign-level in Google,
+        # so the draft's ad-group budget maps (optionally) to a CPC bid only.
+        name = payload.get("name")
+        if not name:
+            raise ProviderError("Google create_ad_set requires payload.name.")
+        create: dict = {
+            "name": name,
+            "campaign": cls._campaign_resource(external_account_id, campaign_external_id),
+            "status": payload.get("status", "PAUSED"),
+            "type": payload.get("type", "SEARCH_STANDARD"),
+        }
+        cpc_bid_cents = payload.get("cpc_bid_cents")
+        if isinstance(cpc_bid_cents, int) and cpc_bid_cents > 0:
+            create["cpcBidMicros"] = str(int(cpc_bid_cents) * 10_000)
+        result = cls._post_mutate(
+            access_token=access_token,
+            customer_id=external_account_id,
+            endpoint="adGroups:mutate",
+            operations=[{"create": create}],
+        )
+        new_resource = (result.get("results", [{}])[0].get("resourceName") or "")
+        new_id = new_resource.split("/")[-1] if new_resource else None
+        return {
+            "ok": True,
+            "external_id": new_id,
+            "external_account_id": external_account_id,
+            "result": result,
+        }
+
+    @classmethod
+    def create_ad(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        ad_set_external_id: str,
+        payload: dict,
+    ) -> dict:
+        # Google's "ad" is an ad group ad — here a Responsive Search Ad built
+        # from the draft's copy. ad_set_external_id is the parent ad group id.
+        final_urls = payload.get("final_urls") or (
+            [payload["landing_page_url"]] if payload.get("landing_page_url") else []
+        )
+        headlines = [h for h in (payload.get("headlines") or []) if h]
+        descriptions = [d for d in (payload.get("descriptions") or []) if d]
+        if not final_urls:
+            raise ProviderError("Google create_ad needs a final URL (landing_page_url).")
+        if not headlines or not descriptions:
+            raise ProviderError(
+                "Google responsive search ads need headlines and descriptions on the creative."
+            )
+        ad_group_resource = (
+            f"customers/{external_account_id}/adGroups/{ad_set_external_id}"
+        )
+        result = cls._post_mutate(
+            access_token=access_token,
+            customer_id=external_account_id,
+            endpoint="adGroupAds:mutate",
+            operations=[
+                {
+                    "create": {
+                        "adGroup": ad_group_resource,
+                        "status": payload.get("status", "PAUSED"),
+                        "ad": {
+                            "finalUrls": final_urls,
+                            "responsiveSearchAd": {
+                                # Google caps headlines at 30 chars, descriptions at 90.
+                                "headlines": [{"text": h[:30]} for h in headlines[:15]],
+                                "descriptions": [{"text": d[:90]} for d in descriptions[:4]],
+                            },
+                        },
+                    }
+                }
+            ],
+        )
+        new_resource = result.get("results", [{}])[0].get("resourceName") or ""
+        # adGroupAds resourceName: customers/{cid}/adGroupAds/{adGroupId}~{adId}
+        new_id = new_resource.split("/")[-1] if new_resource else None
+        return {
+            "ok": True,
+            "external_id": new_id,
+            "external_account_id": external_account_id,
+            "result": result,
+        }
+
+    @classmethod
+    def fetch_insights(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        external_id: str,
+        date_from: str,
+        date_to: str,
+    ) -> list[dict]:
+        developer_token = cls._developer_token()
+        # GAQL: one row per day via segments.date. cost_micros is in micros
+        # (1e6 per currency unit) → cents = micros / 10_000.
+        query = (
+            "SELECT segments.date, metrics.impressions, metrics.clicks, "
+            "metrics.cost_micros, metrics.conversions, metrics.conversions_value "
+            "FROM campaign "
+            f"WHERE campaign.id = {external_id} "
+            f"AND segments.date BETWEEN '{date_from}' AND '{date_to}'"
+        )
+        response = httpx.post(
+            f"{ADS_API}/customers/{external_account_id}/googleAds:search",
+            headers=cls._common_headers(
+                access_token=access_token, developer_token=developer_token
+            ),
+            json={"query": query},
+            timeout=30.0,
+        )
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"Google Ads insights returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        rows: list[dict] = []
+        for row in response.json().get("results", []):
+            segments = row.get("segments") or {}
+            metrics = row.get("metrics") or {}
+            rows.append(
+                {
+                    "date": segments.get("date"),
+                    "impressions": int(float(metrics.get("impressions", 0) or 0)),
+                    "clicks": int(float(metrics.get("clicks", 0) or 0)),
+                    "spend_cents": round(int(metrics.get("costMicros", 0) or 0) / 10_000),
+                    # Google allows fractional conversions; round to whole events.
+                    "conversions": int(round(float(metrics.get("conversions", 0) or 0))),
+                    "conversion_value_cents": round(
+                        float(metrics.get("conversionsValue", 0) or 0) * 100
+                    ),
+                }
+            )
+        return rows
+
+    @classmethod
     def _normalize(cls, row: dict, *, customer_id: str) -> CampaignData:
         campaign = row.get("campaign", {})
         budget = row.get("campaignBudget", {})

@@ -99,6 +99,11 @@ def confirm_reset(
     user.hashed_password = hash_password(new_password)
     user.password_reset_hash = None
     user.password_reset_expires_at = None
+    # A password reset invalidates every existing session — revoke all of the
+    # user's live refresh tokens so a leaked/old token can't survive the reset.
+    from app.services import refresh_token_service
+
+    refresh_token_service.revoke_all_for_user(db, user_id=user.id)
     db.commit()
     db.refresh(user)
     return user

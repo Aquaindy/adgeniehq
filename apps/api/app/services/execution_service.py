@@ -30,6 +30,7 @@ from app.integrations.base import (
     BaseProvider,
     ProviderError,
     ProviderNotConfiguredError,
+    ProviderNotImplementedError,
 )
 from app.integrations.registry import get_provider
 from app.models.approval import Approval, ApprovalStatus
@@ -86,6 +87,8 @@ SUPPORTED_ACTIONS = {
     "campaign.update_budget",
     "campaign.update_audience",
     "campaign.create",
+    "ad_set.create",
+    "ad.create",
 }
 
 # Reverse map for revert-by-action — used when status flips, the inverse is
@@ -245,6 +248,28 @@ def _dispatch(
             external_account_id=external_account_id,
             payload=payload,
         )
+    if action == "ad_set.create":
+        if not external_account_id or not external_id:
+            raise InvalidActionError(
+                "ad_set.create needs external_account_id and external_id (parent campaign)."
+            )
+        return provider_cls.create_ad_set(
+            access_token=access_token,
+            external_account_id=external_account_id,
+            campaign_external_id=external_id,
+            payload=payload,
+        )
+    if action == "ad.create":
+        if not external_account_id or not external_id:
+            raise InvalidActionError(
+                "ad.create needs external_account_id and external_id (parent ad set)."
+            )
+        return provider_cls.create_ad(
+            access_token=access_token,
+            external_account_id=external_account_id,
+            ad_set_external_id=external_id,
+            payload=payload,
+        )
     raise InvalidActionError(f"Unsupported action `{action}`.")
 
 
@@ -278,6 +303,98 @@ def _build_execution_row(
         executed_at=datetime.now(timezone.utc),
         idempotency_key=idempotency_key,
     )
+
+
+def _materialize_created_campaign(
+    db: Session, *, rec: Recommendation, result: dict, actor_user_id: UUID | None
+) -> None:
+    """After a successful `campaign.create`, insert the local Campaign row and
+    accrue the one-time listing fee. Idempotent by (workspace, provider,
+    external_id). Best-effort: a reconciliation hiccup must not fail the write
+    that already succeeded on the platform."""
+    from app.models.campaign import Campaign, CampaignStatus
+    from app.services import fee_service
+
+    meta = rec.metadata_json or {}
+    provider = meta.get("provider") or rec.platform
+    payload = meta.get("payload") or {}
+    new_external_id = (result or {}).get("external_id")
+    if not provider or not new_external_id:
+        return
+
+    new_external_id = str(new_external_id)
+    existing = (
+        db.query(Campaign)
+        .filter(
+            Campaign.workspace_id == rec.workspace_id,
+            Campaign.provider == provider,
+            Campaign.external_id == new_external_id,
+        )
+        .first()
+    )
+    if existing is not None:
+        return
+
+    account = (
+        db.query(ConnectedAccount)
+        .filter(
+            ConnectedAccount.workspace_id == rec.workspace_id,
+            ConnectedAccount.provider == provider,
+        )
+        .first()
+    )
+    campaign = Campaign(
+        workspace_id=rec.workspace_id,
+        connected_account_id=account.id if account else None,
+        provider=provider,
+        external_id=new_external_id,
+        external_account_id=(result or {}).get("external_account_id")
+        or meta.get("external_account_id"),
+        name=payload.get("name") or "New campaign",
+        status=CampaignStatus.PAUSED,  # launched paused/draft for safety
+        objective=payload.get("objective") or meta.get("campaign_type"),
+        daily_budget_cents=meta.get("daily_budget_cents")
+        or payload.get("daily_budget_cents"),
+        currency="USD",
+        last_synced_at=datetime.now(timezone.utc),
+        raw_payload=result,
+    )
+    db.add(campaign)
+    db.flush()
+    fee_service.accrue_listing_fee(db, campaign=campaign, actor_user_id=actor_user_id)
+
+
+def _materialize_published_ad_object(
+    db: Session, *, rec: Recommendation, result: dict, action: str
+) -> None:
+    """After a successful `ad_set.create` / `ad.create`, write the new platform
+    `external_id` back onto the local draft row and flip it to platform_synced
+    (so it becomes read-only in the builder). Idempotent + best-effort."""
+    from app.models.ad import Ad
+    from app.models.ad_group import AdGroup, AdObjectSource
+
+    meta = rec.metadata_json or {}
+    new_external_id = (result or {}).get("external_id")
+    local_id = meta.get("local_object_id")
+    if not new_external_id or not local_id:
+        return
+    try:
+        local_uuid = UUID(str(local_id))
+    except ValueError:
+        return
+
+    model = AdGroup if action == "ad_set.create" else Ad
+    obj = (
+        db.query(model)
+        .filter(model.id == local_uuid, model.workspace_id == rec.workspace_id)
+        .first()
+    )
+    if obj is None or obj.external_id:
+        return
+    obj.external_id = str(new_external_id)
+    obj.source = AdObjectSource.PLATFORM_SYNCED
+    obj.raw_payload = result
+    db.flush()
 
 
 def _check_idempotency(
@@ -389,6 +506,7 @@ def execute_recommendation(
     except (
         ProviderError,
         ProviderNotConfiguredError,
+        ProviderNotImplementedError,
         InvalidActionError,
         AccountNotReadyError,
         billing_service.PlanLimitExceededError,
@@ -419,6 +537,19 @@ def execute_recommendation(
     execution.status = ExecutionStatus.SUCCEEDED
     execution.prior_state = result.get("prior_state")
     execution.result = _strip_secrets(result)
+
+    # When a campaign is created on the platform, reconcile local state: insert
+    # the Campaign row and accrue the one-time listing fee. Runs here (not in the
+    # launch service) so it fires for BOTH the one-click launch and a queued
+    # launch that's approved later through the generic approvals flow.
+    if plan["action"] == "campaign.create":
+        _materialize_created_campaign(
+            db, rec=rec, result=result, actor_user_id=actor_user_id
+        )
+    elif plan["action"] in {"ad_set.create", "ad.create"}:
+        _materialize_published_ad_object(
+            db, rec=rec, result=result, action=plan["action"]
+        )
 
     rec.status = RecommendationStatus.EXECUTED
     if rec.approval is not None:

@@ -38,6 +38,51 @@ def test_oauth_state_rejects_garbage() -> None:
         parse_state("not-a-jwt")
 
 
+def test_oauth_state_is_single_use(db_session) -> None:
+    """A state token can be consumed exactly once — a replay (e.g. a leaked
+    code+state pair) is rejected even within its TTL."""
+    from app.models.connected_account import ConnectionStatus
+    from app.models.user import User
+    from app.models.workspace import Workspace
+    from app.models.workspace_member import WorkspaceMember
+    from app.security.passwords import hash_password
+    from app.security.permissions import MemberStatus, Role
+    from app.services import integration_service
+
+    user = User(
+        email="oauth-su@example.com",
+        hashed_password=hash_password("correct-horse-9"),
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+    ws = Workspace(name="W", slug="w-oauth-su")
+    db_session.add(ws)
+    db_session.flush()
+    db_session.add(
+        WorkspaceMember(
+            workspace_id=ws.id, user_id=user.id, role=Role.OWNER, status=MemberStatus.ACTIVE
+        )
+    )
+    db_session.commit()
+
+    state = issue_state(workspace_id=ws.id, user_id=user.id, provider="google_ads")
+
+    # First use: the provider "denied" so we hit the error branch (no network
+    # exchange) — but the state is still consumed.
+    _, _, status, _ = integration_service.handle_oauth_callback(
+        db_session, provider_id="google_ads", code=None, state_token=state, error="access_denied"
+    )
+    assert status == ConnectionStatus.ERROR
+    db_session.commit()
+
+    # Replaying the same state is now rejected.
+    with pytest.raises(InvalidStateError):
+        integration_service.handle_oauth_callback(
+            db_session, provider_id="google_ads", code=None, state_token=state, error="access_denied"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Helpers for the rest of the file
 # ---------------------------------------------------------------------------
@@ -114,6 +159,79 @@ def test_connect_url_succeeds_when_credentials_configured(
     assert "accounts.google.com" in body["authorization_url"]
     assert "google_ads/callback" in body["redirect_uri"]
     assert body["state"]
+
+
+# ---------------------------------------------------------------------------
+# Write-scope at connect-time
+# ---------------------------------------------------------------------------
+
+
+def test_scopes_for_mode_drops_write_scopes() -> None:
+    from app.integrations.meta_ads import MetaAdsProvider
+
+    full = MetaAdsProvider.scopes_for_mode("write")
+    read = MetaAdsProvider.scopes_for_mode("read")
+    assert "ads_management" in full  # the write scope
+    assert "ads_management" not in read
+    assert "ads_read" in read  # read scopes preserved
+
+
+def test_connect_url_scope_mode_read_vs_write(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("META_APP_ID", "x")
+    monkeypatch.setenv("META_APP_SECRET", "y")
+    ws = _signup_and_workspace(client)
+    read = client.get(
+        f"/api/v1/workspaces/{ws}/integrations/meta_ads/connect-url?scope_mode=read"
+    )
+    assert read.status_code == 200
+    assert "ads_management" not in read.json()["authorization_url"]
+    write = client.get(
+        f"/api/v1/workspaces/{ws}/integrations/meta_ads/connect-url?scope_mode=write"
+    )
+    assert "ads_management" in write.json()["authorization_url"]
+
+
+def test_connect_url_rejects_bad_scope_mode(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("META_APP_ID", "x")
+    monkeypatch.setenv("META_APP_SECRET", "y")
+    ws = _signup_and_workspace(client)
+    resp = client.get(
+        f"/api/v1/workspaces/{ws}/integrations/meta_ads/connect-url?scope_mode=bogus"
+    )
+    assert resp.status_code == 422
+
+
+def test_integration_status_can_write_reflects_scopes(client: TestClient, db_session) -> None:
+    from uuid import UUID
+
+    from app.models.connected_account import ConnectedAccount, ConnectionStatus
+
+    ws = _signup_and_workspace(client)
+    acct = ConnectedAccount(
+        workspace_id=UUID(ws),
+        provider="meta_ads",
+        status=ConnectionStatus.CONNECTED,
+        scopes=["ads_read", "ads_management"],
+        connected_at=datetime.now(timezone.utc),
+    )
+    db_session.add(acct)
+    db_session.commit()
+
+    body = client.get(f"/api/v1/workspaces/{ws}/integrations").json()
+    meta = next(e for e in body if e["provider"] == "meta_ads")
+    assert meta["can_write"] is True
+    assert "ads_management" in meta["write_scopes"]
+
+    # Drop the write scope → read-only.
+    acct.scopes = ["ads_read"]
+    db_session.commit()
+    body2 = client.get(f"/api/v1/workspaces/{ws}/integrations").json()
+    meta2 = next(e for e in body2 if e["provider"] == "meta_ads")
+    assert meta2["can_write"] is False
 
 
 # ---------------------------------------------------------------------------

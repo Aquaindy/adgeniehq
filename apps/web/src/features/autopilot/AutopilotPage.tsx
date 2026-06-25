@@ -109,6 +109,14 @@ function AutopilotPageInner({ workspaceId }: { workspaceId: string }) {
     });
   }
 
+  function toggleAction(action: string) {
+    if (!draft) return;
+    const set = new Set(draft.allowed_action_types ?? []);
+    if (set.has(action)) set.delete(action);
+    else set.add(action);
+    save.mutate({ allowed_action_types: [...set] });
+  }
+
   if (config.isLoading || draft === null) {
     return <div className="text-sm text-slate-400">Loading autopilot config…</div>;
   }
@@ -244,12 +252,12 @@ function AutopilotPageInner({ workspaceId }: { workspaceId: string }) {
                     .filter(Boolean),
                 })
               }
-              placeholder={"paid_ads.budget_unset\npaid_ads.scale_up"}
+              placeholder={"campaign.pause\ncampaign.update_budget"}
               className="rounded-xl border border-slate-200 bg-surface px-3 py-2 font-mono text-xs text-ink shadow-sm outline-none transition focus:border-grape focus:ring-2 focus:ring-grape-200"
             />
             <span className="text-xs text-slate-400">
               One recommendation_type per line. Empty list means autopilot won't
-              auto-approve anything.
+              auto-approve anything. Use the toggles below for autonomous ad actions.
             </span>
           </label>
 
@@ -258,6 +266,13 @@ function AutopilotPageInner({ workspaceId }: { workspaceId: string }) {
           </Button>
         </form>
       </Card>
+
+      <AutonomousActionsCard
+        workspaceId={workspaceId}
+        allowed={draft.allowed_action_types ?? []}
+        onToggle={toggleAction}
+        busy={save.isPending}
+      />
 
       <Card>
         <CardHeader
@@ -302,6 +317,136 @@ function AutopilotPageInner({ workspaceId }: { workspaceId: string }) {
   );
 }
 
+
+type ActionTypeInfo = {
+  action: string;
+  label: string;
+  tier: string;
+  default_risk: string;
+  description: string;
+};
+
+type AutonomousCandidate = {
+  action: string;
+  risk_level: "low" | "medium" | "high";
+  title: string;
+  summary: string;
+  allowed: boolean;
+};
+
+function AutonomousActionsCard({
+  workspaceId,
+  allowed,
+  onToggle,
+  busy,
+}: {
+  workspaceId: string;
+  allowed: string[];
+  onToggle: (action: string) => void;
+  busy: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [note, setNote] = useState<string | null>(null);
+
+  const catalog = useQuery<ActionTypeInfo[]>({
+    queryKey: ["autopilot-action-types", workspaceId],
+    queryFn: () => apiFetch(`/workspaces/${workspaceId}/autopilot/action-types`),
+  });
+  const candidates = useQuery<AutonomousCandidate[]>({
+    queryKey: ["autopilot-candidates", workspaceId],
+    queryFn: () => apiFetch(`/workspaces/${workspaceId}/autopilot/candidates`),
+  });
+
+  const generate = useMutation({
+    mutationFn: () =>
+      apiFetch<{ generated: number }>(`/workspaces/${workspaceId}/autopilot/generate`, {
+        method: "POST",
+      }),
+    onSuccess: (r) => {
+      setNote(`Generated ${r.generated} executable recommendation(s).`);
+      void queryClient.invalidateQueries({ queryKey: ["autopilot-preview", workspaceId] });
+      void queryClient.invalidateQueries({ queryKey: ["autopilot-candidates", workspaceId] });
+    },
+    onError: (e) => setNote(e instanceof ApiError ? e.message : "Could not generate."),
+  });
+
+  const allowedSet = new Set(allowed);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Autonomous ad actions"
+        subtitle="Let the agents originate executable ad actions. Each tier is opt-in; execution still obeys the guardrails + risk ceiling above."
+      />
+
+      <div className="mt-3 flex flex-col gap-2">
+        {(catalog.data ?? []).map((a) => (
+          <label
+            key={a.action}
+            className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={allowedSet.has(a.action)}
+              onChange={() => onToggle(a.action)}
+              disabled={busy}
+            />
+            <div>
+              <div className="flex items-center gap-2 text-sm font-medium text-ink">
+                {a.label}
+                <span className="pill bg-slate-100 text-slate-600">{a.tier}</span>
+                <span className="text-xs font-normal text-slate-400">risk {a.default_risk}</span>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-500">{a.description}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <Button variant="secondary" onClick={() => generate.mutate()} disabled={generate.isPending}>
+          {generate.isPending ? "Scanning…" : "Run autonomous scan now"}
+        </Button>
+        {note ? <span className="text-xs text-slate-500">{note}</span> : null}
+      </div>
+
+      <div className="mt-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          What the agents would propose now
+        </div>
+        {candidates.isLoading ? (
+          <p className="mt-2 text-sm text-slate-400">Loading…</p>
+        ) : (candidates.data ?? []).length === 0 ? (
+          <p className="mt-2 text-sm text-slate-500">
+            No autonomous actions detected from current campaign signals.
+          </p>
+        ) : (
+          <ul className="mt-2 flex flex-col divide-y divide-slate-100 text-sm">
+            {(candidates.data ?? []).map((c, i) => (
+              <li key={`${c.action}-${i}`} className="flex items-start justify-between gap-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-ink">{c.title}</div>
+                  <div className="text-xs text-slate-500">
+                    {c.action} · risk {c.risk_level}
+                  </div>
+                </div>
+                <span
+                  className={cn(
+                    "pill shrink-0",
+                    c.allowed ? "pill-success" : "bg-slate-100 text-slate-600",
+                  )}
+                >
+                  {c.allowed ? "enabled" : "off"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 function NumberField({
   label,

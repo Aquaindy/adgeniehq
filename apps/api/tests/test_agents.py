@@ -208,7 +208,7 @@ def test_website_audit_handles_unreachable_url(client: TestClient) -> None:
     def raise_http_error(*args, **kwargs):
         raise httpx.ConnectError("could not connect")
 
-    with patch("app.skills.website.fetch.httpx.get", side_effect=raise_http_error):
+    with patch("app.skills.website.fetch.safe_get", side_effect=raise_http_error):
         response = client.post(
             f"/api/v1/workspaces/{workspace_id}/agents/run",
             json={"agent_type": "website_audit"},

@@ -4,6 +4,8 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
+from app.security.safe_http import safe_get
+
 USER_AGENT = "AdVantaAI-SEOAgent/0.0.1 (+https://advantaai.com)"
 TIMEOUT = 10.0
 
@@ -29,11 +31,12 @@ def _origin(url: str) -> str:
 
 def _try_fetch(url: str) -> httpx.Response | None:
     try:
-        return httpx.get(
+        # SSRF-guarded fetch; a blocked (internal) URL raises BlockedURLError,
+        # a subclass of httpx.HTTPError, so it's treated as "unreachable" here.
+        return safe_get(
             url,
             headers={"User-Agent": USER_AGENT, "Accept": "text/xml,application/xml,*/*;q=0.9"},
             timeout=TIMEOUT,
-            follow_redirects=True,
         )
     except httpx.HTTPError:
         return None

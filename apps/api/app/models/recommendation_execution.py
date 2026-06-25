@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,6 +25,18 @@ class RecommendationExecution(Base, TimestampMixin):
     the original budget if a campaign budget change misbehaves)."""
 
     __tablename__ = "recommendation_executions"
+    __table_args__ = (
+        # Mirrors the DB migration so create_all() (tests) enforces the same
+        # idempotency guarantee as production: at most one execution per
+        # (workspace, idempotency_key) when a key is supplied. NULL keys repeat.
+        Index(
+            "uq_rec_executions_workspace_idempotency_key",
+            "workspace_id",
+            "idempotency_key",
+            unique=True,
+            postgresql_where=text("idempotency_key IS NOT NULL"),
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(PgUUID(as_uuid=True), primary_key=True, default=uuid4)
     workspace_id: Mapped[UUID] = mapped_column(

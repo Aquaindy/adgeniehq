@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import httpx
 
+from app.security.safe_http import safe_get
+
 USER_AGENT = "AdVantaAI-WebsiteAgent/0.0.1 (+https://advantaai.com)"
 MAX_BYTES = 1_500_000  # 1.5 MB cap on fetched HTML
 TIMEOUT_SECONDS = 10.0
@@ -26,11 +28,13 @@ def fetch_html(url: str) -> FetchedPage:
     """Synchronously fetch a page's HTML. Raises WebsiteFetchError on transport
     failure or non-2xx response."""
     try:
-        response = httpx.get(
+        # SSRF-guarded: rejects internal/loopback/link-local/metadata targets
+        # and re-validates every redirect hop. A blocked URL surfaces as a
+        # normal "could not reach" error so internals aren't disclosed.
+        response = safe_get(
             url,
             headers={"User-Agent": USER_AGENT, "Accept": "text/html,*/*;q=0.9"},
             timeout=TIMEOUT_SECONDS,
-            follow_redirects=True,
         )
     except httpx.HTTPError as exc:
         raise WebsiteFetchError(f"Could not reach {url}: {exc.__class__.__name__}", url=url) from exc

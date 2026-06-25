@@ -65,6 +65,7 @@ def render_pdf(payload: dict[str, Any], *, title: str) -> bytes:
     _top_recommendations_section(story, payload, styles)
     _agent_runs_section(story, payload, styles)
     _campaigns_section(story, payload, styles)
+    _ad_performance_section(story, payload, styles)
     _seo_section(story, payload, styles)
     _landing_pages_section(story, payload, styles)
     _executions_section(story, payload, styles)
@@ -462,6 +463,28 @@ def _ab_tests_section(story: list, payload: dict[str, Any], styles: dict) -> Non
     story.append(_kv_table(rows))
 
 
+def _ad_performance_section(story: list, payload: dict[str, Any], styles: dict) -> None:
+    ap = payload.get("ad_performance")
+    if not ap:
+        return
+    story.append(Paragraph("Ad performance", styles["section"]))
+
+    def _money(c: int) -> str:
+        return f"${c / 100:,.2f}"
+
+    rows = [
+        ["Metric", "Value"],
+        ["Spend", _money(ap.get("spend_cents", 0))],
+        ["Impressions", f"{ap.get('impressions', 0):,}"],
+        ["Clicks", f"{ap.get('clicks', 0):,}"],
+        ["Conversions", f"{ap.get('conversions', 0):,}"],
+        ["CTR", f"{ap.get('ctr', 0) * 100:.2f}%"],
+        ["CPA", _money(ap.get("cpa_cents", 0)) if ap.get("conversions") else "—"],
+        ["ROAS", f"{ap.get('roas', 0):.2f}x" if ap.get("spend_cents") else "—"],
+    ]
+    story.append(_kv_table(rows))
+
+
 def _growth_dna_section(story: list, payload: dict[str, Any], styles: dict) -> None:
     dna = payload.get("growth_dna")
     if not dna:
@@ -475,6 +498,13 @@ def _growth_dna_section(story: list, payload: dict[str, Any], styles: dict) -> N
             styles["body"],
         )
     )
+    channel_count = dna.get("channel_count")
+    if channel_count:
+        priorities = dna.get("top_priorities") or []
+        line = f"Marketing strategy: {channel_count} channels mapped"
+        if priorities:
+            line += " · Top priorities: " + ", ".join(str(p) for p in priorities[:4])
+        story.append(Paragraph(line, styles["body"]))
 
 
 def _truncate(value: str | None, max_len: int) -> str:

@@ -49,8 +49,11 @@ class BillingStatus(BaseModel):
     usage: UsagePublic
     has_billing_customer: bool
     stripe_configured: bool
-    # "stripe" (recurring) or "appsumo" (lifetime deal). Lets the UI show a
-    # lifetime badge and hide Stripe upgrade/portal CTAs for AppSumo workspaces.
+    paddle_configured: bool = False
+    # Which processor handles recurring plans: "paddle" | "stripe" | "none".
+    subscription_provider: str = "none"
+    # "stripe" (recurring) | "paddle" (recurring, MoR) | "appsumo" (lifetime).
+    # Lets the UI pick the right checkout/portal flow and badge.
     subscription_source: str = "stripe"
 
 
@@ -58,8 +61,21 @@ class CheckoutRequest(BaseModel):
     plan_code: str
 
 
+class PaddleCheckout(BaseModel):
+    """Client-side overlay config for Paddle.js (there is no server redirect)."""
+
+    client_token: str
+    environment: str
+    price_id: str
+    customer_email: str
+    custom_data: dict[str, str]
+
+
 class CheckoutResponse(BaseModel):
-    url: str
+    # "stripe" -> use `url` (redirect); "paddle" -> use `paddle` (overlay).
+    provider: str = "stripe"
+    url: str | None = None
+    paddle: PaddleCheckout | None = None
 
 
 class PortalResponse(BaseModel):

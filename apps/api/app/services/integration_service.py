@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import Request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AdVantaError
@@ -25,7 +26,8 @@ from app.schemas.integrations import (
     SyncLogPublic,
 )
 from app.security.encryption import decrypt, encrypt
-from app.security.oauth_state import issue_state, parse_state
+from app.models.processed_webhook_event import ProcessedWebhookEvent
+from app.security.oauth_state import InvalidStateError, issue_state, parse_state
 from app.services import audit_service
 
 log = get_logger(__name__)
@@ -170,6 +172,8 @@ def list_integrations_for_workspace(
                 provider_account_id=account.provider_account_id if account else None,
                 display_account_name=account.display_name if account else None,
                 scopes=account.scopes if account else None,
+                write_scopes=list(provider.write_scopes or []),
+                can_write=_can_write(provider, account),
                 connected_at=account.connected_at if account else None,
                 last_sync_at=account.last_sync_at if account else None,
                 last_error=account.last_error if account else None,
@@ -179,18 +183,34 @@ def list_integrations_for_workspace(
     return out
 
 
+def _can_write(provider: type[BaseProvider], account: ConnectedAccount | None) -> bool:
+    """Whether the connected account carries the scopes needed for outbound
+    writes (run/manage ads). Mirrors execution_service._resolve_connection's
+    scope check, including the legacy-trust path when scopes weren't recorded."""
+    if account is None or account.status != ConnectionStatus.CONNECTED:
+        return False
+    required = set(provider.write_scopes or [])
+    if not required:
+        return True  # provider needs no special write scope
+    if account.scopes is None:
+        return True  # legacy grant — trust the default (all scopes granted)
+    return required.issubset(set(account.scopes))
+
+
 # ---------------------------------------------------------------------------
 # Connect URL
 # ---------------------------------------------------------------------------
 
 
 def build_connect_url(
-    *, workspace_id: UUID, user_id: UUID, provider_id: str
+    *, workspace_id: UUID, user_id: UUID, provider_id: str, scope_mode: str = "write"
 ) -> ConnectUrlResponse:
     provider = get_provider(provider_id)
     state = issue_state(workspace_id=workspace_id, user_id=user_id, provider=provider_id)
     return ConnectUrlResponse(
-        authorization_url=provider.build_authorization_url(state=state),
+        authorization_url=provider.build_authorization_url(
+            state=state, scope_mode=scope_mode
+        ),
         state=state,
         redirect_uri=provider.callback_url(),
     )
@@ -221,6 +241,23 @@ def handle_oauth_callback(
     user_id = UUID(payload["uid"])
     if payload["p"] != provider_id:
         raise ProviderError("OAuth state was issued for a different provider.")
+
+    # Single-use: burn the state's JTI so a leaked code+state pair can't be
+    # replayed within its 10-min TTL. The (provider, event_id) unique index on
+    # the generic processed-events ledger is the guarantee; a duplicate insert
+    # means the state was already consumed.
+    jti = payload.get("jti")
+    if jti:
+        db.add(
+            ProcessedWebhookEvent(
+                provider="oauth_state", event_id=jti, event_type=f"connect:{provider_id}"
+            )
+        )
+        try:
+            db.flush()
+        except IntegrityError:
+            db.rollback()
+            raise InvalidStateError("OAuth state has already been used.")
 
     if error or not code:
         message = error or "OAuth flow returned no authorization code."

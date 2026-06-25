@@ -10,9 +10,43 @@ from app.models.recommendation import Recommendation, RecommendationStatus, Risk
 from app.models.workspace_member import WorkspaceMember
 from app.security.dependencies import get_current_member
 from app.security.permissions import Role, require_role_at_least
-from app.services import autopilot_service
+from app.services import autonomous_action_service, autopilot_service
 
 router = APIRouter()
+
+
+# Catalog of action types the autonomous generator can produce, with the risk
+# tier each carries — drives the allowlist UI.
+AUTONOMOUS_ACTION_CATALOG = [
+    {
+        "action": "campaign.pause",
+        "label": "Auto-pause (stop-loss)",
+        "tier": "spend-down",
+        "default_risk": "low",
+        "description": "Pause past-end-date campaigns. Spend-down, fully reversible.",
+    },
+    {
+        "action": "campaign.update_budget",
+        "label": "Auto-adjust budget",
+        "tier": "spend-down + scale",
+        "default_risk": "low/medium",
+        "description": "Trim budgets on CPA spikes (low risk) and scale winners within caps (medium).",
+    },
+    {
+        "action": "ad_set.create",
+        "label": "Auto-publish ad sets",
+        "tier": "publish",
+        "default_risk": "medium",
+        "description": "Publish human-built draft ad sets under live campaigns (paused).",
+    },
+    {
+        "action": "ad.create",
+        "label": "Auto-publish ads",
+        "tier": "publish",
+        "default_risk": "medium",
+        "description": "Publish human-built draft ads under live ad sets (paused).",
+    },
+]
 
 
 class AutopilotConfigPublic(BaseModel):
@@ -48,6 +82,19 @@ class AutopilotPreviewItem(BaseModel):
     allow: bool
     reason: str
     matched_rules: list[str]
+
+
+class AutonomousCandidate(BaseModel):
+    action: str
+    risk_level: RiskLevel
+    title: str
+    summary: str
+    allowed: bool  # whether the workspace has opted this action type in
+
+
+class GenerateActionsResult(BaseModel):
+    generated: int
+    recommendation_ids: list[str]
 
 
 @router.get(
@@ -119,3 +166,68 @@ def preview_autopilot(
             )
         )
     return out
+
+
+@router.get("/{workspace_id}/autopilot/action-types")
+def list_autonomous_action_types(
+    _member: WorkspaceMember = Depends(get_current_member),
+) -> list[dict]:
+    """Catalog of action types the autonomous generator can produce, for the
+    allowlist UI."""
+    return AUTONOMOUS_ACTION_CATALOG
+
+
+@router.get(
+    "/{workspace_id}/autopilot/candidates",
+    response_model=list[AutonomousCandidate],
+)
+def preview_autonomous_candidates(
+    workspace_id: UUID,
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> list[AutonomousCandidate]:
+    """What the autonomous generator would create right now from live campaign
+    signals — without writing anything. `allowed` reflects the current
+    allowlist."""
+    config = autopilot_service.get_or_create_config(db, workspace_id=workspace_id)
+    allowed = set(config.allowed_action_types or [])
+    candidates = autonomous_action_service.collect_candidates(
+        db, workspace_id=workspace_id, config=config
+    )
+    return [
+        AutonomousCandidate(
+            action=c.action,
+            risk_level=c.risk,
+            title=c.title,
+            summary=c.summary,
+            allowed=c.action in allowed,
+        )
+        for c in candidates
+    ]
+
+
+@router.post(
+    "/{workspace_id}/autopilot/generate",
+    response_model=GenerateActionsResult,
+)
+def generate_autonomous_actions(
+    workspace_id: UUID,
+    member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> GenerateActionsResult:
+    """Run the autonomous generator now (owner-only). Creates OPEN executable
+    recommendations for opted-in action types; execution still goes through the
+    autopilot guardrails (or manual approval). Lets an admin seed/test autonomy
+    without waiting for the 15-minute beat."""
+    require_role_at_least(member.role, Role.OWNER)
+    config = autopilot_service.get_or_create_config(db, workspace_id=workspace_id)
+    created = autonomous_action_service.generate_for_workspace(
+        db,
+        workspace_id=workspace_id,
+        system_actor_id=member.user_id,
+        config=config,
+    )
+    return GenerateActionsResult(
+        generated=len(created),
+        recommendation_ids=[str(r.id) for r in created],
+    )

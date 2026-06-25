@@ -7,10 +7,11 @@ Thumbs.db
 .idea/
 *.swp
 
-# Env
+# Env — never commit real secrets. `.env` holds live API keys / encryption key.
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # Python
 __pycache__/

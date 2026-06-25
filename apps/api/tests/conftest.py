@@ -64,6 +64,28 @@ def _truncate_between_tests() -> Generator[None, None, None]:
             conn.execute(table.delete())
 
 
+@pytest.fixture(autouse=True)
+def _pin_null_llm() -> Generator[None, None, None]:
+    """Default every test to *no* LLM so the suite is hermetic and deterministic
+    regardless of the env-configured provider/key. Tests that exercise LLM
+    behavior opt in explicitly by setting `llm_client._INSTANCE` to a fake."""
+    import app.llm.client as _llm
+    from app.core.config import settings
+
+    prev = _llm._INSTANCE
+    _llm._INSTANCE = _llm.NullClient()
+    # Also neutralize the Growth DNA fast-model override — otherwise a real
+    # `LLM_FAST_MODEL`/`OPENAI_API_KEY` in .env would make `_fast_client_or`
+    # swap the pinned fake for a real provider client and hit the network.
+    prev_fast = settings.llm_fast_model
+    settings.llm_fast_model = ""
+    try:
+        yield
+    finally:
+        _llm._INSTANCE = prev
+        settings.llm_fast_model = prev_fast
+
+
 @pytest.fixture
 def db_session() -> Generator[Session, None, None]:
     session = TestSessionLocal()

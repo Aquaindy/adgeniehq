@@ -1,23 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect, type ComponentType } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+// Eager: layout, route guards, auth pages, public marketing, and the first
+// authenticated view (Dashboard). These are on the critical path so we don't
+// want a chunk round-trip for them.
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminPage } from "@/features/admin/AdminPage";
-import { AgentRunDetailPage } from "@/features/agents/AgentRunDetailPage";
-import { AgentsDashboardPage } from "@/features/agents/AgentsDashboardPage";
-import { BillingPage } from "@/features/billing/BillingPage";
-import { CampaignDetailPage } from "@/features/campaigns/CampaignDetailPage";
-import { CampaignsPage } from "@/features/campaigns/CampaignsPage";
-import { CreativesPage } from "@/features/creatives/CreativesPage";
-import { ContentDraftDetailPage } from "@/features/content/ContentDraftDetailPage";
-import { ContentDraftsPage } from "@/features/content/ContentDraftsPage";
-import { BlogEditorPage } from "@/features/blog/BlogEditorPage";
-import { BlogPostsPage } from "@/features/blog/BlogPostsPage";
-import { AbTestDetailPage } from "@/features/ab-tests/AbTestDetailPage";
-import { AbTestsPage } from "@/features/ab-tests/AbTestsPage";
-import { OutreachPage } from "@/features/outreach/OutreachPage";
-import { ProspectDetailPage } from "@/features/outreach/ProspectDetailPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { GoogleFinishPage } from "@/features/auth/GoogleFinishPage";
 import { LoginPage } from "@/features/auth/LoginPage";
@@ -36,23 +24,47 @@ import {
   ensureApiClientConfigured,
 } from "@/features/auth/auth-runtime";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
-import { GrowthDnaPage } from "@/features/growth-dna/GrowthDnaPage";
-import { IntegrationsPage } from "@/features/integrations/IntegrationsPage";
-import { OnboardingWizardPage } from "@/features/onboarding/OnboardingWizardPage";
-import { RecommendationDetailPage } from "@/features/recommendations/RecommendationDetailPage";
-import { RecommendationsPage } from "@/features/recommendations/RecommendationsPage";
-import { ReportDetailPage } from "@/features/reports/ReportDetailPage";
-import { ReportsPage } from "@/features/reports/ReportsPage";
-import { SeoPage } from "@/features/seo/SeoPage";
-import { WebsitePage } from "@/features/website/WebsitePage";
-import { AutopilotPage } from "@/features/autopilot/AutopilotPage";
-import { ApiKeysPage } from "@/features/settings/ApiKeysPage";
-import { ProfilePage } from "@/features/settings/ProfilePage";
-import { ProviderCredentialsPage } from "@/features/settings/ProviderCredentialsPage";
 import { SettingsLayout } from "@/features/settings/SettingsLayout";
-import { WorkspaceApiKeysPage } from "@/features/settings/WorkspaceApiKeysPage";
 import { RequireWorkspace } from "@/features/workspaces/RequireWorkspace";
 import { WorkspaceSelectorPage } from "@/features/workspaces/WorkspaceSelectorPage";
+
+// Lazy: the bulk of the authenticated app. Each becomes its own chunk loaded on
+// first navigation, shrinking the initial bundle. `lazyPage` adapts our named
+// exports to React.lazy's default-export contract.
+function lazyPage(loader: () => Promise<Record<string, unknown>>, name: string) {
+  return lazy(async () => ({ default: (await loader())[name] as ComponentType }));
+}
+
+const AdminPage = lazyPage(() => import("@/features/admin/AdminPage"), "AdminPage");
+const AgentRunDetailPage = lazyPage(() => import("@/features/agents/AgentRunDetailPage"), "AgentRunDetailPage");
+const AgentsDashboardPage = lazyPage(() => import("@/features/agents/AgentsDashboardPage"), "AgentsDashboardPage");
+const BillingPage = lazyPage(() => import("@/features/billing/BillingPage"), "BillingPage");
+const CampaignDetailPage = lazyPage(() => import("@/features/campaigns/CampaignDetailPage"), "CampaignDetailPage");
+const CampaignsPage = lazyPage(() => import("@/features/campaigns/CampaignsPage"), "CampaignsPage");
+const CreativesPage = lazyPage(() => import("@/features/creatives/CreativesPage"), "CreativesPage");
+const ContentDraftDetailPage = lazyPage(() => import("@/features/content/ContentDraftDetailPage"), "ContentDraftDetailPage");
+const ContentDraftsPage = lazyPage(() => import("@/features/content/ContentDraftsPage"), "ContentDraftsPage");
+const BlogEditorPage = lazyPage(() => import("@/features/blog/BlogEditorPage"), "BlogEditorPage");
+const BlogPostsPage = lazyPage(() => import("@/features/blog/BlogPostsPage"), "BlogPostsPage");
+const AbTestDetailPage = lazyPage(() => import("@/features/ab-tests/AbTestDetailPage"), "AbTestDetailPage");
+const AbTestsPage = lazyPage(() => import("@/features/ab-tests/AbTestsPage"), "AbTestsPage");
+const OutreachPage = lazyPage(() => import("@/features/outreach/OutreachPage"), "OutreachPage");
+const ProspectDetailPage = lazyPage(() => import("@/features/outreach/ProspectDetailPage"), "ProspectDetailPage");
+const GrowthDnaPage = lazyPage(() => import("@/features/growth-dna/GrowthDnaPage"), "GrowthDnaPage");
+const IntegrationsPage = lazyPage(() => import("@/features/integrations/IntegrationsPage"), "IntegrationsPage");
+const OnboardingWizardPage = lazyPage(() => import("@/features/onboarding/OnboardingWizardPage"), "OnboardingWizardPage");
+const RecommendationDetailPage = lazyPage(() => import("@/features/recommendations/RecommendationDetailPage"), "RecommendationDetailPage");
+const RecommendationsPage = lazyPage(() => import("@/features/recommendations/RecommendationsPage"), "RecommendationsPage");
+const ReportDetailPage = lazyPage(() => import("@/features/reports/ReportDetailPage"), "ReportDetailPage");
+const ReportsPage = lazyPage(() => import("@/features/reports/ReportsPage"), "ReportsPage");
+const SeoPage = lazyPage(() => import("@/features/seo/SeoPage"), "SeoPage");
+const WebsitePage = lazyPage(() => import("@/features/website/WebsitePage"), "WebsitePage");
+const AutopilotPage = lazyPage(() => import("@/features/autopilot/AutopilotPage"), "AutopilotPage");
+const AutorespondersPage = lazyPage(() => import("@/features/autoresponders/AutorespondersPage"), "AutorespondersPage");
+const ApiKeysPage = lazyPage(() => import("@/features/settings/ApiKeysPage"), "ApiKeysPage");
+const ProfilePage = lazyPage(() => import("@/features/settings/ProfilePage"), "ProfilePage");
+const ProviderCredentialsPage = lazyPage(() => import("@/features/settings/ProviderCredentialsPage"), "ProviderCredentialsPage");
+const WorkspaceApiKeysPage = lazyPage(() => import("@/features/settings/WorkspaceApiKeysPage"), "WorkspaceApiKeysPage");
 
 ensureApiClientConfigured();
 
@@ -77,6 +89,13 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <Suspense
+          fallback={
+            <div className="flex min-h-screen items-center justify-center text-sm text-slate-400">
+              Loading…
+            </div>
+          }
+        >
         <Routes>
           {/* Public */}
           <Route path="/" element={<LandingPage />} />
@@ -131,6 +150,7 @@ export function App() {
                 <Route path="campaigns" element={<CampaignsPage />} />
                 <Route path="campaigns/:campaignId" element={<CampaignDetailPage />} />
                 <Route path="creatives" element={<CreativesPage />} />
+                <Route path="autoresponders" element={<AutorespondersPage />} />
                 <Route path="content" element={<ContentDraftsPage />} />
                 <Route path="content/:draftId" element={<ContentDraftDetailPage />} />
                 <Route path="blog/posts" element={<BlogPostsPage />} />
@@ -148,6 +168,7 @@ export function App() {
             </Route>
           </Route>
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   );

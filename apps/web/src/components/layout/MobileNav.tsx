@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 type Item = { to: string; label: string };
 
 const items: Item[] = [
-  { to: "/", label: "Home" },
+  { to: "/dashboard", label: "Home" },
   { to: "/agents", label: "Agents" },
   { to: "/recommendations", label: "Recs" },
   { to: "/campaigns", label: "Ads" },
@@ -22,7 +22,7 @@ export function MobileNav() {
         <NavLink
           key={item.to}
           to={item.to}
-          end={item.to === "/"}
+          end={item.to === "/dashboard"}
           className={({ isActive }) =>
             cn(
               "flex flex-1 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium transition",

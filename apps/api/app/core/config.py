@@ -72,6 +72,17 @@ class Settings(BaseSettings):
     anthropic_model: str = Field(default="claude-sonnet-4-6", alias="ANTHROPIC_MODEL")
     google_ai_api_key: str = Field(default="", alias="GOOGLE_AI_API_KEY")
     google_ai_model: str = Field(default="gemini-1.5-flash", alias="GOOGLE_AI_MODEL")
+    # Optional faster/cheaper model used ONLY for large background generations
+    # (the Growth DNA marketing strategy). Must match the active provider's
+    # naming (e.g. claude-haiku-4-5 for anthropic, gpt-5.4-mini for openai).
+    # Empty = use the provider's normal model.
+    llm_fast_model: str = Field(default="", alias="LLM_FAST_MODEL")
+    # Per-request HTTP timeout (seconds) for LLM provider calls. Larger
+    # generations (e.g. the full Growth DNA marketing strategy) can legitimately
+    # run longer than the old 60s default, so this is generous by default.
+    llm_http_timeout_seconds: float = Field(
+        default=120.0, alias="LLM_HTTP_TIMEOUT_SECONDS"
+    )
 
     # Inbound email parsing — Postmark/Sendgrid/Mailgun-style webhooks.
     # When `inbound_email_domain` is set, outreach emails go out with a
@@ -139,6 +150,49 @@ class Settings(BaseSettings):
                 return json.loads(stripped)
             return [origin.strip() for origin in stripped.split(",") if origin.strip()]
         return value
+
+
+def validate_production_settings(s: "Settings") -> list[str]:
+    """Return a list of fatal misconfigurations for a *production* deploy.
+
+    Pure function (no side effects) so it can be unit-tested without booting
+    the app. Returns an empty list for non-production environments or when the
+    config is safe. The app refuses to start (in ``main.lifespan``) when this
+    returns anything, so a forgotten env var can never silently ship an
+    insecure default (e.g. the public dev signing key)."""
+    if (s.app_env or "").lower() != "production":
+        return []
+
+    problems: list[str] = []
+
+    if s.app_secret_key in ("", "dev-secret-change-me") or len(s.app_secret_key) < 32:
+        problems.append(
+            "APP_SECRET_KEY must be a strong, random value of at least 32 "
+            "characters in production (it signs every JWT and OAuth state token)."
+        )
+    if s.app_debug:
+        problems.append("APP_DEBUG must be false in production (it leaks verbose errors).")
+
+    key = (s.encryption_key or "").strip()
+    if not key:
+        problems.append("ENCRYPTION_KEY must be set in production (it encrypts OAuth tokens at rest).")
+    else:
+        try:
+            from cryptography.fernet import Fernet
+
+            Fernet(key.encode("utf-8"))
+        except Exception:
+            problems.append(
+                "ENCRYPTION_KEY is not a valid Fernet key. Generate one with "
+                "`python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\"`."
+            )
+
+    if "*" in s.cors_origins:
+        problems.append(
+            "CORS_ORIGINS must not include '*' in production because credentials are allowed."
+        )
+
+    return problems
 
 
 @lru_cache(maxsize=1)

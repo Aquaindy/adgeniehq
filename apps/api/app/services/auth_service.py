@@ -48,10 +48,14 @@ def authenticate_user(db: Session, *, email: str, password: str) -> User:
     return user
 
 
-def issue_tokens(user: User) -> tuple[str, datetime, str, datetime]:
+def issue_tokens(db: Session, user: User) -> tuple[str, datetime, str]:
+    """Mint an access token plus a tracked refresh token (recorded server-side
+    so it can be revoked). Returns (access_token, access_exp, refresh_token)."""
+    from app.services import refresh_token_service
+
     access_token, access_exp = create_token(subject=user.id, token_type="access")
-    refresh_token, refresh_exp = create_token(subject=user.id, token_type="refresh")
-    return access_token, access_exp, refresh_token, refresh_exp
+    refresh_token = refresh_token_service.issue_refresh_token(db, user=user)
+    return access_token, access_exp, refresh_token
 
 
 def access_token_seconds_remaining(expires_at: datetime) -> int:

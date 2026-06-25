@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from redis import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import text
@@ -14,12 +14,46 @@ router = APIRouter()
 
 @router.get("", response_model=HealthResponse)
 def health() -> HealthResponse:
+    """Liveness — is the process up. Cheap, no dependency probes."""
     return HealthResponse(
         status="ok",
         app=settings.app_name,
         env=settings.app_env,
         version="0.0.1",
     )
+
+
+@router.get("/ready")
+def health_ready(response: Response, db: Session = Depends(get_db)) -> dict:
+    """Readiness — probes Postgres AND Redis and returns **503** if either is
+    down, so a load balancer / Render health check pulls a brownout instance
+    out of rotation instead of routing traffic to it."""
+    checks: dict[str, str] = {}
+    healthy = True
+
+    try:
+        db.execute(text("SELECT 1"))
+        checks["postgres"] = "ok"
+    except SQLAlchemyError as exc:
+        checks["postgres"] = f"error:{exc.__class__.__name__}"
+        healthy = False
+
+    client = Redis.from_url(settings.redis_url, socket_connect_timeout=2)
+    try:
+        client.ping()
+        checks["redis"] = "ok"
+    except RedisError as exc:
+        checks["redis"] = f"error:{exc.__class__.__name__}"
+        healthy = False
+    finally:
+        try:
+            client.close()
+        except Exception:  # pragma: no cover — defensive
+            pass
+
+    if not healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return {"status": "ok" if healthy else "degraded", "checks": checks}
 
 
 @router.get("/db", response_model=ComponentHealth)

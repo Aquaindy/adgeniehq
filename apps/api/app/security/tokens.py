@@ -24,14 +24,18 @@ def _expiry_for(token_type: TokenType) -> datetime:
     return now + timedelta(days=settings.jwt_refresh_token_expire_days)
 
 
-def create_token(*, subject: UUID | str, token_type: TokenType) -> tuple[str, datetime]:
+def create_token(
+    *, subject: UUID | str, token_type: TokenType, jti: str | None = None
+) -> tuple[str, datetime]:
+    """Mint a signed JWT. Pass an explicit ``jti`` when the caller needs to
+    persist it (refresh tokens are tracked server-side for revocation)."""
     expires_at = _expiry_for(token_type)
     payload = {
         "sub": str(subject),
         "type": token_type,
         "iat": int(datetime.now(timezone.utc).timestamp()),
         "exp": int(expires_at.timestamp()),
-        "jti": str(uuid4()),
+        "jti": jti or str(uuid4()),
     }
     token = jwt.encode(payload, settings.app_secret_key, algorithm=ALGORITHM)
     return token, expires_at

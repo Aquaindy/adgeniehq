@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AdVantaError
@@ -11,6 +11,7 @@ from app.schemas.onboarding import OnboardingProfilePublic, OnboardingProfileUpd
 from app.security.dependencies import get_current_member, require_role
 from app.security.permissions import Role
 from app.services.growth_dna_service import (
+    enrich_growth_dna_background,
     generate_growth_dna,
     get_latest_for_workspace,
 )
@@ -59,11 +60,16 @@ def update_onboarding(
 )
 def generate_growth_dna_endpoint(
     workspace_id: UUID,
+    background_tasks: BackgroundTasks,
     _member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
     db: Session = Depends(get_db),
 ) -> GrowthDnaPublic:
     profile = get_or_create_profile(db, workspace_id=workspace_id)
+    # Returns the deterministic profile immediately; the AI tailoring runs in
+    # the background so the request never blocks on a slow LLM call.
     dna = generate_growth_dna(db, profile=profile)
+    if (dna.marketing_strategy or {}).get("enrichment") == "pending":
+        background_tasks.add_task(enrich_growth_dna_background, workspace_id, dna.id)
     return GrowthDnaPublic.model_validate(dna)
 
 

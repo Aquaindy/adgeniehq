@@ -1,6 +1,9 @@
 import { apiFetch } from "@/lib/api-client";
 import type {
+  CampaignActionResponse,
   CampaignDetail,
+  CampaignLaunchRequest,
+  CampaignLaunchResponse,
   CampaignPublic,
   CampaignStatus,
   CampaignSummary,
@@ -29,4 +32,36 @@ export function syncCampaigns(workspaceId: string, provider?: string) {
     method: "POST",
     query: provider ? { provider } : undefined,
   });
+}
+
+export function launchCampaign(workspaceId: string, body: CampaignLaunchRequest) {
+  return apiFetch<CampaignLaunchResponse>(`/workspaces/${workspaceId}/campaigns/launch`, {
+    method: "POST",
+    body,
+  });
+}
+
+export function pauseCampaign(workspaceId: string, campaignId: string) {
+  return apiFetch<CampaignActionResponse>(
+    `/workspaces/${workspaceId}/campaigns/${campaignId}/pause`,
+    { method: "POST" },
+  );
+}
+
+export function resumeCampaign(workspaceId: string, campaignId: string) {
+  return apiFetch<CampaignActionResponse>(
+    `/workspaces/${workspaceId}/campaigns/${campaignId}/resume`,
+    { method: "POST" },
+  );
+}
+
+export function updateCampaignBudget(
+  workspaceId: string,
+  campaignId: string,
+  dailyBudgetCents: number,
+) {
+  return apiFetch<CampaignActionResponse>(
+    `/workspaces/${workspaceId}/campaigns/${campaignId}/budget`,
+    { method: "POST", body: { daily_budget_cents: dailyBudgetCents } },
+  );
 }

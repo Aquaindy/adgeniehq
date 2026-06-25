@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CampaignSuggestion(BaseModel):
@@ -15,6 +15,84 @@ class GrowthPlanWeek(BaseModel):
     week: int
     focus: str
     deliverables: list[str]
+
+
+# --- Comprehensive marketing strategy ---------------------------------------
+
+
+class ChannelStrategy(BaseModel):
+    channel: str
+    category: str  # paid | owned | earned | foundation
+    priority: str  # high | medium | low
+    status: str  # ready | needs_setup | recommended
+    cadence: str = ""
+    summary: str = ""
+    tactics: list[str] = Field(default_factory=list)
+    kpis: list[str] = Field(default_factory=list)
+    first_step: str = ""
+
+
+class ContentPillar(BaseModel):
+    name: str
+    allocation_pct: int
+    description: str = ""
+    example_hooks: list[str] = Field(default_factory=list)
+
+
+class PlatformPlan(BaseModel):
+    platform: str
+    cadence: str = ""
+    focus: str = ""
+    best_for: str = ""
+
+
+class EmailFlow(BaseModel):
+    name: str
+    trigger: str = ""
+    goal: str = ""
+
+
+class EmailStrategy(BaseModel):
+    summary: str = ""
+    newsletter_cadence: str = ""
+    flows: list[EmailFlow] = Field(default_factory=list)
+    kpis: list[str] = Field(default_factory=list)
+
+
+class CalendarEntry(BaseModel):
+    day: int
+    channel: str = ""
+    format: str = ""
+    pillar: str = ""
+    hook: str = ""
+    caption_direction: str = ""
+
+
+class BudgetAllocation(BaseModel):
+    channel: str
+    pct: int
+    rationale: str = ""
+
+
+class MarketingOverview(BaseModel):
+    model: str = "general"
+    thesis: str = ""
+    priorities: list[str] = Field(default_factory=list)
+    budget_allocation: list[BudgetAllocation] = Field(default_factory=list)
+
+
+class MarketingStrategy(BaseModel):
+    overview: MarketingOverview = Field(default_factory=MarketingOverview)
+    channels: list[ChannelStrategy] = Field(default_factory=list)
+    content_pillars: list[ContentPillar] = Field(default_factory=list)
+    platform_strategy: list[PlatformPlan] = Field(default_factory=list)
+    email_strategy: EmailStrategy = Field(default_factory=EmailStrategy)
+    content_calendar: list[CalendarEntry] = Field(default_factory=list)
+    source: str = "deterministic"  # deterministic | ai
+    model_used: str | None = None
+    # AI-tailoring lifecycle: "pending" (running in background) | "enriched"
+    # (AI applied) | "skipped" (no LLM / failed — deterministic kept) | None.
+    enrichment: str | None = None
 
 
 class GrowthDnaPublic(BaseModel):
@@ -37,6 +115,7 @@ class GrowthDnaPublic(BaseModel):
 
     recommended_first_campaigns: list[CampaignSuggestion]
     thirty_day_growth_plan: list[GrowthPlanWeek]
+    marketing_strategy: MarketingStrategy = Field(default_factory=MarketingStrategy)
 
     engine_version: str
 

@@ -24,6 +24,14 @@ class AdGroupStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class AdObjectSource(StrEnum):
+    """Where an ad-hierarchy object came from. Synced objects are read-only;
+    AdVanta drafts are user-built in the app and editable."""
+
+    PLATFORM_SYNCED = "platform_synced"
+    ADVANTA_DRAFT = "advanta_draft"
+
+
 class AdGroup(Base, TimestampMixin):
     __tablename__ = "ad_groups"
     __table_args__ = (
@@ -45,7 +53,17 @@ class AdGroup(Base, TimestampMixin):
         nullable=False,
         index=True,
     )
-    external_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    # Null for AdVanta drafts not yet pushed to the platform.
+    external_id: Mapped[str | None] = mapped_column(String(128))
+    source: Mapped[AdObjectSource] = mapped_column(
+        Enum(
+            AdObjectSource,
+            name="ad_group_source",
+            values_callable=lambda enum: [m.value for m in enum],
+        ),
+        nullable=False,
+        default=AdObjectSource.PLATFORM_SYNCED,
+    )
     name: Mapped[str] = mapped_column(String(512), nullable=False)
     status: Mapped[AdGroupStatus] = mapped_column(
         Enum(

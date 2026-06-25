@@ -1,5 +1,14 @@
 # Render blueprint for AdVanta AI.
 # https://render.com/docs/blueprint-spec
+#
+# Provisions everything: Postgres, Redis, the FastAPI API (web), the Celery
+# worker+beat, and the nginx-served SPA. Domains for getadvanta.app are baked in.
+#
+# Secrets are `sync: false` (NOT stored here) — set them once in the Render
+# dashboard after the first deploy. See docs/deployment.md for the full
+# checklist. APP_SECRET_KEY + ENCRYPTION_KEY + LLM/OAuth/Paddle creds live in a
+# shared env-var GROUP so the api and worker always use identical values
+# (tokens encrypted by one service must decrypt in the other).
 
 databases:
   - name: advanta-postgres
@@ -7,77 +16,80 @@ databases:
     databaseName: advanta_ai
     user: advanta
 
-services:
-  - type: redis
-    name: advanta-redis
-    plan: starter
-    ipAllowList: []  # internal-only
-
-  - type: web
-    name: advanta-api
-    runtime: docker
-    dockerfilePath: ./infra/docker/Dockerfile.api
-    dockerContext: .
-    plan: standard
-    healthCheckPath: /api/v1/health
-    autoDeploy: true
-    preDeployCommand: alembic upgrade head
-    domains:
-      - api.getadvanta.app
-    # Blog-image uploads write to /app/uploads, which is EPHEMERAL on Render —
-    # images are lost on every deploy/restart. For production, use object
-    # storage (S3 / Cloudflare R2). A persistent disk is possible but pins the
-    # service to one instance, drops zero-downtime deploys, and the container
-    # runs as non-root (uid 10001) while Render mounts disks as root, so writes
-    # can fail without an entrypoint chown. Uncomment only if you accept that.
-    # disk:
-    #   name: advanta-uploads
-    #   mountPath: /app/uploads
-    #   sizeGB: 1
+# ---------------------------------------------------------------------------
+# Shared secrets/config for the api + worker. DATABASE_URL / REDIS_URL are NOT
+# here — they use fromDatabase/fromService, which env groups don't support, so
+# each service declares them individually (both point at the same instances).
+# ---------------------------------------------------------------------------
+envVarGroups:
+  - name: advanta-shared
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
-      - key: LLM_PROVIDER
-        value: openai
-      - key: LLM_MODEL
-        value: gpt-5.4-mini
-      - key: DATABASE_URL
-        fromDatabase:
-          name: advanta-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: advanta-redis
-          type: redis
-          property: connectionString
+      # Generated ONCE here and shared by every service that references the
+      # group — no manual copy between api and worker.
       - key: APP_SECRET_KEY
         generateValue: true
+      # Fernet key — generate and paste in the dashboard (see docs). Must be set
+      # before the first real boot; the app refuses to start without it in prod.
       - key: ENCRYPTION_KEY
-        sync: false  # set manually with a Fernet key
+        sync: false
       - key: FRONTEND_URL
         value: https://getadvanta.app
       - key: BACKEND_URL
         value: https://api.getadvanta.app
-      - key: CORS_ORIGINS
-        value: '["https://getadvanta.app","https://www.getadvanta.app"]'
-      - key: STRIPE_SECRET_KEY
+
+      # --- LLM: Anthropic Sonnet for agents; gpt-5.4-mini for the Growth DNA
+      #     background generation (cross-provider fast model needs the OpenAI key)
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
         sync: false
-      - key: STRIPE_WEBHOOK_SECRET
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-4-6
+      - key: LLM_MODEL
+        value: gpt-5.4-mini
+      - key: LLM_FAST_MODEL
+        value: gpt-5.4-mini
+      - key: OPENAI_API_KEY
         sync: false
-      - key: STRIPE_PRICE_ID_STARTER
+
+      # --- Subscription billing: Paddle (Merchant of Record)
+      - key: PADDLE_API_KEY
         sync: false
-      - key: STRIPE_PRICE_ID_PRO
+      - key: PADDLE_CLIENT_TOKEN
         sync: false
-      - key: STRIPE_PRICE_ID_AGENCY
+      - key: PADDLE_WEBHOOK_SECRET
         sync: false
+      - key: PADDLE_ENVIRONMENT
+        value: production
+      - key: PADDLE_PRICE_ID_STARTER
+        sync: false
+      - key: PADDLE_PRICE_ID_PRO
+        sync: false
+      - key: PADDLE_PRICE_ID_AGENCY
+        sync: false
+
+      # --- Google OAuth: integration client (Ads / GA4 / Search Console)
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_ADS_DEVELOPER_TOKEN
         sync: false
+      - key: GOOGLE_ADS_LOGIN_CUSTOMER_ID
+        sync: false
+      # --- Google OAuth: "Sign in with Google" (separate client)
+      - key: GOOGLE_LOGIN_CLIENT_ID
+        sync: false
+      - key: GOOGLE_LOGIN_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_LOGIN_REDIRECT_URI
+        value: https://api.getadvanta.app/api/v1/auth/google/callback
+
+      # --- Other ad platforms
       - key: META_APP_ID
         sync: false
       - key: META_APP_SECRET
@@ -86,10 +98,8 @@ services:
         sync: false
       - key: LINKEDIN_CLIENT_SECRET
         sync: false
-      - key: PAGESPEED_API_KEY
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
+
+      # --- Email: outbound SMTP + inbound parse
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -104,37 +114,46 @@ services:
         sync: false
       - key: INBOUND_EMAIL_SECRET
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: WORKERS_ENABLED
-        value: "1"
 
-  # Background worker — picks up slow tasks queued from the api service.
-  # `preDeployCommand` runs alembic before swap so the worker never boots
-  # against a schema older than its task code expects. Alembic is idempotent
-  # so it's safe for both this and the api service to run it; whichever
-  # deploys first applies the migrations.
-  - type: worker
-    name: advanta-worker
+      # --- Observability + misc (all optional)
+      - key: SENTRY_DSN
+        sync: false
+      - key: PAGESPEED_API_KEY
+        sync: false
+
+services:
+  - type: redis
+    name: advanta-redis
+    plan: starter
+    ipAllowList: []  # internal-only
+
+  - type: web
+    name: advanta-api
     runtime: docker
     dockerfilePath: ./infra/docker/Dockerfile.api
     dockerContext: .
     plan: standard
+    # Readiness probe: returns 503 when Postgres or Redis is down so Render
+    # pulls a brownout instance out of rotation (the bare /health is liveness
+    # only and stays 200 even with a dead dependency).
+    healthCheckPath: /api/v1/health/ready
     autoDeploy: true
+    # Applies pending migrations before traffic shifts. Alembic is idempotent so
+    # it's safe for both api + worker to run it; whichever deploys first applies.
     preDeployCommand: alembic upgrade head
-    # `--beat` runs the periodic-task scheduler in the same process as the
-    # worker. Fine at single-replica scale; if you scale out the worker,
-    # break this into two services (one with --beat, one without).
-    dockerCommand: celery -A app.core.celery_app.celery_app worker --beat --loglevel=info --concurrency=4
+    domains:
+      - api.getadvanta.app
+    # Blog-image uploads write to /app/uploads, which is EPHEMERAL on Render —
+    # images are lost on every deploy/restart. For production use object storage
+    # (S3 / Cloudflare R2). A persistent disk pins the service to one instance,
+    # drops zero-downtime deploys, and needs an entrypoint chown (container runs
+    # as uid 10001, Render mounts disks as root). Uncomment only if you accept that.
+    # disk:
+    #   name: advanta-uploads
+    #   mountPath: /app/uploads
+    #   sizeGB: 1
     envVars:
-      - key: APP_ENV
-        value: production
-      - key: APP_DEBUG
-        value: "false"
-      - key: LLM_PROVIDER
-        value: openai
-      - key: LLM_MODEL
-        value: gpt-5.4-mini
+      - fromGroup: advanta-shared
       - key: DATABASE_URL
         fromDatabase:
           name: advanta-postgres
@@ -144,38 +163,36 @@ services:
           name: advanta-redis
           type: redis
           property: connectionString
-      - key: APP_SECRET_KEY
-        sync: false  # mirror the value used by advanta-api
-      - key: ENCRYPTION_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: GOOGLE_CLIENT_ID
-        sync: false
-      - key: GOOGLE_CLIENT_SECRET
-        sync: false
-      - key: GOOGLE_ADS_DEVELOPER_TOKEN
-        sync: false
-      - key: META_APP_ID
-        sync: false
-      - key: META_APP_SECRET
-        sync: false
-      - key: LINKEDIN_CLIENT_ID
-        sync: false
-      - key: LINKEDIN_CLIENT_SECRET
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        sync: false
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: SMTP_FROM
-        sync: false
-      - key: INBOUND_EMAIL_DOMAIN
-        sync: false
+      - key: CORS_ORIGINS
+        value: '["https://getadvanta.app","https://www.getadvanta.app"]'
+      # Dispatch slow tasks to the worker instead of running them inline.
+      - key: WORKERS_ENABLED
+        value: "1"
+
+  # Background worker + beat scheduler. SINGLE REPLICA only: `--beat` runs the
+  # periodic scheduler in-process, so scaling this out would fire the monthly
+  # fee accrual + autopilot scan once per replica. To scale workers, split beat
+  # into its own dedicated single-replica service first.
+  - type: worker
+    name: advanta-worker
+    runtime: docker
+    dockerfilePath: ./infra/docker/Dockerfile.api
+    dockerContext: .
+    plan: standard
+    autoDeploy: true
+    preDeployCommand: alembic upgrade head
+    dockerCommand: celery -A app.core.celery_app.celery_app worker --beat --loglevel=info --concurrency=4
+    envVars:
+      - fromGroup: advanta-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: advanta-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: advanta-redis
+          type: redis
+          property: connectionString
 
   - type: web
     name: advanta-web

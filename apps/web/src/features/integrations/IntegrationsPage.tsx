@@ -96,13 +96,18 @@ function IntegrationCard({ entry }: { entry: IntegrationStatus }) {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  // Default to requesting write access so users can run/manage ads; they can
+  // opt down to read-only (analytics + recommendations) before connecting.
+  const [enableWrite, setEnableWrite] = useState(true);
+  const supportsWrite = entry.write_scopes.length > 0;
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["integrations", workspaceId] });
   }
 
   const connect = useMutation({
-    mutationFn: () => getConnectUrl(workspaceId!, entry.provider),
+    mutationFn: () =>
+      getConnectUrl(workspaceId!, entry.provider, enableWrite ? "write" : "read"),
     onSuccess: (resp) => {
       // Hand off to the provider's OAuth screen
       window.location.href = resp.authorization_url;
@@ -162,6 +167,27 @@ function IntegrationCard({ entry }: { entry: IntegrationStatus }) {
             {entry.last_sync_at ? new Date(entry.last_sync_at).toLocaleString() : "—"}
           </dd>
         </div>
+        {supportsWrite ? (
+          <div>
+            <dt className="text-slate-400">Write access</dt>
+            <dd
+              className={cn(
+                "font-medium",
+                entry.status !== "connected"
+                  ? "text-slate-500"
+                  : entry.can_write
+                    ? "text-emerald-700"
+                    : "text-amber-700",
+              )}
+            >
+              {entry.status !== "connected"
+                ? "—"
+                : entry.can_write
+                  ? "Run & manage ads"
+                  : "Read-only"}
+            </dd>
+          </div>
+        ) : null}
       </dl>
 
       {entry.last_error ? (
@@ -176,12 +202,36 @@ function IntegrationCard({ entry }: { entry: IntegrationStatus }) {
         </div>
       ) : null}
 
+      {entry.status !== "connected" && supportsWrite ? (
+        <label className="mt-4 flex items-center gap-2 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={enableWrite}
+            onChange={(e) => setEnableWrite(e.target.checked)}
+          />
+          Enable write access — lets AdVanta run &amp; manage ads (not just read
+          analytics). You can reconnect to change this later.
+        </label>
+      ) : null}
+
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {entry.status === "connected" ? (
           <>
             <Button onClick={() => sync.mutate()} disabled={busy}>
               {sync.isPending ? "Syncing…" : "Sync now"}
             </Button>
+            {supportsWrite && !entry.can_write ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setEnableWrite(true);
+                  connect.mutate();
+                }}
+                disabled={busy}
+              >
+                {connect.isPending ? "Opening…" : "Grant write access"}
+              </Button>
+            ) : null}
             <Button variant="ghost" onClick={() => disconnect.mutate()} disabled={busy}>
               {disconnect.isPending ? "Disconnecting…" : "Disconnect"}
             </Button>

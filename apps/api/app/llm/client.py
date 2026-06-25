@@ -186,12 +186,22 @@ class OpenAIClient(LlmClient):
             raise LlmNotConfiguredError(
                 "OPENAI_API_KEY is not set. Configure it or use a deterministic fallback."
             )
-        body = {
+        body: dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": m.role, "content": m.content} for m in messages],
-            "max_tokens": max_tokens,
-            "temperature": temperature,
         }
+        # Newer OpenAI models (GPT-5 family + o1/o3/o4 reasoning models) replaced
+        # `max_tokens` with `max_completion_tokens` and only accept the default
+        # temperature. Older models keep the legacy params.
+        mdl = (self.model or "").lower()
+        new_family = mdl.startswith(("gpt-5", "gpt-6", "o1", "o3", "o4"))
+        if new_family:
+            body["max_completion_tokens"] = max_tokens
+            if temperature == 1:
+                body["temperature"] = temperature
+        else:
+            body["max_tokens"] = max_tokens
+            body["temperature"] = temperature
         try:
             response = httpx.post(
                 f"{self.base_url}/chat/completions",
@@ -200,7 +210,7 @@ class OpenAIClient(LlmClient):
                     "Content-Type": "application/json",
                 },
                 json=body,
-                timeout=60.0,
+                timeout=settings.llm_http_timeout_seconds,
             )
         except httpx.HTTPError as exc:
             raise LlmError(f"OpenAI request failed: {exc}") from exc
@@ -244,7 +254,7 @@ class OpenAIClient(LlmClient):
                     "n": 1,
                     "response_format": "url",
                 },
-                timeout=60.0,
+                timeout=settings.llm_http_timeout_seconds,
             )
         except httpx.HTTPError as exc:
             raise LlmError(f"OpenAI image request failed: {exc}") from exc
@@ -315,7 +325,7 @@ class AnthropicClient(LlmClient):
                     "Content-Type": "application/json",
                 },
                 json=body,
-                timeout=60.0,
+                timeout=settings.llm_http_timeout_seconds,
             )
         except httpx.HTTPError as exc:
             raise LlmError(f"Anthropic request failed: {exc}") from exc
@@ -398,7 +408,7 @@ class GoogleAIClient(LlmClient):
                 params={"key": self.api_key},
                 headers={"Content-Type": "application/json"},
                 json=body,
-                timeout=60.0,
+                timeout=settings.llm_http_timeout_seconds,
             )
         except httpx.HTTPError as exc:
             raise LlmError(f"Google AI request failed: {exc}") from exc

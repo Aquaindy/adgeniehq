@@ -9,7 +9,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.api.v1 import api_router
-from app.core.config import settings
+from app.core.config import settings, validate_production_settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import configure_logging, get_logger
 from app.core.request_id import RequestIdMiddleware
@@ -41,6 +41,17 @@ if settings.sentry_dsn:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Fail fast on an insecure production config (default signing key, debug on,
+    # missing/invalid encryption key, wildcard CORS) rather than booting with a
+    # silently exploitable default.
+    config_problems = validate_production_settings(settings)
+    if config_problems:
+        for problem in config_problems:
+            log.error("config.production_invalid", problem=problem)
+        raise RuntimeError(
+            "Refusing to start: insecure production configuration:\n  - "
+            + "\n  - ".join(config_problems)
+        )
     log.info("api.startup", env=settings.app_env, debug=settings.app_debug)
     yield
     log.info("api.shutdown")

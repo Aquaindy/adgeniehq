@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
@@ -57,6 +58,9 @@ class AutopilotConfig(Base, TimestampMixin):
         ),
         nullable=False,
         default=AutopilotMode.OFF,
+        # Defense in depth: the DB itself defaults a config row to OFF, so any
+        # insert path that forgets to set mode can never land a live autopilot.
+        server_default="off",
     )
     # Spend guardrails.
     max_daily_spend_increase_cents: Mapped[int | None] = mapped_column(BigInteger)
@@ -84,7 +88,7 @@ class AutopilotConfig(Base, TimestampMixin):
     # Stop-loss kill switch — flipped by the Budget Guardian when something
     # is detected in the workspace (overspend, repeated execution failures).
     stop_loss_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
+        Boolean, nullable=False, default=False, server_default=text("false")
     )
     stop_loss_reason: Mapped[str | None] = mapped_column(Text)
     last_disabled_reason: Mapped[str | None] = mapped_column(String(512))

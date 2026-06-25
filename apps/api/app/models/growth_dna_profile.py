@@ -41,6 +41,13 @@ class GrowthDnaProfile(Base, TimestampMixin):
     recommended_first_campaigns: Mapped[list[dict]] = mapped_column(JSONB, nullable=False)
     thirty_day_growth_plan: Mapped[list[dict]] = mapped_column(JSONB, nullable=False)
 
+    # Comprehensive cross-channel marketing strategy bundle (paid, organic
+    # social, email/lifecycle, SEO, GEO, content, CRO, automation, referral,
+    # measurement) plus content pillars, platform plan, and content calendar.
+    marketing_strategy: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, default=dict, server_default="{}"
+    )
+
     engine_version: Mapped[str] = mapped_column(String(32), nullable=False)
 
     onboarding_profile = relationship("OnboardingProfile", back_populates="growth_dna_profiles")

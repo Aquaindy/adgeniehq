@@ -12,6 +12,8 @@ import {
   listCampaigns,
   syncCampaigns,
 } from "@/lib/campaigns";
+import { WorkspaceAnalyticsCard } from "@/features/analytics/AnalyticsPanels";
+import { NewCampaignPanel } from "@/features/campaigns/NewCampaignPanel";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { CampaignPublic, CampaignStatus, CampaignSummary } from "@/types/api";
@@ -37,6 +39,7 @@ export function CampaignsPage() {
   const [providerFilter, setProviderFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
   const [error, setError] = useState<string | null>(null);
+  const [showNew, setShowNew] = useState(false);
 
   const summary = useQuery({
     queryKey: ["campaigns", workspaceId, "summary"],
@@ -82,10 +85,25 @@ export function CampaignsPage() {
             optimization recommendations.
           </p>
         </div>
-        <Button onClick={() => sync.mutate()} disabled={sync.isPending}>
-          {sync.isPending ? "Syncing…" : "Sync now"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => sync.mutate()} disabled={sync.isPending}>
+            {sync.isPending ? "Syncing…" : "Sync now"}
+          </Button>
+          <Button onClick={() => setShowNew((v) => !v)}>
+            {showNew ? "Close" : "New campaign"}
+          </Button>
+        </div>
       </header>
+
+      {showNew && workspaceId ? (
+        <NewCampaignPanel
+          workspaceId={workspaceId}
+          onClose={() => setShowNew(false)}
+          onLaunched={() =>
+            queryClient.invalidateQueries({ queryKey: ["campaigns", workspaceId] })
+          }
+        />
+      ) : null}
 
       <UsageMeter resource="outbound_writes" />
 
@@ -99,6 +117,8 @@ export function CampaignsPage() {
           ) : null}
         </div>
       ) : null}
+
+      <WorkspaceAnalyticsCard />
 
       {summary.data ? <SummaryStrip summary={summary.data} /> : null}
 

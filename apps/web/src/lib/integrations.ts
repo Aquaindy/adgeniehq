@@ -9,9 +9,14 @@ export function listIntegrations(workspaceId: string) {
   return apiFetch<IntegrationStatus[]>(`/workspaces/${workspaceId}/integrations`);
 }
 
-export function getConnectUrl(workspaceId: string, providerId: string) {
+export function getConnectUrl(
+  workspaceId: string,
+  providerId: string,
+  scopeMode: "read" | "write" = "write",
+) {
   return apiFetch<ConnectUrlResponse>(
     `/workspaces/${workspaceId}/integrations/${providerId}/connect-url`,
+    { query: { scope_mode: scopeMode } },
   );
 }
 

@@ -11,10 +11,12 @@ from app.db.base import Base, TimestampMixin
 
 class SubscriptionSource(StrEnum):
     """Where the current plan grant comes from. `appsumo` rows are lifetime
-    deals with no Stripe customer and no recurring charge."""
+    deals with no Stripe customer and no recurring charge. `paddle` is the
+    Merchant-of-Record processor for recurring plans (handles global tax/VAT)."""
 
     STRIPE = "stripe"
     APPSUMO = "appsumo"
+    PADDLE = "paddle"
 
 
 class SubscriptionStatus(StrEnum):
@@ -58,6 +60,15 @@ class BillingSubscription(Base, TimestampMixin):
 
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(64), unique=True)
     stripe_price_id: Mapped[str | None] = mapped_column(String(64))
+
+    # Provider-neutral identifiers used by non-Stripe processors (Paddle).
+    # Kept separate from the stripe_* columns so AppSumo/Stripe rows are
+    # untouched. `management_url` is the processor-hosted page where the
+    # customer can update or cancel (Paddle returns these on the subscription).
+    external_subscription_id: Mapped[str | None] = mapped_column(String(64), unique=True)
+    external_price_id: Mapped[str | None] = mapped_column(String(64))
+    management_url: Mapped[str | None] = mapped_column(String(1024))
+
     plan_code: Mapped[str] = mapped_column(String(32), nullable=False, default="free")
 
     status: Mapped[SubscriptionStatus] = mapped_column(

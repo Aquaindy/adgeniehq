@@ -30,6 +30,10 @@ class IntegrationStatus(BaseModel):
     provider_account_id: str | None
     display_account_name: str | None
     scopes: list[str] | None
+    # Scopes this provider needs for outbound writes (run/manage ads), and
+    # whether the current connection actually granted them.
+    write_scopes: list[str] = []
+    can_write: bool = False
     connected_at: datetime | None
     last_sync_at: datetime | None
     last_error: str | None

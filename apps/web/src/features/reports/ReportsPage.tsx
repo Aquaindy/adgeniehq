@@ -121,10 +121,12 @@ export function ReportsPage() {
 function ReportRow({ report }: { report: ReportSummaryRow }) {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
   const [busy, setBusy] = useState<"pdf" | "csv" | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function download(format: "pdf" | "csv") {
     if (!workspaceId) return;
     setBusy(format);
+    setDownloadError(null);
     try {
       const blob = await fetchReportBlob(workspaceId, report.id, format);
       const url = URL.createObjectURL(blob);
@@ -135,6 +137,8 @@ function ReportRow({ report }: { report: ReportSummaryRow }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+    } catch {
+      setDownloadError(`Could not download the ${format.toUpperCase()}. Please try again.`);
     } finally {
       setBusy(null);
     }
@@ -181,6 +185,11 @@ function ReportRow({ report }: { report: ReportSummaryRow }) {
           {busy === "csv" ? "Downloading…" : "CSV"}
         </Button>
       </div>
+      {downloadError ? (
+        <p className="w-full text-right text-xs text-red-600" role="alert">
+          {downloadError}
+        </p>
+      ) : null}
     </li>
   );
 }

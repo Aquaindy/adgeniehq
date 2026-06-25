@@ -11,7 +11,7 @@ from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.schemas.users import UserPublic
 from app.security.dependencies import get_current_user
-from app.security.tokens import create_token, decode_token
+from app.security.tokens import create_token
 from app.services.auth_service import (
     access_token_seconds_remaining,
     authenticate_user,
@@ -46,8 +46,9 @@ def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
 
 
-def _build_token_response(response: Response, user: User) -> TokenResponse:
-    access_token, access_exp, refresh_token, _ = issue_tokens(user)
+def _build_token_response(response: Response, user: User, db: Session) -> TokenResponse:
+    access_token, access_exp, refresh_token = issue_tokens(db, user)
+    db.commit()  # persist the refresh-token ledger row
     refresh_max_age = settings.jwt_refresh_token_expire_days * 24 * 60 * 60
     _set_refresh_cookie(response, refresh_token, max_age_seconds=refresh_max_age)
     return TokenResponse(
@@ -69,7 +70,7 @@ def register(
         password=payload.password,
         full_name=payload.full_name,
     )
-    return _build_token_response(response, user)
+    return _build_token_response(response, user, db)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -93,7 +94,7 @@ def login(
             db, user=user, code=payload.otp_code
         ):
             raise two_factor_service.TwoFactorInvalidCodeError("Invalid 2FA code.")
-    return _build_token_response(response, user)
+    return _build_token_response(response, user, db)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -105,14 +106,21 @@ def refresh(
     if not advanta_refresh:
         raise RefreshNotProvidedError("Refresh token cookie missing.")
 
-    payload = decode_token(advanta_refresh, expected_type="refresh")
-    user = db.get(User, UUID(payload["sub"]))
-    if user is None or not user.is_active:
+    from app.services import refresh_token_service
+
+    try:
+        user, new_refresh_token = refresh_token_service.rotate(
+            db, presented_token=advanta_refresh
+        )
+    except (AdVantaError):
+        # Invalid / reused / expired refresh token — clear the cookie so the
+        # client stops presenting it, and surface 401.
+        db.commit()  # persist any reuse-triggered mass revocation
         _clear_refresh_cookie(response)
-        raise RefreshNotProvidedError("Refresh subject invalid.")
+        raise
+    db.commit()
 
     access_token, access_exp = create_token(subject=user.id, token_type="access")
-    new_refresh_token, _ = create_token(subject=user.id, token_type="refresh")
     refresh_max_age = settings.jwt_refresh_token_expire_days * 24 * 60 * 60
     _set_refresh_cookie(response, new_refresh_token, max_age_seconds=refresh_max_age)
 
@@ -124,7 +132,16 @@ def refresh(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response) -> Response:
+def logout(
+    response: Response,
+    db: Session = Depends(get_db),
+    advanta_refresh: str | None = Cookie(default=None),
+) -> Response:
+    # Revoke the presented refresh token server-side so it can't be reused.
+    from app.services import refresh_token_service
+
+    refresh_token_service.revoke_token_value(db, token=advanta_refresh)
+    db.commit()
     _clear_refresh_cookie(response)
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
@@ -337,7 +354,8 @@ def google_login_callback(
     # Set the same advanta_refresh cookie a normal /login sets — the frontend
     # /auth/google/finish page calls /auth/refresh on mount to get the access
     # token, then routes to `redirect_to`.
-    _, _access_exp, refresh_token, _ = issue_tokens(user)
+    _, _access_exp, refresh_token = issue_tokens(db, user)
+    db.commit()  # persist the refresh-token ledger row
     refresh_max_age = settings.jwt_refresh_token_expire_days * 24 * 60 * 60
     redirect.set_cookie(
         key=REFRESH_COOKIE_NAME,

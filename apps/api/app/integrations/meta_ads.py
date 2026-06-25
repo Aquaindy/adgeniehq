@@ -30,6 +30,28 @@ def _parse_meta_datetime(value: str | None) -> date | None:
         return None
 
 
+# Meta reports many action types; count the conversion-shaped ones.
+_CONVERSION_ACTION_HINTS = ("lead", "purchase", "complete_registration", "conversion", "subscribe")
+
+
+def _sum_conversion_actions(actions: object, *, as_float: bool = False) -> float:
+    """Sum the `value` of conversion-shaped action rows from Meta's
+    actions / action_values arrays."""
+    if not isinstance(actions, list):
+        return 0.0 if as_float else 0
+    total = 0.0
+    for a in actions:
+        if not isinstance(a, dict):
+            continue
+        action_type = str(a.get("action_type", "")).lower()
+        if any(h in action_type for h in _CONVERSION_ACTION_HINTS):
+            try:
+                total += float(a.get("value", 0) or 0)
+            except (TypeError, ValueError):
+                continue
+    return total if as_float else int(total)
+
+
 class MetaAdsProvider(BaseProvider):
     provider_id: ClassVar[str] = "meta_ads"
     display_name: ClassVar[str] = "Meta Ads"
@@ -337,6 +359,149 @@ class MetaAdsProvider(BaseProvider):
             "external_account_id": external_account_id,
             "result": body,
         }
+
+    @classmethod
+    def create_ad_set(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        campaign_external_id: str,
+        payload: dict,
+    ) -> dict:
+        import json as _json
+
+        name = payload.get("name")
+        daily_budget_cents = payload.get("daily_budget_cents")
+        if not name:
+            raise ProviderError("Meta create_ad_set requires payload.name.")
+        if not isinstance(daily_budget_cents, int) or daily_budget_cents <= 0:
+            raise ProviderError("Meta create_ad_set requires a positive daily_budget_cents.")
+        account_path = (
+            external_account_id
+            if str(external_account_id).startswith("act_")
+            else f"act_{external_account_id}"
+        )
+        # Meta requires a non-empty targeting spec; default to broad US geo when
+        # the draft didn't specify one rather than failing the push.
+        targeting = payload.get("targeting") or {"geo_locations": {"countries": ["US"]}}
+        fields = {
+            "access_token": access_token,
+            "name": name,
+            "campaign_id": campaign_external_id,
+            "daily_budget": str(int(daily_budget_cents)),
+            "billing_event": payload.get("billing_event", "IMPRESSIONS"),
+            "optimization_goal": payload.get("optimization_goal", "LINK_CLICKS"),
+            "bid_strategy": payload.get("bid_strategy", "LOWEST_COST_WITHOUT_CAP"),
+            "targeting": _json.dumps(targeting),
+            "status": payload.get("status", "PAUSED"),
+        }
+        response = httpx.post(
+            f"{GRAPH}/{account_path}/adsets", data=fields, timeout=20.0
+        )
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"Meta create ad set returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        body = response.json()
+        return {
+            "ok": True,
+            "external_id": body.get("id"),
+            "external_account_id": external_account_id,
+            "result": body,
+        }
+
+    @classmethod
+    def create_ad(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        ad_set_external_id: str,
+        payload: dict,
+    ) -> dict:
+        import json as _json
+
+        name = payload.get("name")
+        if not name:
+            raise ProviderError("Meta create_ad requires payload.name.")
+        # An ad needs a platform creative. We use an existing Meta creative id
+        # (payload.creative_id) — we never fabricate one. Building a creative
+        # from scratch needs a Facebook Page + creative spec (a later depth).
+        creative_id = payload.get("creative_id")
+        if not creative_id:
+            raise ProviderError(
+                "Meta create_ad needs a Meta creative_id. Create the creative in "
+                "Ads Manager (or via a page-backed creative) and store its id on "
+                "the AdVanta creative first."
+            )
+        account_path = (
+            external_account_id
+            if str(external_account_id).startswith("act_")
+            else f"act_{external_account_id}"
+        )
+        fields = {
+            "access_token": access_token,
+            "name": name,
+            "adset_id": ad_set_external_id,
+            "creative": _json.dumps({"creative_id": str(creative_id)}),
+            "status": payload.get("status", "PAUSED"),
+        }
+        response = httpx.post(f"{GRAPH}/{account_path}/ads", data=fields, timeout=20.0)
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"Meta create ad returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        body = response.json()
+        return {
+            "ok": True,
+            "external_id": body.get("id"),
+            "external_account_id": external_account_id,
+            "result": body,
+        }
+
+    @classmethod
+    def fetch_insights(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        external_id: str,
+        date_from: str,
+        date_to: str,
+    ) -> list[dict]:
+        import json as _json
+
+        response = httpx.get(
+            f"{GRAPH}/{external_id}/insights",
+            params={
+                "access_token": access_token,
+                "fields": "impressions,clicks,spend,actions,action_values",
+                "time_increment": 1,
+                "time_range": _json.dumps({"since": date_from, "until": date_to}),
+                "limit": 500,
+            },
+            timeout=30.0,
+        )
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"Meta insights returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        rows: list[dict] = []
+        for row in response.json().get("data", []):
+            rows.append(
+                {
+                    "date": row.get("date_start"),
+                    "impressions": int(float(row.get("impressions", 0) or 0)),
+                    "clicks": int(float(row.get("clicks", 0) or 0)),
+                    "spend_cents": round(float(row.get("spend", 0) or 0) * 100),
+                    "conversions": _sum_conversion_actions(row.get("actions")),
+                    "conversion_value_cents": round(
+                        _sum_conversion_actions(row.get("action_values"), as_float=True) * 100
+                    ),
+                }
+            )
+        return rows
 
     @classmethod
     def _normalize(cls, raw: dict, *, account_id: str, currency: str | None) -> CampaignData:

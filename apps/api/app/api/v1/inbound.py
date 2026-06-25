@@ -11,6 +11,8 @@ outreach email."""
 
 from __future__ import annotations
 
+import hmac
+
 from fastapi import APIRouter, Depends, HTTPException, Header, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -36,7 +38,7 @@ def _verify_secret(provided: str | None) -> None:
         raise InboundConfigError(
             "INBOUND_EMAIL_SECRET is not set; reject all inbound webhooks."
         )
-    if not provided or provided != expected:
+    if not provided or not hmac.compare_digest(provided, expected):
         raise HTTPException(status_code=401, detail="Invalid inbound secret.")
 
 

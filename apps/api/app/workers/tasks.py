@@ -133,9 +133,11 @@ def launch_ab_test_task(
 
 
 @celery_app.task(name="advanta.prune_idempotency_keys", bind=True, ignore_result=False)
-def prune_idempotency_keys_task(self, *, hours: int = 24) -> dict[str, Any]:  # noqa: ARG001
+def prune_idempotency_keys_task(self, *, hours: int = 24 * 90) -> dict[str, Any]:  # noqa: ARG001
     """Null out `idempotency_key` on rows older than `hours` so the table
-    + index don't grow monotonically. Runs on the daily beat schedule."""
+    + index don't grow monotonically. Defaults to 90 days so replay protection
+    on money-moving executions comfortably outlasts any provider retry window.
+    Runs on the daily beat schedule."""
 
     from datetime import datetime, timedelta, timezone
 
@@ -169,6 +171,30 @@ def outreach_auto_followups_task(self) -> dict[str, Any]:  # noqa: ARG001
         return {"drafted": drafted}
 
 
+@celery_app.task(name="advanta.monthly_run_fee_accrual", bind=True, ignore_result=False)
+def monthly_run_fee_accrual_task(
+    self,  # noqa: ARG001
+    *,
+    period: str | None = None,
+) -> dict[str, Any]:
+    """Accrue the previous month's run fees (flat + % of spend) for every
+    workspace with active campaigns. Runs on the 1st of the month for the month
+    that just closed, so real synced spend is available. Idempotent."""
+
+    from app.services import fee_service
+
+    with _session() as db:
+        if period is None:
+            from datetime import datetime, timezone
+
+            now = datetime.now(timezone.utc)
+            year, month = (
+                (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
+            )
+            period = f"{year:04d}-{month:02d}"
+        return fee_service.accrue_run_fees_all_workspaces(db, period=period)
+
+
 @celery_app.task(name="advanta.autopilot_scan", bind=True, ignore_result=False)
 def autopilot_scan_task(self) -> dict[str, Any]:  # noqa: ARG001
     """Iterate every workspace whose AutopilotConfig.mode is AUTOPILOT and
@@ -179,17 +205,17 @@ def autopilot_scan_task(self) -> dict[str, Any]:  # noqa: ARG001
     from app.models.workspace import Workspace
     from app.models.workspace_member import WorkspaceMember
     from app.security.permissions import Role
-    from app.services import autopilot_service
+    from app.services import autonomous_action_service, autopilot_service
 
     summaries: list[dict[str, Any]] = []
     with _session() as db:
-        active_workspaces = (
-            db.query(Workspace)
+        active = (
+            db.query(Workspace, AutopilotConfig)
             .join(AutopilotConfig, AutopilotConfig.workspace_id == Workspace.id)
             .filter(AutopilotConfig.mode == AutopilotMode.AUTOPILOT)
             .all()
         )
-        for workspace in active_workspaces:
+        for workspace, config in active:
             owner = (
                 db.query(WorkspaceMember)
                 .filter(
@@ -201,11 +227,21 @@ def autopilot_scan_task(self) -> dict[str, Any]:  # noqa: ARG001
             )
             if owner is None:
                 continue  # safety: refuse to act without a real human owner.
+            # 1) Generate fresh executable recommendations from current campaign
+            #    signals (only for action types the workspace opted into), then
+            # 2) approve + execute everything that clears the guardrails.
+            generated = autonomous_action_service.generate_for_workspace(
+                db,
+                workspace_id=workspace.id,
+                system_actor_id=owner.user_id,
+                config=config,
+            )
             summary = autopilot_service.auto_approve_pending(
                 db,
                 workspace_id=workspace.id,
                 system_actor_id=owner.user_id,
             )
+            summary["generated"] = len(generated)
             summaries.append(summary)
     return {"workspaces_scanned": len(summaries), "summaries": summaries}
 
@@ -213,6 +249,7 @@ def autopilot_scan_task(self) -> dict[str, Any]:  # noqa: ARG001
 __all__ = [
     "autopilot_scan_task",
     "launch_ab_test_task",
+    "monthly_run_fee_accrual_task",
     "outreach_auto_followups_task",
     "prune_idempotency_keys_task",
     "run_agent_task",

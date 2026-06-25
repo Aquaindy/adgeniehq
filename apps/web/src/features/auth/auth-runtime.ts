@@ -21,6 +21,14 @@ export function ensureApiClientConfigured(): void {
       } catch {
         useAuthStore.getState().clear();
         useWorkspaceStore.getState().setCurrentWorkspaceId(null);
+        // Session is unrecoverable — bounce to login deterministically rather
+        // than letting in-flight queries surface scattered 401 error states.
+        // Guarded so we never loop on the login/register pages. (Bootstrap uses
+        // a skipAuth refresh, so it never reaches this handler.)
+        const path = window.location.pathname;
+        if (!path.startsWith("/login") && !path.startsWith("/register")) {
+          window.location.assign("/login?session=expired");
+        }
         return null;
       }
     },

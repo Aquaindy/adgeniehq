@@ -30,6 +30,7 @@ from app.security.permissions import (
     PermissionDeniedError,
     Role,
     require_role_at_least,
+    role_at_least,
 )
 from app.services.workspace_service import (
     create_workspace_for_user,
@@ -151,9 +152,15 @@ def update_workspace_member(
     if target is None or target.workspace_id != workspace_id:
         raise MemberNotFoundError("Member not found in this workspace.")
 
-    # Admins cannot modify the Owner unless they are the Owner.
-    if target.role == Role.OWNER and actor.role != Role.OWNER:
-        raise PermissionDeniedError("Only the Owner can modify the Owner.")
+    # A non-Owner cannot modify a peer at or above their own rank (only the
+    # Owner can act on Admins/Owners). Acting on yourself is still allowed
+    # (the sole-Owner demotion guard below covers the dangerous case).
+    if (
+        actor.role != Role.OWNER
+        and target.id != actor.id
+        and role_at_least(target.role, actor.role)
+    ):
+        raise PermissionDeniedError("You cannot modify a member at or above your role.")
 
     # If demoting an Owner, ensure another Owner exists.
     if (
@@ -176,9 +183,10 @@ def update_workspace_member(
                 "Promote another member to Owner before demoting the sole Owner."
             )
 
-    # Promotions to Owner require Owner-level actor.
-    if payload.role == Role.OWNER:
-        require_role_at_least(actor.role, Role.OWNER)
+    # You can never grant a role higher than your own (generalizes the
+    # Owner-promotion guard to any future intermediate role).
+    if payload.role is not None:
+        require_role_at_least(actor.role, payload.role)
 
     updated = update_member(db, member=target, role=payload.role, status=payload.status)
     target_user = updated.user

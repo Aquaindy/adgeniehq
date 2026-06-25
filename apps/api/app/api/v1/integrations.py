@@ -47,6 +47,7 @@ def list_integrations(
 def get_connect_url(
     workspace_id: UUID,
     provider_id: str,
+    scope_mode: str = Query(default="write", pattern="^(read|write)$"),
     member: WorkspaceMember = Depends(require_role(Role.ADMIN)),
 ) -> ConnectUrlResponse:
     # Surface unknown providers with a real 404
@@ -55,6 +56,7 @@ def get_connect_url(
         workspace_id=workspace_id,
         user_id=member.user_id,
         provider_id=provider_id,
+        scope_mode=scope_mode,
     )
 
 

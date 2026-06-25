@@ -1,5 +1,6 @@
 from datetime import date
 from typing import ClassVar
+from urllib.parse import quote
 
 import httpx
 
@@ -346,6 +347,121 @@ class LinkedInAdsProvider(BaseProvider):
             "external_account_id": external_account_id,
             "result": result_body or {"created": True, "id": new_id},
         }
+
+    @classmethod
+    def create_ad(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        ad_set_external_id: str,
+        payload: dict,
+    ) -> dict:
+        # A LinkedIn "ad" is a creative that sponsors an existing share/post.
+        # ad_set_external_id is the parent campaign id. We never fabricate a
+        # post — a share URN must be supplied.
+        del external_account_id
+        reference = payload.get("share_urn") or payload.get("reference")
+        if not reference:
+            raise ProviderError(
+                "LinkedIn create_ad needs a share/post URN (payload.share_urn) to "
+                "sponsor; building a creative from copy alone isn't supported."
+            )
+        body = {
+            "campaign": f"urn:li:sponsoredCampaign:{ad_set_external_id}",
+            "content": {"reference": reference},
+            "intendedStatus": payload.get("status", "DRAFT"),
+        }
+        response = httpx.post(
+            f"{LI_API}/creatives",
+            headers=cls._common_headers(access_token=access_token),
+            json=body,
+            timeout=20.0,
+        )
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"LinkedIn create creative returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        new_id = (
+            response.headers.get("x-restli-id")
+            or response.headers.get("x-linkedin-id")
+            or response.headers.get("X-RestLi-Id")
+        )
+        result_body: dict = {}
+        if response.content:
+            try:
+                result_body = response.json()
+            except ValueError:
+                result_body = {}
+        return {
+            "ok": True,
+            "external_id": new_id or result_body.get("id"),
+            "external_account_id": ad_set_external_id,
+            "result": result_body or {"created": True, "id": new_id},
+        }
+
+    @classmethod
+    def fetch_insights(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        external_id: str,
+        date_from: str,
+        date_to: str,
+    ) -> list[dict]:
+        # LinkedIn analytics is addressed by campaign URN, not account.
+        del external_account_id
+
+        def _ymd(value: str) -> tuple[int, int, int]:
+            y, m, d = value.split("-")
+            return int(y), int(m), int(d)
+
+        sy, sm, sd = _ymd(date_from)
+        ey, em, ed = _ymd(date_to)
+        # Rest.li wants the date tuple + List() literal un-encoded; only the
+        # URN's colons are percent-encoded.
+        date_range = (
+            f"(start:(year:{sy},month:{sm},day:{sd}),"
+            f"end:(year:{ey},month:{em},day:{ed}))"
+        )
+        encoded_urn = quote(f"urn:li:sponsoredCampaign:{external_id}", safe="")
+        fields = (
+            "impressions,clicks,costInLocalCurrency,"
+            "externalWebsiteConversions,dateRange"
+        )
+        url = (
+            f"{LI_API}/adAnalytics?q=analytics&pivot=CAMPAIGN&timeGranularity=DAILY"
+            f"&dateRange={date_range}&campaigns=List({encoded_urn})&fields={fields}"
+        )
+        response = httpx.get(
+            url, headers=cls._common_headers(access_token=access_token), timeout=30.0
+        )
+        if response.status_code >= 400:
+            raise ProviderError(
+                f"LinkedIn adAnalytics returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        rows: list[dict] = []
+        for el in response.json().get("elements", []):
+            start = (el.get("dateRange") or {}).get("start") or {}
+            try:
+                on_date = date(
+                    int(start["year"]), int(start["month"]), int(start["day"])
+                ).isoformat()
+            except (KeyError, ValueError, TypeError):
+                continue
+            rows.append(
+                {
+                    "date": on_date,
+                    "impressions": int(float(el.get("impressions", 0) or 0)),
+                    "clicks": int(float(el.get("clicks", 0) or 0)),
+                    "spend_cents": round(float(el.get("costInLocalCurrency", 0) or 0) * 100),
+                    "conversions": int(float(el.get("externalWebsiteConversions", 0) or 0)),
+                    # LinkedIn's analytics finder doesn't expose revenue reliably.
+                    "conversion_value_cents": 0,
+                }
+            )
+        return rows
 
     @classmethod
     def _normalize(

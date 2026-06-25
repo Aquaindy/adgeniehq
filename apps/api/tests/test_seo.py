@@ -136,7 +136,7 @@ def test_sitemap_discovered_via_robots() -> None:
             return _StubResp(200, content=sitemap)
         return _StubResp(404)
 
-    with patch("app.skills.seo.sitemap.httpx.get", side_effect=_fake):
+    with patch("app.skills.seo.sitemap.safe_get", side_effect=_fake):
         result = discover_sitemap("https://example.com")
 
     assert result.discovered_via_robots is True
@@ -159,7 +159,7 @@ def test_sitemap_falls_back_to_sitemap_xml() -> None:
             return _StubResp(200, content=sitemap)
         return _StubResp(404)
 
-    with patch("app.skills.seo.sitemap.httpx.get", side_effect=_fake):
+    with patch("app.skills.seo.sitemap.safe_get", side_effect=_fake):
         result = discover_sitemap("https://x.com")
     assert result.sitemap_url_found.endswith("/sitemap.xml")
     assert result.page_urls == ["https://x.com/a"]
@@ -169,7 +169,7 @@ def test_sitemap_no_sitemap_records_error() -> None:
     def _fake(url, **_):
         return _StubResp(404)
 
-    with patch("app.skills.seo.sitemap.httpx.get", side_effect=_fake):
+    with patch("app.skills.seo.sitemap.safe_get", side_effect=_fake):
         result = discover_sitemap("https://nosite.example")
     assert result.sitemap_url_found is None
     assert result.error and "No sitemap" in result.error
@@ -412,7 +412,7 @@ def test_seo_audit_agent_with_real_site_emits_findings(
         )
 
     _login(client, "alice@example.com")
-    with patch("app.skills.seo.sitemap.httpx.get", side_effect=_sitemap_fake), patch(
+    with patch("app.skills.seo.sitemap.safe_get", side_effect=_sitemap_fake), patch(
         "app.agents.seo_audit.fetch_html", side_effect=_page_fetch
     ):
         response = client.post(
@@ -455,7 +455,7 @@ def test_seo_audit_agent_no_sitemap_recommends_creating_one(
         )
 
     _login(client, "alice@example.com")
-    with patch("app.skills.seo.sitemap.httpx.get", side_effect=_fake_404), patch(
+    with patch("app.skills.seo.sitemap.safe_get", side_effect=_fake_404), patch(
         "app.agents.seo_audit.fetch_html", side_effect=_page_fetch
     ):
         response = client.post(

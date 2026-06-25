@@ -3,11 +3,13 @@ webhook processing, plan-limit enforcement, and usage tracking."""
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import stripe
@@ -16,6 +18,7 @@ from app.core.config import settings
 from app.core.exceptions import AdVantaError
 from app.core.logging import get_logger
 from app.core.superuser_context import is_superuser_request
+from app.integrations import paddle_billing
 from app.integrations.stripe import (
     BillingNotConfiguredError,
     PLANS,
@@ -27,7 +30,12 @@ from app.integrations.stripe import (
     webhook_secret,
 )
 from app.models.billing_customer import BillingCustomer
-from app.models.billing_subscription import BillingSubscription, SubscriptionStatus
+from app.models.billing_subscription import (
+    BillingSubscription,
+    SubscriptionSource,
+    SubscriptionStatus,
+)
+from app.models.processed_webhook_event import ProcessedWebhookEvent
 from app.models.usage_event import UsageEvent, UsageEventType
 from app.models.user import User
 from app.models.workspace import Workspace
@@ -468,6 +476,34 @@ def process_webhook_event(db: Session, event: dict[str, Any]) -> None:
         _on_subscription_changed(db, data_object)
     elif event_type == "customer.subscription.deleted":
         _on_subscription_deleted(db, data_object)
+    elif event_type == "invoice.payment_failed":
+        _on_invoice_payment_failed(db, data_object)
+
+
+def _on_invoice_payment_failed(db: Session, invoice_payload: dict[str, Any]) -> None:
+    """Card failed on renewal: flip the subscription to past_due immediately
+    (rather than waiting for a possibly-delayed subscription.updated), so plan
+    limits drop to free-tier during dunning. `get_active_plan` already treats
+    past_due as free."""
+    stripe_customer_id = invoice_payload.get("customer")
+    if not stripe_customer_id:
+        return
+    customer = (
+        db.query(BillingCustomer)
+        .filter(BillingCustomer.stripe_customer_id == stripe_customer_id)
+        .first()
+    )
+    if customer is None:
+        return
+    sub = (
+        db.query(BillingSubscription)
+        .filter(BillingSubscription.workspace_id == customer.workspace_id)
+        .first()
+    )
+    if sub is None:
+        return
+    sub.status = SubscriptionStatus.PAST_DUE
+    db.commit()
 
 
 def _on_checkout_completed(db: Session, session: dict[str, Any]) -> None:
@@ -606,3 +642,212 @@ def _to_dt(value: Any) -> datetime | None:
         return datetime.fromtimestamp(int(value), tz=timezone.utc)
     except (TypeError, ValueError, OSError):
         return None
+
+
+# ---------------------------------------------------------------------------
+# Provider selection
+# ---------------------------------------------------------------------------
+
+
+def subscription_provider() -> str:
+    """Which processor handles *recurring* subscriptions. Paddle takes
+    precedence when configured (Merchant of Record); falls back to Stripe."""
+    if paddle_billing.is_configured():
+        return "paddle"
+    if os.getenv("STRIPE_SECRET_KEY", "").strip():
+        return "stripe"
+    return "none"
+
+
+# ---------------------------------------------------------------------------
+# Paddle checkout (client-side overlay — no server redirect URL)
+# ---------------------------------------------------------------------------
+
+
+def create_paddle_checkout(
+    db: Session, *, workspace: Workspace, user: User, plan_code: str
+) -> dict[str, Any]:
+    if not paddle_billing.is_configured():
+        raise BillingNotConfiguredError("Paddle billing is not configured.")
+    get_plan(plan_code)  # validates the plan exists (raises UnknownPlanError)
+    price_id = paddle_billing.price_id_for_plan(plan_code)
+    return {
+        "client_token": paddle_billing.client_token(),
+        "environment": paddle_billing.environment(),
+        "price_id": price_id,
+        "customer_email": user.email,
+        "custom_data": {"workspace_id": str(workspace.id), "plan_code": plan_code},
+    }
+
+
+def paddle_management_url(db: Session, *, workspace_id: UUID) -> str:
+    sub = (
+        db.query(BillingSubscription)
+        .filter(BillingSubscription.workspace_id == workspace_id)
+        .first()
+    )
+    if sub is None or not sub.management_url:
+        raise BillingNotConfiguredError(
+            "No Paddle subscription to manage yet."
+        )
+    return sub.management_url
+
+
+# ---------------------------------------------------------------------------
+# Paddle webhook — idempotent, signature already verified by the route
+# ---------------------------------------------------------------------------
+
+
+def _record_processed_event(
+    db: Session, *, provider: str, event_id: str, event_type: str | None
+) -> bool:
+    """Insert the event into the idempotency ledger. Returns False (and leaves
+    the session clean) if it was already processed — the unique constraint on
+    (provider, event_id) is the real guard against replays."""
+    db.add(
+        ProcessedWebhookEvent(
+            provider=provider, event_id=event_id, event_type=event_type
+        )
+    )
+    try:
+        db.flush()
+    except IntegrityError:
+        db.rollback()
+        return False
+    return True
+
+
+def process_paddle_webhook(db: Session, event: dict[str, Any]) -> None:
+    event_id = event.get("event_id")
+    event_type = event.get("event_type")
+    data = event.get("data") or {}
+    log.info("paddle.webhook", event_type=event_type, event_id=event_id)
+
+    if not event_id:
+        log.warning("paddle.webhook.no_event_id", event_type=event_type)
+        return
+    if not _record_processed_event(
+        db, provider="paddle", event_id=event_id, event_type=event_type
+    ):
+        log.info("paddle.webhook.duplicate", event_id=event_id)
+        return
+
+    if event_type == "subscription.canceled":
+        _on_paddle_subscription_canceled(db, data)
+    elif event_type and event_type.startswith("subscription."):
+        _on_paddle_subscription_changed(db, data)
+    elif event_type in ("transaction.completed", "transaction.paid"):
+        _on_paddle_transaction_completed(db, data)
+
+    db.commit()
+
+
+def _parse_iso(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _paddle_workspace_id(data: dict[str, Any]) -> UUID | None:
+    custom = data.get("custom_data") or {}
+    raw = custom.get("workspace_id")
+    if not raw:
+        return None
+    try:
+        return UUID(str(raw))
+    except (ValueError, TypeError):
+        return None
+
+
+def _get_or_create_paddle_sub(
+    db: Session, *, workspace_id: UUID
+) -> BillingSubscription:
+    sub = (
+        db.query(BillingSubscription)
+        .filter(BillingSubscription.workspace_id == workspace_id)
+        .first()
+    )
+    if sub is None:
+        sub = BillingSubscription(
+            workspace_id=workspace_id, plan_code="free", source=SubscriptionSource.PADDLE
+        )
+        db.add(sub)
+        db.flush()
+    return sub
+
+
+def _on_paddle_subscription_changed(db: Session, data: dict[str, Any]) -> None:
+    workspace_id = _paddle_workspace_id(data)
+    if workspace_id is None:
+        log.warning("paddle.webhook.no_workspace", subscription_id=data.get("id"))
+        return
+
+    sub = _get_or_create_paddle_sub(db, workspace_id=workspace_id)
+    sub.source = SubscriptionSource.PADDLE
+    sub.external_subscription_id = data.get("id")
+
+    items = data.get("items") or []
+    price_id = None
+    if items:
+        price_id = (items[0].get("price") or {}).get("id")
+    sub.external_price_id = price_id
+
+    custom = data.get("custom_data") or {}
+    sub.plan_code = (
+        paddle_billing.plan_for_price_id(price_id)
+        or custom.get("plan_code")
+        or sub.plan_code
+        or "free"
+    )
+
+    sub.status = paddle_billing.map_status(data.get("status"))
+
+    period = data.get("current_billing_period") or {}
+    sub.current_period_start = _parse_iso(period.get("starts_at"))
+    sub.current_period_end = _parse_iso(period.get("ends_at"))
+
+    scheduled = data.get("scheduled_change") or {}
+    sub.cancel_at_period_end = bool(scheduled.get("action") == "cancel")
+
+    mgmt = data.get("management_urls") or {}
+    sub.management_url = mgmt.get("update") or mgmt.get("cancel") or sub.management_url
+
+
+def _on_paddle_subscription_canceled(db: Session, data: dict[str, Any]) -> None:
+    workspace_id = _paddle_workspace_id(data)
+    if workspace_id is None:
+        return
+    sub = (
+        db.query(BillingSubscription)
+        .filter(BillingSubscription.workspace_id == workspace_id)
+        .first()
+    )
+    if sub is None:
+        return
+    sub.status = SubscriptionStatus.CANCELED
+    sub.plan_code = "free"
+    sub.cancel_at_period_end = False
+
+
+def _on_paddle_transaction_completed(db: Session, data: dict[str, Any]) -> None:
+    """A Paddle transaction settled. If it corresponds to one of our fee
+    invoices (matched by the stored transaction id), confirm it paid. Recurring
+    subscription transactions won't match a fee invoice and are a no-op here."""
+    txn_id = data.get("id")
+    if not txn_id:
+        return
+    from app.models.fee_invoice import FeeInvoice
+    from app.services import fee_billing_service
+
+    invoice = (
+        db.query(FeeInvoice)
+        .filter(FeeInvoice.external_id == txn_id, FeeInvoice.provider == "paddle")
+        .first()
+    )
+    if invoice is not None:
+        fee_billing_service.confirm_invoice_payment(
+            db, invoice=invoice, confirmation_ref=txn_id
+        )

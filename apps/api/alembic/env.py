@@ -5,30 +5,10 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
-from app.models import (  # noqa: F401  — register tables on metadata
-    AgentRun,
-    AgentTask,
-    Approval,
-    AuditLog,
-    BillingCustomer,
-    BillingSubscription,
-    Campaign,
-    ConnectedAccount,
-    GrowthDnaProfile,
-    Keyword,
-    LandingPage,
-    OAuthToken,
-    OnboardingProfile,
-    Recommendation,
-    Report,
-    SeoProject,
-    SkillOutput,
-    SyncLog,
-    UsageEvent,
-    User,
-    Workspace,
-    WorkspaceMember,
-)
+# Import the models *package* so EVERY model registers on Base.metadata. A
+# hand-maintained import list silently omits new models, which would make
+# `alembic revision --autogenerate` emit destructive DROPs for them.
+import app.models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

@@ -14,6 +14,7 @@ diverge (e.g., RQ-style separation, or a managed broker)."""
 from __future__ import annotations
 
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import settings
 
@@ -61,7 +62,10 @@ celery_app.conf.beat_schedule = {
     "prune-idempotency-keys-daily": {
         "task": "advanta.prune_idempotency_keys",
         "schedule": 24 * 60 * 60.0,  # every 24h
-        "kwargs": {"hours": 24},
+        # 90-day retention: idempotency keys guard money-moving execution
+        # replays, so the window must comfortably outlast any provider retry /
+        # delayed redelivery. 24h was too short for that guarantee.
+        "kwargs": {"hours": 24 * 90},
     },
     "outreach-auto-followups-hourly": {
         "task": "advanta.outreach_auto_followups",
@@ -70,5 +74,11 @@ celery_app.conf.beat_schedule = {
     "autopilot-scan-every-15min": {
         "task": "advanta.autopilot_scan",
         "schedule": 15 * 60.0,
+    },
+    # Run fees roll up monthly: 02:00 UTC on the 1st, billing the month that
+    # just closed (so real synced spend is in).
+    "monthly-run-fee-accrual": {
+        "task": "advanta.monthly_run_fee_accrual",
+        "schedule": crontab(hour=2, minute=0, day_of_month=1),
     },
 }

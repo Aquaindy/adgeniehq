@@ -41,6 +41,9 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
+      # Dispatch slow tasks to the worker below instead of running them inline
+      # in the request (which would block requests + risk proxy timeouts).
+      WORKERS_ENABLED: "1"
       DATABASE_URL: postgresql+psycopg://advanta:advanta@postgres:5432/advanta_ai
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
@@ -53,12 +56,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/health').status==200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     ports:
       - "8000:8000"
 
-  # Background worker. Set WORKERS_ENABLED=1 on the api service to dispatch
-  # slow tasks (long ad-test launches, LLM calls, scheduled outreach sends)
-  # here instead of running them inline in the request handler.
+  # Background worker + beat scheduler in ONE process (single replica only).
+  # IMPORTANT: `--beat` runs the scheduler here, so this service must stay at a
+  # single replica. If you scale the worker out, split beat into its own
+  # dedicated single-replica service first — otherwise the monthly fee accrual
+  # and the autopilot scan would fire once per replica.
   worker:
     build:
       context: .
@@ -77,6 +88,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.core.celery_app.celery_app", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   web:
     build:
@@ -87,6 +104,11 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     ports:
       - "8080:80"
 

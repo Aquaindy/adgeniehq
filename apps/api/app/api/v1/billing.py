@@ -11,10 +11,12 @@ from app.models.billing_customer import BillingCustomer
 from app.models.usage_event import UsageEventType
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
+from app.integrations import paddle_billing
 from app.schemas.billing import (
     BillingStatus,
     CheckoutRequest,
     CheckoutResponse,
+    PaddleCheckout,
     PlanLimitsPublic,
     PlanPublic,
     PortalResponse,
@@ -91,7 +93,11 @@ def get_billing_status(
         ),
         has_billing_customer=customer is not None,
         stripe_configured=bool(os.getenv("STRIPE_SECRET_KEY", "").strip()),
-        subscription_source=(sub.source.value if sub else "stripe"),
+        paddle_configured=paddle_billing.is_configured(),
+        subscription_provider=billing_service.subscription_provider(),
+        subscription_source=(
+            sub.source.value if sub else billing_service.subscription_provider()
+        ),
     )
 
 
@@ -109,10 +115,19 @@ def create_checkout(
     workspace = db.get(Workspace, workspace_id)
     assert workspace is not None  # require_owner guarantees membership
     user = member.user
+
+    provider = billing_service.subscription_provider()
+    if provider == "paddle":
+        cfg = billing_service.create_paddle_checkout(
+            db, workspace=workspace, user=user, plan_code=payload.plan_code
+        )
+        return CheckoutResponse(provider="paddle", paddle=PaddleCheckout(**cfg))
+
+    # Stripe (default / fallback).
     url = billing_service.create_checkout_session(
         db, workspace=workspace, user=user, plan_code=payload.plan_code
     )
-    return CheckoutResponse(url=url)
+    return CheckoutResponse(provider="stripe", url=url)
 
 
 @workspace_router.post(
@@ -127,12 +142,15 @@ def create_portal(
 ) -> PortalResponse:
     workspace = db.get(Workspace, workspace_id)
     assert workspace is not None
-    url = billing_service.create_portal_session(db, workspace=workspace)
+    if billing_service.subscription_provider() == "paddle":
+        url = billing_service.paddle_management_url(db, workspace_id=workspace_id)
+    else:
+        url = billing_service.create_portal_session(db, workspace=workspace)
     return PortalResponse(url=url)
 
 
 # ---------------------------------------------------------------------------
-# Public Stripe webhook
+# Public processor webhooks (signature-verified, no auth)
 # ---------------------------------------------------------------------------
 
 
@@ -147,4 +165,17 @@ async def stripe_webhook(
         payload=payload, signature=stripe_signature
     )
     billing_service.process_webhook_event(db, event)
+    return JSONResponse({"received": True})
+
+
+@public_router.post("/paddle/webhook")
+async def paddle_webhook(
+    request: Request,
+    paddle_signature: str | None = Header(default=None, alias="Paddle-Signature"),
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    payload = await request.body()
+    # Verify the HMAC signature over the RAW body before doing anything else.
+    event = paddle_billing.verify_webhook(payload, paddle_signature)
+    billing_service.process_paddle_webhook(db, event)
     return JSONResponse({"received": True})

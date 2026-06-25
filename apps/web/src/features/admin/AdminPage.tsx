@@ -3,6 +3,8 @@ import { Navigate } from "react-router-dom";
 
 import { Card, CardHeader } from "@/components/ui/Card";
 import { AppSumoAdminPanel } from "@/features/admin/AppSumoAdminPanel";
+import { FeeInvoicesAdminPanel } from "@/features/admin/FeeInvoicesAdminPanel";
+import { FeeRulesAdminPanel } from "@/features/admin/FeeRulesAdminPanel";
 import { ApiError } from "@/lib/api-client";
 import {
   getAdminOverview,
@@ -55,6 +57,10 @@ export function AdminPage() {
       ) : overview.data ? (
         <OverviewGrid data={overview.data} />
       ) : null}
+
+      <FeeRulesAdminPanel />
+
+      <FeeInvoicesAdminPanel />
 
       <AppSumoAdminPanel />
 

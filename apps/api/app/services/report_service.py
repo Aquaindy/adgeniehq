@@ -146,6 +146,7 @@ def build_payload(
         "agent_runs": _agent_runs_block(db, workspace_id, start, end),
         "top_recommendations": _top_recommendations(db, workspace_id, start, end),
         "campaigns": _campaigns_block(db, workspace_id),
+        "ad_performance": _ad_performance_block(db, workspace_id, start, end),
         "seo": _seo_block(db, workspace_id),
         "landing_pages": _landing_pages_block(db, workspace_id),
         "growth_dna": _growth_dna_block(db, workspace_id),
@@ -154,6 +155,43 @@ def build_payload(
         "outreach": _outreach_block(db, workspace_id, start, end),
         "ab_tests": _ab_tests_block(db, workspace_id, start, end),
     }
+
+
+def _ad_performance_block(
+    db: Session, workspace_id: UUID, start, end
+) -> dict[str, Any] | None:
+    """Aggregate ad performance (impressions/clicks/spend/conversions + KPIs)
+    over the report period from stored campaign_metrics. None when no data."""
+    from app.models.campaign_metric import CampaignMetric
+    from app.services.metrics_service import derive_kpis
+
+    start_date = start.date() if isinstance(start, datetime) else start
+    end_date = end.date() if isinstance(end, datetime) else end
+    rows = (
+        db.query(CampaignMetric)
+        .filter(
+            CampaignMetric.workspace_id == workspace_id,
+            CampaignMetric.date >= start_date,
+            CampaignMetric.date <= end_date,
+        )
+        .all()
+    )
+    if not rows:
+        return None
+    agg = {
+        "impressions": 0,
+        "clicks": 0,
+        "spend_cents": 0,
+        "conversions": 0,
+        "conversion_value_cents": 0,
+    }
+    for m in rows:
+        agg["impressions"] += m.impressions
+        agg["clicks"] += m.clicks
+        agg["spend_cents"] += m.spend_cents
+        agg["conversions"] += m.conversions
+        agg["conversion_value_cents"] += m.conversion_value_cents
+    return {**agg, **derive_kpis(**agg), "days_with_data": len({m.date for m in rows})}
 
 
 def _executions_block(
@@ -575,11 +613,16 @@ def _growth_dna_block(db: Session, workspace_id: UUID) -> dict[str, Any] | None:
     )
     if dna is None:
         return None
+    strategy = dna.marketing_strategy if isinstance(dna.marketing_strategy, dict) else {}
+    channels = strategy.get("channels") or []
     return {
         "engine_version": dna.engine_version,
         "funnel_readiness_score": dna.funnel_readiness_score,
         "paid_ads_readiness_score": dna.paid_ads_readiness_score,
         "generated_at": dna.created_at.isoformat(),
+        "channel_count": len(channels),
+        "top_priorities": (strategy.get("overview") or {}).get("priorities") or [],
+        "strategy_source": strategy.get("source"),
     }
 
 

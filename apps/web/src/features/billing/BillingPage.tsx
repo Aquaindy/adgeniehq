@@ -10,6 +10,7 @@ import {
   createPortalSession,
   getBillingStatus,
 } from "@/lib/billing";
+import { openPaddleCheckout } from "@/lib/paddle";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { BillingStatus, Plan, SubscriptionStatusValue } from "@/types/api";
@@ -28,25 +29,35 @@ export function BillingPage() {
     enabled: !!workspaceId,
   });
 
-  // Surface Stripe redirect outcome
+  // Surface checkout redirect outcome (Stripe redirect or Paddle successUrl).
   useEffect(() => {
-    const stripe = searchParams.get("stripe");
-    if (!stripe) return;
+    const outcome = searchParams.get("stripe") ?? searchParams.get("checkout");
+    if (!outcome) return;
     setBanner(
-      stripe === "success"
+      outcome === "success"
         ? { kind: "success", text: "Subscription updated. Webhooks will reconcile shortly." }
         : { kind: "warning", text: "Checkout cancelled. No charges made." },
     );
     queryClient.invalidateQueries({ queryKey: ["billing", workspaceId] });
     const next = new URLSearchParams(searchParams);
     next.delete("stripe");
+    next.delete("checkout");
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams, queryClient, workspaceId]);
 
   const checkout = useMutation({
     mutationFn: (planCode: string) => createCheckoutSession(workspaceId!, planCode),
-    onSuccess: (resp) => {
-      window.location.href = resp.url;
+    onSuccess: async (resp) => {
+      if (resp.provider === "paddle" && resp.paddle) {
+        // Client-side overlay; the subscription lands via webhook. Reconcile
+        // the status query shortly after the overlay opens.
+        await openPaddleCheckout(resp.paddle);
+        queryClient.invalidateQueries({ queryKey: ["billing", workspaceId] });
+        return;
+      }
+      if (resp.url) {
+        window.location.href = resp.url;
+      }
     },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Could not start checkout."),
   });
@@ -65,7 +76,9 @@ export function BillingPage() {
         <h1 className="text-2xl font-semibold text-ink sm:text-3xl">Plan & usage</h1>
         <p className="mt-2 text-sm text-slate-500">
           Upgrade to lift agent-run, landing-page, and team-size limits. Plan changes are
-          processed by Stripe; webhook updates land here within seconds.
+          processed by{" "}
+          {status.data?.subscription_provider === "paddle" ? "Paddle" : "Stripe"}; webhook updates
+          land here within seconds.
         </p>
         <p className="mt-2 text-sm text-slate-500">
           Have an AppSumo code?{" "}
@@ -112,11 +125,12 @@ export function BillingPage() {
         />
       ) : null}
 
-      {status.data && !status.data.stripe_configured ? (
+      {status.data && status.data.subscription_provider === "none" ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <strong>Stripe is not configured for this server.</strong> Plan limits still apply, but
-          Upgrade actions will fail with a clear error until <code>STRIPE_SECRET_KEY</code> and the
-          relevant <code>STRIPE_PRICE_ID_*</code> env vars are set.
+          <strong>No subscription billing provider is configured for this server.</strong> Plan
+          limits still apply, but Upgrade actions will fail with a clear error until either Paddle
+          (<code>PADDLE_API_KEY</code> + <code>PADDLE_WEBHOOK_SECRET</code> + <code>PADDLE_PRICE_ID_*</code>)
+          or Stripe (<code>STRIPE_SECRET_KEY</code> + <code>STRIPE_PRICE_ID_*</code>) is set.
         </div>
       ) : null}
     </div>
@@ -338,7 +352,7 @@ function PlanCard({
           onClick={() => onCheckout(plan.code)}
           disabled={checkoutPending}
         >
-          {checkoutPending ? "Opening Stripe…" : "Upgrade"}
+          {checkoutPending ? "Opening checkout…" : "Upgrade"}
         </Button>
       ) : null}
     </Card>

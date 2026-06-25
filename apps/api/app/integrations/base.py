@@ -123,13 +123,24 @@ class BaseProvider:
     # ------------------------------------------------------------------
 
     @classmethod
-    def build_authorization_url(cls, *, state: str) -> str:
+    def scopes_for_mode(cls, scope_mode: str) -> list[str]:
+        """Scopes to request at connect-time. `scope_mode="read"` drops the
+        write scopes (so the workspace connects read-only); `"write"` requests
+        the full set including writes. Providers with no declared write_scopes
+        always request all scopes."""
+        if scope_mode == "read" and cls.write_scopes:
+            write = set(cls.write_scopes)
+            return [s for s in cls.scopes if s not in write]
+        return list(cls.scopes)
+
+    @classmethod
+    def build_authorization_url(cls, *, state: str, scope_mode: str = "write") -> str:
         client_id, _ = cls.credentials()
         params = {
             "client_id": client_id,
             "redirect_uri": cls.callback_url(),
             "response_type": "code",
-            "scope": " ".join(cls.scopes),
+            "scope": " ".join(cls.scopes_for_mode(scope_mode)),
             "state": state,
         }
         params.update(cls.extra_auth_params)
@@ -260,6 +271,55 @@ class BaseProvider:
         raise ProviderNotImplementedError(
             f"{cls.display_name} does not support campaign creation."
         )
+
+    @classmethod
+    def create_ad_set(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        campaign_external_id: str,
+        payload: dict,
+    ) -> dict:  # pragma: no cover — provider-specific
+        """Create an ad set / ad group under an existing campaign. Returns a
+        dict carrying `external_id` (the new platform object id). Launches the
+        object paused/draft for safety."""
+        raise ProviderNotImplementedError(
+            f"{cls.display_name} does not support ad-set creation yet."
+        )
+
+    @classmethod
+    def create_ad(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        ad_set_external_id: str,
+        payload: dict,
+    ) -> dict:  # pragma: no cover — provider-specific
+        """Create an ad under an existing ad set / ad group. Returns a dict
+        carrying `external_id` (the new platform object id)."""
+        raise ProviderNotImplementedError(
+            f"{cls.display_name} does not support ad creation yet."
+        )
+
+    @classmethod
+    def fetch_insights(
+        cls,
+        *,
+        access_token: str,
+        external_account_id: str,
+        external_id: str,
+        date_from: str,
+        date_to: str,
+    ) -> list[dict]:
+        """Return daily performance rows for a campaign over [date_from, date_to].
+
+        Each row: {date (YYYY-MM-DD), impressions, clicks, spend_cents,
+        conversions, conversion_value_cents}. Default is empty — providers
+        override with the real insights/analytics call. Returning [] (rather
+        than raising) lets the sync run cleanly for not-yet-wired platforms."""
+        return []
 
     # ------------------------------------------------------------------
     # Helpers

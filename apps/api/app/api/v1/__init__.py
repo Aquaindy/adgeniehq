@@ -5,13 +5,16 @@ from app.api.v1 import (
     ad_hierarchy,
     admin,
     agents,
+    analytics,
     api_keys,
     appsumo,
     auth,
     autopilot,
+    autoresponders,
     billing,
     campaigns,
     content_drafts,
+    fees,
     health,
     inbound,
     integrations,
@@ -56,6 +59,9 @@ api_router.include_router(billing.public_router, prefix="/billing", tags=["billi
 api_router.include_router(appsumo.workspace_router, prefix="/workspaces", tags=["appsumo"])
 api_router.include_router(appsumo.admin_router, prefix="/appsumo", tags=["appsumo"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(analytics.router, prefix="/workspaces", tags=["analytics"])
+api_router.include_router(fees.workspace_router, prefix="/workspaces", tags=["fees"])
+api_router.include_router(fees.admin_router, prefix="/admin", tags=["admin-fees"])
 api_router.include_router(autopilot.router, prefix="/workspaces", tags=["autopilot"])
 api_router.include_router(api_keys.router, prefix="/workspaces", tags=["api-keys"])
 api_router.include_router(
@@ -64,4 +70,7 @@ api_router.include_router(
     tags=["provider-credentials"],
 )
 api_router.include_router(ad_hierarchy.router, prefix="/workspaces", tags=["ad-hierarchy"])
+api_router.include_router(
+    autoresponders.router, prefix="/workspaces", tags=["autoresponders"]
+)
 api_router.include_router(provider_webhooks.router, tags=["webhooks"])

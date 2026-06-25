@@ -14,6 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
+from app.models.ad_group import AdObjectSource
 
 
 class AdStatus(StrEnum):
@@ -55,7 +56,17 @@ class Ad(Base, TimestampMixin):
         PgUUID(as_uuid=True),
         ForeignKey("creatives.id", ondelete="SET NULL"),
     )
-    external_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    # Null for AdVanta drafts not yet pushed to the platform.
+    external_id: Mapped[str | None] = mapped_column(String(128))
+    source: Mapped[AdObjectSource] = mapped_column(
+        Enum(
+            AdObjectSource,
+            name="ad_source",
+            values_callable=lambda enum: [m.value for m in enum],
+        ),
+        nullable=False,
+        default=AdObjectSource.PLATFORM_SYNCED,
+    )
     name: Mapped[str] = mapped_column(String(512), nullable=False)
     status: Mapped[AdStatus] = mapped_column(
         Enum(

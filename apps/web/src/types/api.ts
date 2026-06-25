@@ -26,16 +26,29 @@ export type CreativeType =
   | "ugc"
   | "other";
 export type CreativeSource = "platform_synced" | "ai_generated" | "user_uploaded";
+export type AdObjectSource = "platform_synced" | "advanta_draft";
+
+export type AdGroupTargeting = {
+  locations?: string[];
+  age_min?: number | null;
+  age_max?: number | null;
+  genders?: string[];
+  interests?: string[];
+  keywords?: string[];
+  optimization_goal?: string | null;
+  notes?: string | null;
+};
 
 export type AdGroup = {
   id: string;
   workspace_id: string;
   campaign_id: string;
-  external_id: string;
+  external_id: string | null;
+  source: AdObjectSource;
   name: string;
   status: AdGroupStatus;
   daily_budget_cents: number | null;
-  targeting: Record<string, unknown> | null;
+  targeting: AdGroupTargeting | null;
   last_synced_at: string;
   created_at: string;
 };
@@ -46,7 +59,8 @@ export type Ad = {
   campaign_id: string;
   ad_group_id: string;
   creative_id: string | null;
-  external_id: string;
+  external_id: string | null;
+  source: AdObjectSource;
   name: string;
   status: AdStatus;
   landing_page_url: string | null;
@@ -233,6 +247,77 @@ export type GrowthPlanWeek = {
   deliverables: string[];
 };
 
+export type ChannelStrategy = {
+  channel: string;
+  category: "paid" | "owned" | "earned" | "foundation" | string;
+  priority: "high" | "medium" | "low" | string;
+  status: "ready" | "needs_setup" | "recommended" | string;
+  cadence: string;
+  summary: string;
+  tactics: string[];
+  kpis: string[];
+  first_step: string;
+};
+
+export type ContentPillar = {
+  name: string;
+  allocation_pct: number;
+  description: string;
+  example_hooks: string[];
+};
+
+export type PlatformPlan = {
+  platform: string;
+  cadence: string;
+  focus: string;
+  best_for: string;
+};
+
+export type EmailFlow = {
+  name: string;
+  trigger: string;
+  goal: string;
+};
+
+export type EmailStrategy = {
+  summary: string;
+  newsletter_cadence: string;
+  flows: EmailFlow[];
+  kpis: string[];
+};
+
+export type CalendarEntry = {
+  day: number;
+  channel: string;
+  format: string;
+  pillar: string;
+  hook: string;
+  caption_direction: string;
+};
+
+export type BudgetAllocation = {
+  channel: string;
+  pct: number;
+  rationale: string;
+};
+
+export type MarketingStrategy = {
+  overview: {
+    model: string;
+    thesis: string;
+    priorities: string[];
+    budget_allocation: BudgetAllocation[];
+  };
+  channels: ChannelStrategy[];
+  content_pillars: ContentPillar[];
+  platform_strategy: PlatformPlan[];
+  email_strategy: EmailStrategy;
+  content_calendar: CalendarEntry[];
+  source: "deterministic" | "ai" | string;
+  model_used: string | null;
+  enrichment?: "pending" | "enriched" | "skipped" | null;
+};
+
 export type GrowthDna = {
   id: string;
   workspace_id: string;
@@ -247,6 +332,7 @@ export type GrowthDna = {
   tracking_readiness: string;
   recommended_first_campaigns: CampaignSuggestion[];
   thirty_day_growth_plan: GrowthPlanWeek[];
+  marketing_strategy: MarketingStrategy;
   engine_version: string;
   created_at: string;
 };
@@ -407,6 +493,8 @@ export type IntegrationStatus = {
   provider_account_id: string | null;
   display_account_name: string | null;
   scopes: string[] | null;
+  write_scopes: string[];
+  can_write: boolean;
   connected_at: string | null;
   last_sync_at: string | null;
   last_error: string | null;
@@ -487,6 +575,140 @@ export type CampaignSyncResponse = {
   started_at: string;
   completed_at: string;
   providers: ProviderSyncResult[];
+};
+
+// ---- Analytics ----
+
+export type Kpi = {
+  impressions: number;
+  clicks: number;
+  spend_cents: number;
+  conversions: number;
+  conversion_value_cents: number;
+  ctr: number;
+  cpc_cents: number;
+  cpm_cents: number;
+  cpa_cents: number;
+  roas: number;
+  conversion_rate: number;
+};
+
+export type CampaignMetricsSeries = {
+  campaign_id: string;
+  days: number;
+  points: Array<{
+    date: string;
+    impressions: number;
+    clicks: number;
+    spend_cents: number;
+    conversions: number;
+    conversion_value_cents: number;
+  }>;
+  totals: Kpi;
+  currency: string;
+};
+
+export type WorkspaceAnalytics = {
+  days: number;
+  has_data: boolean;
+  totals: Kpi;
+  by_provider: Record<string, Kpi>;
+  top_campaigns: Array<Kpi & { campaign_id: string; name: string }>;
+  daily: Array<Kpi & { date: string }>;
+  currency: string;
+};
+
+export type MetricsSyncResult = {
+  upserted: number;
+  providers: Array<{ provider: string; status: string; upserted?: number; error?: string | null }>;
+  window: { from: string; to: string };
+};
+
+// ---- Platform fees ----
+
+export type FeeRule = {
+  id: string;
+  provider: string | null;
+  campaign_type: string | null;
+  label: string;
+  listing_fee_cents: number;
+  run_flat_fee_cents: number;
+  run_pct_basis_points: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type FeeRuleUpsert = {
+  provider?: string | null;
+  campaign_type?: string | null;
+  label: string;
+  listing_fee_cents: number;
+  run_flat_fee_cents: number;
+  run_pct_basis_points: number;
+};
+
+export type FeeQuote = {
+  provider: string | null;
+  campaign_type: string;
+  listing_fee_cents: number;
+  run_flat_fee_cents: number;
+  run_pct_basis_points: number;
+  est_monthly_spend_cents: number;
+  est_monthly_run_fee_cents: number;
+  est_first_month_total_cents: number;
+  source: "rule" | "default" | string;
+};
+
+export type WorkspaceFeeSummary = {
+  period: string;
+  total_cents: number;
+  by_type: Record<string, number>;
+  currency: string;
+};
+
+export type AdminRevenueSummary = {
+  period: string;
+  period_total_cents: number;
+  all_time_total_cents: number;
+  by_status_cents: Record<string, number>;
+  accrual_count: number;
+  currency: string;
+};
+
+export type CampaignActionResponse = {
+  status: "executed" | "failed" | "queued";
+  action: string;
+  risk_level: "low" | "medium" | "high";
+  required_role: string;
+  message: string;
+  recommendation_id: string;
+  approval_id: string | null;
+  approval_status: string | null;
+  execution_id: string | null;
+  execution_status: string | null;
+  error_message: string | null;
+  campaign: CampaignPublic;
+};
+
+export type CampaignLaunchRequest = {
+  provider: string;
+  name: string;
+  campaign_type: string;
+  daily_budget_cents: number;
+};
+
+export type CampaignLaunchResponse = {
+  status: "executed" | "failed" | "queued";
+  risk_level: "low" | "medium" | "high";
+  required_role: string;
+  message: string;
+  recommendation_id: string;
+  approval_id: string | null;
+  approval_status: string | null;
+  execution_id: string | null;
+  execution_status: string | null;
+  error_message: string | null;
+  campaign: CampaignPublic | null;
 };
 
 // ---- SEO & GEO (M8) ----
@@ -741,10 +963,24 @@ export type BillingStatus = {
   usage: Usage;
   has_billing_customer: boolean;
   stripe_configured: boolean;
-  subscription_source: "stripe" | "appsumo";
+  paddle_configured: boolean;
+  subscription_provider: "stripe" | "paddle" | "none";
+  subscription_source: "stripe" | "paddle" | "appsumo";
 };
 
-export type CheckoutSessionResponse = { url: string };
+export type PaddleCheckout = {
+  client_token: string;
+  environment: string;
+  price_id: string;
+  customer_email: string;
+  custom_data: Record<string, string>;
+};
+
+export type CheckoutSessionResponse = {
+  provider: "stripe" | "paddle";
+  url?: string | null;
+  paddle?: PaddleCheckout | null;
+};
 export type PortalSessionResponse = { url: string };
 
 // ---- Content drafts (Phase B) ----
@@ -957,4 +1193,147 @@ export type CreateAbTestRequest = {
     traffic_share?: number;
     payload?: Record<string, unknown>;
   }>;
+};
+
+// ---------------------------------------------------------------------------
+// Autoresponders
+// ---------------------------------------------------------------------------
+
+export type AutoresponderConfigField = {
+  key: string;
+  label: string;
+  type: string;
+  required: boolean;
+  placeholder: string | null;
+  help_text: string | null;
+};
+
+export type AutoresponderProviderInfo = {
+  provider: string;
+  display_name: string;
+  description: string;
+  requires_api_key: boolean;
+  api_key_label: string;
+  api_key_help: string | null;
+  config_fields: AutoresponderConfigField[];
+  supports_audience_listing: boolean;
+  supports_contact_pull: boolean;
+  freeform_audience: boolean;
+  docs_url: string | null;
+};
+
+export type AutoresponderConnection = {
+  id: string;
+  provider: string;
+  display_name: string | null;
+  provider_account_id: string | null;
+  status: ConnectionStatus;
+  config: Record<string, unknown> | null;
+  connected_at: string | null;
+  last_sync_at: string | null;
+  last_error: string | null;
+};
+
+export type AutoresponderAudience = {
+  external_id: string;
+  name: string;
+  member_count: number | null;
+};
+
+export type AudienceListResponse = {
+  provider: string;
+  supports_audience_listing: boolean;
+  freeform_audience: boolean;
+  audiences: AutoresponderAudience[];
+};
+
+export type ContactInput = {
+  email?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+  tags?: string[];
+  custom_fields?: Record<string, unknown>;
+};
+
+export type ContactSyncDirection = "push" | "pull";
+export type ContactSyncStatus = "running" | "succeeded" | "partial" | "failed";
+
+export type ContactSync = {
+  id: string;
+  direction: ContactSyncDirection;
+  status: ContactSyncStatus;
+  audience_external_id: string | null;
+  audience_name: string | null;
+  source: string | null;
+  requested_count: number;
+  succeeded_count: number;
+  failed_count: number;
+  summary: Record<string, unknown> | null;
+  error_message: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type ContactPublic = {
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  tags: string[];
+};
+
+export type PullContactsResponse = {
+  sync: ContactSync;
+  contacts: ContactPublic[];
+};
+
+export type AdPublishResponse = {
+  status: "executed" | "failed" | "queued";
+  object_type: "ad_group" | "ad";
+  risk_level: string;
+  required_role: string;
+  message: string;
+  recommendation_id: string;
+  approval_id: string | null;
+  approval_status: string | null;
+  execution_id: string | null;
+  execution_status: string | null;
+  external_id: string | null;
+  error_message: string | null;
+};
+
+export type PaymentProviderInfo = {
+  provider: string;
+  display_name: string;
+  description: string;
+  configured: boolean;
+};
+
+export type FeeInvoiceStatus = "draft" | "open" | "paid" | "void" | "failed";
+
+export type FeeInvoiceLineItem = {
+  accrual_id: string;
+  description: string;
+  amount_cents: number;
+  fee_type: string;
+};
+
+export type FeeInvoice = {
+  id: string;
+  workspace_id: string;
+  provider: string;
+  status: FeeInvoiceStatus;
+  amount_cents: number;
+  currency: string;
+  period: string | null;
+  accrual_count: number;
+  external_id: string | null;
+  hosted_url: string | null;
+  line_items: FeeInvoiceLineItem[] | null;
+  error_message: string | null;
+  issued_at: string | null;
+  paid_at: string | null;
+  created_at: string;
 };

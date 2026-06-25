@@ -21,25 +21,6 @@ export function getReport(workspaceId: string, reportId: string) {
   return apiFetch<ReportDetail>(`/workspaces/${workspaceId}/reports/${reportId}`);
 }
 
-/** Direct browser download (PDF/CSV). Adds the bearer token because the
- *  shared apiFetch always returns parsed JSON.  */
-export function downloadReportUrl(
-  workspaceId: string,
-  reportId: string,
-  format: "pdf" | "csv",
-): string {
-  const token = useAuthStore.getState().accessToken;
-  const url = new URL(
-    `workspaces/${workspaceId}/reports/${reportId}/download`,
-    API_BASE_URL.replace(/\/$/, "") + "/",
-  );
-  url.searchParams.set("format", format);
-  if (token) {
-    url.searchParams.set("access_token", token);
-  }
-  return url.toString();
-}
-
 export async function fetchReportBlob(
   workspaceId: string,
   reportId: string,
