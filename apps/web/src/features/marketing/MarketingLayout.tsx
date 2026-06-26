@@ -79,6 +79,7 @@ function SiteFooter() {
           <FooterColumn title="Legal">
             <FooterLink to="/terms">Terms of service</FooterLink>
             <FooterLink to="/privacy">Privacy policy</FooterLink>
+            <FooterLink to="/refund">Refund &amp; cancellation</FooterLink>
           </FooterColumn>
         </div>
 

@@ -19,6 +19,7 @@ import { BlogPostPage } from "@/features/marketing/BlogPostPage";
 import { LandingPage } from "@/features/marketing/LandingPage";
 import { PricingPage } from "@/features/marketing/PricingPage";
 import { PrivacyPage } from "@/features/marketing/PrivacyPage";
+import { RefundPolicyPage } from "@/features/marketing/RefundPolicyPage";
 import { TermsPage } from "@/features/marketing/TermsPage";
 import {
   bootstrapAuth,
@@ -106,6 +107,7 @@ export function App() {
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/refund" element={<RefundPolicyPage />} />
           <Route path="/appsumo/redeem" element={<AppSumoRedeemPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

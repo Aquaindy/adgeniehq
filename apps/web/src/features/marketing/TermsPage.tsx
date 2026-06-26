@@ -54,9 +54,14 @@ export function TermsPage() {
         <Section title="5. Billing">
           <p>
             Paid plans are billed monthly or annually via Paddle. Plan limits are
-            enforced on a 30-day rolling window. Past-due subscriptions
-            revert to the free tier until payment resolves. Refunds are
-            handled case-by-case.
+            enforced on a 30-day rolling window. Past-due subscriptions revert to
+            the free tier until payment resolves. You can cancel anytime; access
+            continues until the end of the paid period and payments are
+            non-refundable — see our{" "}
+            <a className="text-grape-700" href="/refund">
+              Refund &amp; Cancellation Policy
+            </a>
+            .
           </p>
         </Section>
 
