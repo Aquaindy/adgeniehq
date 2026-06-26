@@ -25,6 +25,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpRequired, setOtpRequired] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(googleError);
 
@@ -37,6 +38,7 @@ export function LoginPage() {
         email,
         password,
         otp_code: otpCode || undefined,
+        remember_me: remember,
       });
       setSession(response);
       const next = (location.state as LocationState)?.from?.pathname ?? "/dashboard";
@@ -115,6 +117,15 @@ export function LoginPage() {
             required
           />
         ) : null}
+        <label className="flex items-center gap-2 text-sm text-slate-text">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-grape focus:ring-2 focus:ring-grape-200"
+          />
+          Keep me signed in
+        </label>
         {error ? (
           <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
             {error}

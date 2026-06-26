@@ -30,19 +30,28 @@ class RefreshTokenReuseError(AdVantaError):
     code = "refresh_token_reuse"
 
 
-def issue_refresh_token(db: Session, *, user: User) -> str:
-    """Mint + persist a new refresh token. Returns the signed token."""
+def issue_refresh_token(db: Session, *, user: User, persistent: bool = True) -> str:
+    """Mint + persist a new refresh token. Returns the signed token.
+
+    `persistent` records the "remember me" choice on the ledger row so it can be
+    carried across rotations (a non-remembered session must never become a
+    persistent one just because its token was refreshed)."""
     jti = str(uuid4())
     token, expires_at = create_token(subject=user.id, token_type="refresh", jti=jti)
-    db.add(RefreshToken(user_id=user.id, jti=jti, expires_at=expires_at))
+    db.add(
+        RefreshToken(
+            user_id=user.id, jti=jti, expires_at=expires_at, persistent=persistent
+        )
+    )
     db.flush()
     return token
 
 
-def rotate(db: Session, *, presented_token: str) -> tuple[User, str]:
-    """Validate + rotate a presented refresh token. Returns (user, new_token).
-    Raises InvalidTokenError (unknown/expired/forged) or RefreshTokenReuseError
-    (already-revoked JTI replayed → all sessions revoked)."""
+def rotate(db: Session, *, presented_token: str) -> tuple[User, str, bool]:
+    """Validate + rotate a presented refresh token. Returns
+    (user, new_token, persistent). Raises InvalidTokenError (unknown/expired/
+    forged) or RefreshTokenReuseError (already-revoked JTI replayed → all
+    sessions revoked)."""
     payload = decode_token(presented_token, expected_type="refresh")  # raises if bad/expired
     jti = payload.get("jti")
     user_id = UUID(payload["sub"])
@@ -69,8 +78,9 @@ def rotate(db: Session, *, presented_token: str) -> tuple[User, str]:
         raise InvalidTokenError("Refresh subject is invalid.")
 
     row.revoked_at = datetime.now(timezone.utc)
-    new_token = issue_refresh_token(db, user=user)
-    return user, new_token
+    # Carry the remember-me choice forward across the rotation.
+    new_token = issue_refresh_token(db, user=user, persistent=row.persistent)
+    return user, new_token, row.persistent
 
 
 def revoke(db: Session, *, jti: str) -> None:

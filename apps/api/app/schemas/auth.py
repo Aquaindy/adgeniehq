@@ -16,6 +16,13 @@ class LoginRequest(BaseModel):
         default=None, max_length=32,
         description="6-digit TOTP or recovery code, required when 2FA is enabled",
     )
+    remember_me: bool = Field(
+        default=True,
+        description=(
+            "When true (default), the refresh cookie is persistent (~30d). "
+            "When false, it's a browser-session cookie cleared on close."
+        ),
+    )
 
 
 class TokenResponse(BaseModel):

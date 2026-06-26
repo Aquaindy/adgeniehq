@@ -30,7 +30,12 @@ class RefreshNotProvidedError(AdVantaError):
     code = "refresh_not_provided"
 
 
-def _set_refresh_cookie(response: Response, refresh_token: str, *, max_age_seconds: int) -> None:
+def _set_refresh_cookie(
+    response: Response, refresh_token: str, *, max_age_seconds: int | None
+) -> None:
+    """Set the refresh cookie. ``max_age_seconds=None`` makes it a browser
+    *session* cookie (no Max-Age/Expires) — dropped when the browser closes,
+    which is the "don't remember me" behavior."""
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
@@ -42,15 +47,27 @@ def _set_refresh_cookie(response: Response, refresh_token: str, *, max_age_secon
     )
 
 
+def _refresh_max_age(remember: bool) -> int | None:
+    """Persistent (~30d) when remembered, else a session cookie (None)."""
+    if not remember:
+        return None
+    return settings.jwt_refresh_token_expire_days * 24 * 60 * 60
+
+
 def _clear_refresh_cookie(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE_NAME, path=REFRESH_COOKIE_PATH)
 
 
-def _build_token_response(response: Response, user: User, db: Session) -> TokenResponse:
-    access_token, access_exp, refresh_token = issue_tokens(db, user)
+def _build_token_response(
+    response: Response, user: User, db: Session, *, remember: bool = True
+) -> TokenResponse:
+    access_token, access_exp, refresh_token = issue_tokens(
+        db, user, persistent=remember
+    )
     db.commit()  # persist the refresh-token ledger row
-    refresh_max_age = settings.jwt_refresh_token_expire_days * 24 * 60 * 60
-    _set_refresh_cookie(response, refresh_token, max_age_seconds=refresh_max_age)
+    _set_refresh_cookie(
+        response, refresh_token, max_age_seconds=_refresh_max_age(remember)
+    )
     return TokenResponse(
         access_token=access_token,
         expires_in=access_token_seconds_remaining(access_exp),
@@ -70,6 +87,10 @@ def register(
         password=payload.password,
         full_name=payload.full_name,
     )
+    # Fire the verification email (soft — does not block the account).
+    from app.services import email_verification_service
+
+    email_verification_service.send_verification(db, user=user)
     return _build_token_response(response, user, db)
 
 
@@ -94,7 +115,7 @@ def login(
             db, user=user, code=payload.otp_code
         ):
             raise two_factor_service.TwoFactorInvalidCodeError("Invalid 2FA code.")
-    return _build_token_response(response, user, db)
+    return _build_token_response(response, user, db, remember=payload.remember_me)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -109,7 +130,7 @@ def refresh(
     from app.services import refresh_token_service
 
     try:
-        user, new_refresh_token = refresh_token_service.rotate(
+        user, new_refresh_token, persistent = refresh_token_service.rotate(
             db, presented_token=advanta_refresh
         )
     except (AdVantaError):
@@ -121,8 +142,10 @@ def refresh(
     db.commit()
 
     access_token, access_exp = create_token(subject=user.id, token_type="access")
-    refresh_max_age = settings.jwt_refresh_token_expire_days * 24 * 60 * 60
-    _set_refresh_cookie(response, new_refresh_token, max_age_seconds=refresh_max_age)
+    # Preserve the original remember-me choice across rotation.
+    _set_refresh_cookie(
+        response, new_refresh_token, max_age_seconds=_refresh_max_age(persistent)
+    )
 
     return TokenResponse(
         access_token=access_token,
@@ -185,6 +208,40 @@ def password_reset_confirm(
         db, token=payload.token, new_password=payload.new_password
     )
     return UserPublic.model_validate(user)
+
+
+# ---------------------------------------------------------------------------
+# Email verification (soft — does not block login)
+# ---------------------------------------------------------------------------
+
+
+class _EmailVerifyConfirm(BaseModel):
+    token: str = Field(min_length=1, max_length=512)
+
+
+@router.post("/verify-email/confirm", response_model=UserPublic)
+def verify_email_confirm(
+    payload: _EmailVerifyConfirm,
+    db: Session = Depends(get_db),
+) -> UserPublic:
+    """Public: clicked from the verification email. Marks the user verified."""
+    from app.services import email_verification_service
+
+    user = email_verification_service.confirm(db, token=payload.token)
+    return UserPublic.model_validate(user)
+
+
+@router.post("/verify-email/resend", status_code=status.HTTP_204_NO_CONTENT)
+def verify_email_resend(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Re-send the verification email for the signed-in user (no-op if already
+    verified). Always 204 so it doesn't leak verification state."""
+    from app.services import email_verification_service
+
+    email_verification_service.resend(db, user=user)
+    return Response(status_code=204)
 
 
 # ---------------------------------------------------------------------------

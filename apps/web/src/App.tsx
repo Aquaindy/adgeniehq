@@ -12,6 +12,7 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
+import { VerifyEmailPage } from "@/features/auth/VerifyEmailPage";
 import { AppSumoRedeemPage } from "@/features/appsumo/AppSumoRedeemPage";
 import { BlogPage } from "@/features/marketing/BlogPage";
 import { BlogPostPage } from "@/features/marketing/BlogPostPage";
@@ -110,6 +111,7 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/google/finish" element={<GoogleFinishPage />} />
 
           {/* Authenticated, but pre-workspace */}

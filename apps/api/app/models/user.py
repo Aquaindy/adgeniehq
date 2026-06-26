@@ -27,6 +27,13 @@ class User(Base, TimestampMixin):
         DateTime(timezone=True)
     )
 
+    # Email verification (single-use, short-lived) — same pattern as reset:
+    # only the SHA-256 hash is stored; the plaintext token travels in the link.
+    email_verification_hash: Mapped[str | None] = mapped_column(String(128), unique=True)
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+
     # 2FA (TOTP). Secret is Fernet-encrypted at rest. Recovery codes are
     # SHA-256 hashed (one-time use; consumed on verify).
     two_factor_enabled: Mapped[bool] = mapped_column(

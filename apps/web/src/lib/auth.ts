@@ -10,6 +10,7 @@ export function loginRequest(payload: {
   email: string;
   password: string;
   otp_code?: string;
+  remember_me?: boolean;
 }) {
   return apiFetch<TokenResponse>("/auth/login", {
     method: "POST",
@@ -61,6 +62,25 @@ export function passwordResetConfirm(token: string, newPassword: string) {
     method: "POST",
     body: { token, new_password: newPassword },
     skipAuth: true,
+  });
+}
+
+
+// ---- Email verification ----
+
+/** Public: confirm an email from the link token. Returns the updated user. */
+export function verifyEmailConfirm(token: string) {
+  return apiFetch<User>("/auth/verify-email/confirm", {
+    method: "POST",
+    body: { token },
+    skipAuth: true,
+  });
+}
+
+/** Authenticated: re-send the verification email for the current user. */
+export function verifyEmailResend() {
+  return apiFetch<void>("/auth/verify-email/resend", {
+    method: "POST",
   });
 }
 

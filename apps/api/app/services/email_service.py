@@ -95,16 +95,85 @@ def build_report_email_body(payload: dict[str, Any], *, title: str) -> EmailMess
     return EmailMessageDraft(subject=title, text_body=text_body, html_body=html_body)
 
 
-def send_email(*, to: str, draft: EmailMessageDraft) -> bool:
-    """Send via SMTP if `SMTP_HOST` is configured; otherwise log the draft and
-    return False. Returns True on a successful SMTP send.
+def _sender() -> str:
+    """Resolve the From address. EMAIL_FROM is the canonical sender used by
+    both transports; SMTP_FROM is kept as a fallback for existing setups."""
+    return (
+        os.getenv("EMAIL_FROM")
+        or os.getenv("SMTP_FROM")
+        or "AdVanta <noreply@getadvanta.app>"
+    )
 
-    Env vars: SMTP_HOST, SMTP_PORT (default 587), SMTP_USER, SMTP_PASSWORD,
-    SMTP_FROM. SMTP_TLS=1 (default) uses STARTTLS."""
+
+def _send_via_resend(*, to: str, draft: EmailMessageDraft) -> bool:
+    """Deliver through the Resend HTTP API. Returns True on a 2xx response,
+    False (with a logged reason) on any error so the caller can fall back to
+    SMTP rather than silently dropping a security-critical email.
+
+    Env vars: RESEND_API_KEY (required), EMAIL_FROM (sender)."""
+    import httpx
+
+    api_key = os.getenv("RESEND_API_KEY", "").strip()
+    if not api_key:
+        return False
+
+    body: dict[str, Any] = {
+        "from": _sender(),
+        "to": [to],
+        "subject": draft.subject,
+        "html": draft.html_body,
+        "text": draft.text_body,
+    }
+    if draft.reply_to:
+        body["reply_to"] = draft.reply_to
+
+    try:
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=20.0,
+        )
+    except httpx.HTTPError as exc:
+        log.warning("email.resend.transport_error", to=to, error=str(exc))
+        return False
+
+    if resp.status_code >= 400:
+        log.warning(
+            "email.resend.rejected",
+            to=to,
+            status=resp.status_code,
+            detail=resp.text[:500],
+        )
+        return False
+
+    log.info("email.sent", to=to, subject=draft.subject, via="resend")
+    return True
+
+
+def send_email(*, to: str, draft: EmailMessageDraft) -> bool:
+    """Deliver an email. Transport precedence:
+
+      1. Resend HTTP API  — when RESEND_API_KEY is set (preferred)
+      2. SMTP             — when SMTP_HOST is set
+      3. log-drop         — neither configured → structure-log + return False
+
+    Returns True on a successful send. Sender = EMAIL_FROM (falls back to
+    SMTP_FROM, then a default). Resend env: RESEND_API_KEY, EMAIL_FROM. SMTP
+    env: SMTP_HOST, SMTP_PORT (587), SMTP_USER, SMTP_PASSWORD, SMTP_TLS=1."""
+    if os.getenv("RESEND_API_KEY", "").strip():
+        if _send_via_resend(to=to, draft=draft):
+            return True
+        # Resend was configured but the send failed — fall through to SMTP if
+        # it's also configured before giving up.
+
     host = os.getenv("SMTP_HOST", "").strip()
     if not host:
         log.info(
-            "email.dropped.smtp_not_configured",
+            "email.dropped.no_transport",
             to=to,
             subject=draft.subject,
         )
@@ -113,7 +182,7 @@ def send_email(*, to: str, draft: EmailMessageDraft) -> bool:
     port = int(os.getenv("SMTP_PORT", "587"))
     username = os.getenv("SMTP_USER")
     password = os.getenv("SMTP_PASSWORD")
-    sender = os.getenv("SMTP_FROM") or username or "no-reply@advantaai.com"
+    sender = _sender()
     use_tls = os.getenv("SMTP_TLS", "1") == "1"
 
     msg = EmailMessage()

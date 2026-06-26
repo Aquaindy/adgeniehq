@@ -48,13 +48,19 @@ def authenticate_user(db: Session, *, email: str, password: str) -> User:
     return user
 
 
-def issue_tokens(db: Session, user: User) -> tuple[str, datetime, str]:
+def issue_tokens(
+    db: Session, user: User, *, persistent: bool = True
+) -> tuple[str, datetime, str]:
     """Mint an access token plus a tracked refresh token (recorded server-side
-    so it can be revoked). Returns (access_token, access_exp, refresh_token)."""
+    so it can be revoked). `persistent` records the "remember me" choice so the
+    refresh cookie can be persistent (~30d) or browser-session only. Returns
+    (access_token, access_exp, refresh_token)."""
     from app.services import refresh_token_service
 
     access_token, access_exp = create_token(subject=user.id, token_type="access")
-    refresh_token = refresh_token_service.issue_refresh_token(db, user=user)
+    refresh_token = refresh_token_service.issue_refresh_token(
+        db, user=user, persistent=persistent
+    )
     return access_token, access_exp, refresh_token
 
 
