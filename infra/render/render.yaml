@@ -43,6 +43,12 @@ envVarGroups:
       - key: BACKEND_URL
         value: https://api.getadvanta.app
 
+      # Founding super-admins — comma-separated emails promoted to is_superuser
+      # on API startup (grants /admin + bypasses all plan limits). Accounts must
+      # already exist; additive + idempotent. Set in the dashboard.
+      - key: INITIAL_SUPERUSER_EMAILS
+        sync: false
+
       # --- LLM: Anthropic Sonnet for agents; gpt-5.4-mini for the Growth DNA
       #     background generation (cross-provider fast model needs the OpenAI key)
       - key: LLM_PROVIDER

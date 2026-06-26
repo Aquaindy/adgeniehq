@@ -53,6 +53,10 @@ async def lifespan(app: FastAPI):
             + "\n  - ".join(config_problems)
         )
     log.info("api.startup", env=settings.app_env, debug=settings.app_debug)
+    # Promote any configured founding super-admins (idempotent; never demotes).
+    from app.core.bootstrap import run_superuser_bootstrap
+
+    run_superuser_bootstrap()
     yield
     log.info("api.shutdown")
 

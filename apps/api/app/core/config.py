@@ -50,6 +50,15 @@ class Settings(BaseSettings):
         default="", alias="MARKETING_WORKSPACE_SLUG"
     )
 
+    # Founding super-admins. Comma-separated (or JSON list) of emails promoted
+    # to is_superuser=True on API startup — grants /admin access + bypasses all
+    # plan limits. Additive + idempotent: it never demotes, and re-promotes on
+    # every boot so a restored DB keeps its admins. Match is case-insensitive;
+    # the user must already have registered.
+    initial_superuser_emails: list[str] = Field(
+        default=[], alias="INITIAL_SUPERUSER_EMAILS"
+    )
+
     # Production hardening (M12)
     sentry_dsn: str = Field(default="", alias="SENTRY_DSN")
     rate_limit_disabled: bool = Field(default=False, alias="RATE_LIMIT_DISABLED")
@@ -171,6 +180,20 @@ class Settings(BaseSettings):
 
                 return json.loads(stripped)
             return [origin.strip() for origin in stripped.split(",") if origin.strip()]
+        return value
+
+    @field_validator("initial_superuser_emails", mode="before")
+    @classmethod
+    def _split_superuser_emails(cls, value: object) -> object:
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return []
+            if stripped.startswith("["):
+                import json
+
+                return json.loads(stripped)
+            return [e.strip() for e in stripped.split(",") if e.strip()]
         return value
 
 
