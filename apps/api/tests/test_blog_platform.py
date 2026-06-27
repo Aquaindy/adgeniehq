@@ -83,16 +83,16 @@ def test_manual_create_accepts_slug_excerpt_image(
         f"/api/v1/workspaces/{ws.id}/content-drafts",
         json={
             "type": "blog_post",
-            "title": "Launching the AdVanta blog",
+            "title": "Launching the AdGenieHQ blog",
             "body": "First post here.",
-            "slug": "launching-the-advanta-blog",
+            "slug": "launching-the-adgeniehq-blog",
             "excerpt": "Short summary for cards.",
             "image_url": "/uploads/blog-images/x/y.png",
         },
     )
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body["slug"] == "launching-the-advanta-blog"
+    assert body["slug"] == "launching-the-adgeniehq-blog"
     assert body["excerpt"] == "Short summary for cards."
     assert body["image_url"] == "/uploads/blog-images/x/y.png"
 
@@ -165,12 +165,12 @@ def test_publish_auto_generates_slug_and_excerpt(
     _login(client, "alice@example.com")
 
     long_body = (
-        "AdVanta turns chaotic ad spend into pipeline by deploying agents "
+        "AdGenieHQ turns chaotic ad spend into pipeline by deploying agents "
         "across paid, SEO, and conversion. " * 6
     )
     created = client.post(
         f"/api/v1/workspaces/{ws.id}/content-drafts",
-        json={"type": "blog_post", "title": "What AdVanta is", "body": long_body},
+        json={"type": "blog_post", "title": "What AdGenieHQ is", "body": long_body},
     ).json()
 
     # Approve, then publish.
@@ -184,7 +184,7 @@ def test_publish_auto_generates_slug_and_excerpt(
     assert pub.status_code == 200, pub.text
     body = pub.json()
     assert body["status"] == "published"
-    assert body["slug"] == "what-advanta-is"
+    assert body["slug"] == "what-adgeniehq-is"
     assert body["excerpt"] is not None
     assert len(body["excerpt"]) <= 281  # 280 + ellipsis
     assert body["published_at"] is not None

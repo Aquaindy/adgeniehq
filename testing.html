@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AdVanta — Tester Handoff</title>
+  <title>AdGenieHQ — Tester Handoff</title>
   <style>
     /* ------------------------------------------------------------ */
     /* Brand-aligned tokens (Grape Jelly #3E2F84)                   */
@@ -372,7 +372,7 @@
   <!-- ============================================================== -->
   <div class="topbar">
     <div class="topbar-inner">
-      <span class="topbar-logo"><span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L12 4.5 L19 19"/><path d="M8.2 14.5 H15.8"/></svg></span> AdVanta · Tester Handoff</span>
+      <span class="topbar-logo"><span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L12 4.5 L19 19"/><path d="M8.2 14.5 H15.8"/></svg></span> AdGenieHQ · Tester Handoff</span>
       <div class="progress-wrap">
         <span id="progress-label">0 / 0 addressed</span>
         <div class="progress-bar"><span id="progress-fill"></span></div>
@@ -396,7 +396,7 @@
     <!-- ============================================================ -->
     <div class="hero">
       <span class="pill">QA Build · v0.0.1</span>
-      <h1>Test plan for the AdVanta growth platform.</h1>
+      <h1>Test plan for the AdGenieHQ growth platform.</h1>
       <p style="margin-top:10px; max-width:62ch;">
         This document is a self-contained tester handoff. Each section is a feature area; each case has explicit
         steps, expected results, and copy-pasteable demo inputs. Mark each one Pass / Fail / Blocked / Skipped as
@@ -405,7 +405,7 @@
       </p>
       <p style="margin-top:6px; color:var(--slate-500); font-size:13px;">
         Open this file directly in any modern browser. No internet needed for the document itself; you'll need a
-        running AdVanta instance (see <a href="#environment">Environment</a>) to actually run the tests.
+        running AdGenieHQ instance (see <a href="#environment">Environment</a>) to actually run the tests.
       </p>
     </div>
 
@@ -452,10 +452,10 @@
             <th>Account</th><th>Email</th><th>Workspace role</th><th>Use for</th>
           </tr></thead>
           <tbody>
-            <tr><td>Owner</td><td><code>qa-owner@advanta.test</code></td><td>Owner</td><td>All flows. The first user you register becomes Owner of the workspace they create.</td></tr>
-            <tr><td>Admin</td><td><code>qa-admin@advanta.test</code></td><td>Admin</td><td>Approving recommendations + medium-risk actions; cannot toggle Autopilot.</td></tr>
-            <tr><td>Marketer</td><td><code>qa-marketer@advanta.test</code></td><td>Marketer</td><td>Content creation, A/B test design, blog editing.</td></tr>
-            <tr><td>Viewer</td><td><code>qa-viewer@advanta.test</code></td><td>Viewer</td><td>Negative role tests — should be blocked from approvals + edits.</td></tr>
+            <tr><td>Owner</td><td><code>qa-owner@adgeniehq.test</code></td><td>Owner</td><td>All flows. The first user you register becomes Owner of the workspace they create.</td></tr>
+            <tr><td>Admin</td><td><code>qa-admin@adgeniehq.test</code></td><td>Admin</td><td>Approving recommendations + medium-risk actions; cannot toggle Autopilot.</td></tr>
+            <tr><td>Marketer</td><td><code>qa-marketer@adgeniehq.test</code></td><td>Marketer</td><td>Content creation, A/B test design, blog editing.</td></tr>
+            <tr><td>Viewer</td><td><code>qa-viewer@adgeniehq.test</code></td><td>Viewer</td><td>Negative role tests — should be blocked from approvals + edits.</td></tr>
           </tbody>
         </table>
         <p style="margin-top:8px;">Roles other than Owner come from invitations (TC-WS-004). Until invitations are accepted, they sign in to an empty state without a workspace.</p>
@@ -624,7 +624,7 @@
           <h4>Demo data</h4>
           <div class="demo">
             <div>Name: <code>Quinn Owner</code></div>
-            <div>Email: <code>qa-owner@advanta.test</code></div>
+            <div>Email: <code>qa-owner@adgeniehq.test</code></div>
             <div>Password: <code>Tester-9-Validate</code></div>
           </div>
           <h4>Expected result</h4>
@@ -667,7 +667,7 @@
             <li>Once on the dashboard / workspace selector, hard-reload the page (<kbd>⌘⇧R</kbd>).</li>
           </ol>
           <h4>Expected result</h4>
-          <p>After reload you stay signed in. The hidden <code>advanta_refresh</code> cookie (path scoped to <code>/api/v1/auth</code>) is exchanged for a new access token automatically — verify in DevTools Network → look for a <code>POST /auth/refresh</code> 200 response on bootstrap.</p>
+          <p>After reload you stay signed in. The hidden <code>adgeniehq_refresh</code> cookie (path scoped to <code>/api/v1/auth</code>) is exchanged for a new access token automatically — verify in DevTools Network → look for a <code>POST /auth/refresh</code> 200 response on bootstrap.</p>
         </div>
       </details>
 
@@ -684,7 +684,7 @@
           <h4>Steps</h4>
           <ol>
             <li>Open <a href="http://localhost:5173/forgot-password" target="_blank">/forgot-password</a>.</li>
-            <li>Enter <code>qa-owner@advanta.test</code>. Submit.</li>
+            <li>Enter <code>qa-owner@adgeniehq.test</code>. Submit.</li>
             <li>You should see a generic "If that email is registered, we sent a link" success message — without confirming whether the address exists.</li>
             <li>The link itself is in the API logs (no real SMTP in dev). Open the backend console; look for a line containing <code>password_reset.requested</code> with the token. Or check the API response in DevTools.</li>
             <li>Open <code>/reset-password?token={that-token}</code> and complete the form with a new password (e.g. <code>NewPass-9-Validate</code>).</li>
@@ -705,7 +705,7 @@
         <div class="case-body">
           <h4>Steps</h4>
           <ol>
-            <li>Open <code>/forgot-password</code>, submit <code>nobody@advanta.test</code>.</li>
+            <li>Open <code>/forgot-password</code>, submit <code>nobody@adgeniehq.test</code>.</li>
           </ol>
           <h4>Expected result</h4>
           <p>Same 204 + same generic success copy as for a known address. Crucial for not leaking which emails are registered.</p>
@@ -874,7 +874,7 @@
         <div class="case-body">
           <h4>Steps</h4>
           <ol>
-            <li>Sign in as <code>qa-owner@advanta.test</code>.</li>
+            <li>Sign in as <code>qa-owner@adgeniehq.test</code>.</li>
             <li>On <code>/workspaces</code>, click "Create workspace" and enter the demo name.</li>
           </ol>
           <h4>Demo data</h4>
@@ -937,7 +937,7 @@
             <li>From the OpenAPI docs, run <code>POST /workspaces/{ws_id}/members/invite</code> with <code>{ email, role: "marketer" }</code>.</li>
           </ol>
           <h4>Demo data</h4>
-          <div class="demo">Email: <code>qa-marketer@advanta.test</code><br/>Role: <code>marketer</code></div>
+          <div class="demo">Email: <code>qa-marketer@adgeniehq.test</code><br/>Role: <code>marketer</code></div>
           <h4>Expected result</h4>
           <p>200 with <code>{ email, role: "marketer", status: "pending", expires_at: "…" }</code>. Hashed-at-rest invitation token is never returned to the client.</p>
         </div>
@@ -989,7 +989,7 @@
             <div>Website URL: <code>https://acme.example</code></div>
             <div>Industry: <code>B2B SaaS</code></div>
             <div>Target audience: <code>Series A founders running B2B SaaS in North America</code></div>
-            <div>Offer: <code>AdVanta is the AI growth command center that turns chaotic ad spend into measurable pipeline by deploying specialized agents across paid media, SEO, and website conversion.</code></div>
+            <div>Offer: <code>AdGenieHQ is the AI growth command center that turns chaotic ad spend into measurable pipeline by deploying specialized agents across paid media, SEO, and website conversion.</code></div>
             <div>Pain points: <code>Ads waste, slow weekly reporting, agency cycle-time.</code></div>
             <div>Primary conversion goal: <code>Demo request</code></div>
             <div>Monthly ad budget (USD): <code>5000</code></div>
@@ -1393,7 +1393,7 @@
           </ol>
           <h4>Demo data</h4>
           <div class="demo">
-            <div>Topic: <code>How AdVanta cuts wasted ad spend without cutting reach</code></div>
+            <div>Topic: <code>How AdGenieHQ cuts wasted ad spend without cutting reach</code></div>
             <div>Keywords: <code>paid ads, wasted spend, optimization</code></div>
             <div>Audience: <code>Series A founders</code></div>
           </div>
@@ -1463,7 +1463,7 @@
             <li>Enter the demo title; click "Create + edit".</li>
           </ol>
           <h4>Demo data</h4>
-          <div class="demo">Working title: <code>How AdVanta cuts wasted ad spend</code></div>
+          <div class="demo">Working title: <code>How AdGenieHQ cuts wasted ad spend</code></div>
           <h4>Expected result</h4>
           <p>HTTP 200. You're redirected to <code>/blog/posts/{draft_id}</code> with the editor open on the Editor tab. Title is pre-populated; body is the placeholder <code>"Start writing here…"</code>.</p>
         </div>
@@ -1493,7 +1493,7 @@ Most growth teams don't have a wasted-spend problem — they have a *visibility*
 2. Cross-reference with GA4 conversions on a 28-day window.
 3. Surface campaigns whose CPA is above your blended threshold.
 
-## What AdVanta does about it
+## What AdGenieHQ does about it
 
 The Paid Ads agent runs the whole loop and proposes pause / budget-reduce changes you approve before they ship.</pre>
           <h4>Expected result</h4>
@@ -1638,7 +1638,7 @@ The Paid Ads agent runs the whole loop and proposes pause / budget-reduce change
             <div>Slug: <code>cut-wasted-spend</code></div>
             <div>Excerpt: <code>A 3-step audit to find — and fix — the campaigns burning your budget without conversions.</code></div>
             <div>Keywords: <code>paid-ads, optimization, audit</code></div>
-            <div>Meta title: <code>How AdVanta cuts wasted ad spend</code></div>
+            <div>Meta title: <code>How AdGenieHQ cuts wasted ad spend</code></div>
             <div>Meta description: <code>A simple 3-step audit your team can run today to find — and fix — campaigns that are burning budget without conversions.</code></div>
           </div>
           <h4>Expected result</h4>
@@ -1660,7 +1660,7 @@ The Paid Ads agent runs the whole loop and proposes pause / budget-reduce change
             <li>Click "Publish".</li>
           </ol>
           <h4>Expected result</h4>
-          <p>Status flips to <code>published</code>. <code>published_at</code> set to now. The slug stays as the one you set; if you'd left slug blank, publish would auto-generate one from the title (<code>how-advanta-cuts-wasted-ad-spend</code>) and a 280-char excerpt from the body.</p>
+          <p>Status flips to <code>published</code>. <code>published_at</code> set to now. The slug stays as the one you set; if you'd left slug blank, publish would auto-generate one from the title (<code>how-adgeniehq-cuts-wasted-ad-spend</code>) and a 280-char excerpt from the body.</p>
         </div>
       </details>
 
@@ -1696,7 +1696,7 @@ The Paid Ads agent runs the whole loop and proposes pause / budget-reduce change
             <li>From the archive, click your post.</li>
           </ol>
           <h4>Expected result</h4>
-          <p>URL is <code>/blog/cut-wasted-spend</code>. Header has keywords, title, excerpt, cover image. Body shows headings + ordered list + bold/italic — same shape as the Editor preview. Footer has "Back to all posts" and "Try AdVanta free" buttons.</p>
+          <p>URL is <code>/blog/cut-wasted-spend</code>. Header has keywords, title, excerpt, cover image. Body shows headings + ordered list + bold/italic — same shape as the Editor preview. Footer has "Back to all posts" and "Try AdGenieHQ free" buttons.</p>
         </div>
       </details>
 
@@ -2205,7 +2205,7 @@ The Paid Ads agent runs the whole loop and proposes pause / budget-reduce change
         </summary>
         <div class="case-body">
           <h4>Pre-conditions</h4>
-          <p>Promote your owner to superuser via SQL: <code>UPDATE users SET is_superuser = true WHERE email = 'qa-owner@advanta.test';</code> Then sign out + back in.</p>
+          <p>Promote your owner to superuser via SQL: <code>UPDATE users SET is_superuser = true WHERE email = 'qa-owner@adgeniehq.test';</code> Then sign out + back in.</p>
           <h4>Steps</h4>
           <ol>
             <li>Open <code>/admin</code>.</li>
@@ -2405,7 +2405,7 @@ curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
           <span class="stat blocked">— blocked</span>
           <span class="stat skipped">— skipped</span>
         </div>
-        <p style="margin-top:14px;">Click <strong>Export report</strong> at the top of the page. A Markdown file (<code>advanta-test-run.md</code>) will download — that's the artifact to send back. It contains: each case ID, the status you chose, your notes, and a header with the date you ran this pass.</p>
+        <p style="margin-top:14px;">Click <strong>Export report</strong> at the top of the page. A Markdown file (<code>adgeniehq-test-run.md</code>) will download — that's the artifact to send back. It contains: each case ID, the status you chose, your notes, and a header with the date you ran this pass.</p>
       </div>
 
       <div class="card callout">
@@ -2420,7 +2420,7 @@ curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
       </div>
 
       <p style="text-align:center; color:var(--slate-400); font-size:12px; margin-top:30px;">
-        Generated 2026-04-26 · AdVanta Growth Command Center · v0.0.1
+        Generated 2026-04-26 · AdGenieHQ Growth Command Center · v0.0.1
       </p>
     </section>
 
@@ -2433,7 +2433,7 @@ curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
     (function () {
       "use strict";
 
-      const STORAGE_KEY = "advanta-tester-handoff-v1";
+      const STORAGE_KEY = "adgeniehq-tester-handoff-v1";
       const state = loadState();
 
       // -----------------------------------------------------------------
@@ -2597,7 +2597,7 @@ curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
 
       document.getElementById("export-summary").addEventListener("click", () => {
         const lines = [];
-        lines.push(`# AdVanta — test run report`);
+        lines.push(`# AdGenieHQ — test run report`);
         lines.push("");
         lines.push(`Generated: ${new Date().toISOString()}`);
         lines.push("");
@@ -2645,7 +2645,7 @@ curl -i -X POST http://localhost:8002/api/v1/provider-webhooks/google_ads \
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "advanta-test-run.md";
+        a.download = "adgeniehq-test-run.md";
         document.body.appendChild(a);
         a.click();
         a.remove();

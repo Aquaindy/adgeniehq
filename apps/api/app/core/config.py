@@ -16,14 +16,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = Field(default="AdVanta", alias="APP_NAME")
+    app_name: str = Field(default="AdGenieHQ", alias="APP_NAME")
     app_env: str = Field(default="development", alias="APP_ENV")
     app_debug: bool = Field(default=True, alias="APP_DEBUG")
     app_secret_key: str = Field(default="dev-secret-change-me", alias="APP_SECRET_KEY")
     api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
 
     database_url: str = Field(
-        default="postgresql+psycopg://advanta:advanta@localhost:5432/advanta_ai",
+        default="postgresql+psycopg://adgeniehq:adgeniehq@localhost:5432/adgeniehq_ai",
         alias="DATABASE_URL",
     )
     test_database_url: str | None = Field(default=None, alias="TEST_DATABASE_URL")
@@ -45,8 +45,8 @@ class Settings(BaseSettings):
     # Slug of the workspace whose published blog_post drafts are served on
     # the public marketing site at /blog. When empty, the public blog returns
     # an empty list (honest empty state, no fabricated posts). Customers
-    # using AdVanta to write their own blog publish to their own CMS via
-    # the existing publish_webhook flow — this only controls advantaai.com/blog.
+    # using AdGenieHQ to write their own blog publish to their own CMS via
+    # the existing publish_webhook flow — this only controls adgeniehq.com/blog.
     marketing_workspace_slug: str = Field(
         default="", alias="MARKETING_WORKSPACE_SLUG"
     )

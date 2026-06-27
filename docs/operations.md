@@ -12,11 +12,11 @@ Runbook for the running production system: backups, observability, on-call.
 - **Self-hosted**: nightly cron of `pg_dump -Fc` to S3-compatible storage:
 
   ```bash
-  pg_dump -Fc "$DATABASE_URL" > "advanta_$(date -u +%Y%m%d).dump"
-  aws s3 cp advanta_$(date -u +%Y%m%d).dump s3://your-bucket/postgres/
+  pg_dump -Fc "$DATABASE_URL" > "adgeniehq_$(date -u +%Y%m%d).dump"
+  aws s3 cp adgeniehq_$(date -u +%Y%m%d).dump s3://your-bucket/postgres/
   ```
 
-- Test restore quarterly: `pg_restore -d advanta_ai_restore -j 4 advanta_*.dump`.
+- Test restore quarterly: `pg_restore -d adgeniehq_ai_restore -j 4 adgeniehq_*.dump`.
 
 ### Redis
 
@@ -36,7 +36,7 @@ The `oauth_tokens` table is encrypted at rest with `ENCRYPTION_KEY`. **If the ke
 ### Logs
 
 - **structlog** with JSON renderer in production. Each line carries `request_id`, `method`, `path`, plus per-event fields.
-- Render: tail logs with `render logs --service advanta-api --tail`.
+- Render: tail logs with `render logs --service adgeniehq-api --tail`.
 - Self-hosted: pipe stdout to your aggregator (Loki, Datadog, etc.).
 - Correlate with the `X-Request-ID` response header from a failing client request.
 

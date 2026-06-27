@@ -1,6 +1,6 @@
 # Local development
 
-This guide brings AdVanta up locally on macOS or Linux.
+This guide brings AdGenieHQ up locally on macOS or Linux.
 
 ## Prerequisites
 
@@ -79,6 +79,6 @@ docker compose down --volumes  # also wipe Postgres + Redis data
 
 ## Troubleshooting
 
-- **`postgres` health is "Unreachable"** — Docker isn't running, or `DATABASE_URL` doesn't match `docker-compose.yml`. Default is `postgresql+psycopg://advanta:advanta@localhost:5432/advanta_ai`.
+- **`postgres` health is "Unreachable"** — Docker isn't running, or `DATABASE_URL` doesn't match `docker-compose.yml`. Default is `postgresql+psycopg://adgeniehq:adgeniehq@localhost:5432/adgeniehq_ai`.
 - **CORS errors in the browser** — confirm `CORS_ORIGINS` in `.env` includes `http://localhost:5173`.
 - **`ModuleNotFoundError` for `app.*`** — make sure you ran `pip install -e ".[dev]"` from `apps/api/` after activating the venv.

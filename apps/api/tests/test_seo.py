@@ -314,7 +314,7 @@ def test_seo_sync_persists_keywords_with_opportunity_scores(
                 top_page="https://acme.example/",
             ),
             GSCKeywordRow(
-                query="advanta ai",
+                query="adgeniehq ai",
                 clicks=80,
                 impressions=120,
                 ctr=80 / 120,
@@ -345,7 +345,7 @@ def test_seo_sync_persists_keywords_with_opportunity_scores(
     assert by_query["ai growth command center"]["opportunity_score"] >= 50
     # The well-ranked branded query should score lower
     assert (
-        by_query["advanta ai"]["opportunity_score"]
+        by_query["adgeniehq ai"]["opportunity_score"]
         < by_query["ai growth command center"]["opportunity_score"]
     )
 

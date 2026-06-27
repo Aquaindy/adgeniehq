@@ -1,9 +1,9 @@
-# Render blueprint for AdVanta.
+# Render blueprint for AdGenieHQ.
 # https://render.com/docs/blueprint-spec
 #
 # Provisions everything: Postgres, Redis, the FastAPI API (web), the Celery
 # worker+beat, and the SPA as a free Render STATIC SITE (global CDN, no
-# container). Domains for getadvanta.app are baked in. API + worker run on the
+# container). Domains for adgeniehq.com are baked in. API + worker run on the
 # `starter` plan (bump to `standard` when traffic grows).
 #
 # Secrets are `sync: false` (NOT stored here) — set them once in the Render
@@ -13,10 +13,10 @@
 # (tokens encrypted by one service must decrypt in the other).
 
 databases:
-  - name: advanta-postgres
+  - name: adgeniehq-postgres
     plan: starter
-    databaseName: advanta_ai
-    user: advanta
+    databaseName: adgeniehq_ai
+    user: adgeniehq
 
 # ---------------------------------------------------------------------------
 # Shared secrets/config for the api + worker. DATABASE_URL / REDIS_URL are NOT
@@ -24,7 +24,7 @@ databases:
 # each service declares them individually (both point at the same instances).
 # ---------------------------------------------------------------------------
 envVarGroups:
-  - name: advanta-shared
+  - name: adgeniehq-shared
     envVars:
       - key: APP_ENV
         value: production
@@ -39,9 +39,9 @@ envVarGroups:
       - key: ENCRYPTION_KEY
         sync: false
       - key: FRONTEND_URL
-        value: https://getadvanta.app
+        value: https://adgeniehq.com
       - key: BACKEND_URL
-        value: https://api.getadvanta.app
+        value: https://api.adgeniehq.com
 
       # Founding super-admins — comma-separated emails promoted to is_superuser
       # on API startup (grants /admin + bypasses all plan limits). Accounts must
@@ -102,7 +102,7 @@ envVarGroups:
       - key: GOOGLE_LOGIN_CLIENT_SECRET
         sync: false
       - key: GOOGLE_LOGIN_REDIRECT_URI
-        value: https://api.getadvanta.app/api/v1/auth/google/callback
+        value: https://api.adgeniehq.com/api/v1/auth/google/callback
 
       # --- Other ad platforms
       - key: META_APP_ID
@@ -143,12 +143,12 @@ envVarGroups:
 
 services:
   - type: redis
-    name: advanta-redis
+    name: adgeniehq-redis
     plan: starter
     ipAllowList: []  # internal-only
 
   - type: web
-    name: advanta-api
+    name: adgeniehq-api
     runtime: docker
     dockerfilePath: ./infra/docker/Dockerfile.api
     dockerContext: .
@@ -162,29 +162,29 @@ services:
     # it's safe for both api + worker to run it; whichever deploys first applies.
     preDeployCommand: alembic upgrade head
     domains:
-      - api.getadvanta.app
+      - api.adgeniehq.com
     # Blog-image uploads write to /app/uploads, which is EPHEMERAL on Render —
     # images are lost on every deploy/restart. For production use object storage
     # (S3 / Cloudflare R2). A persistent disk pins the service to one instance,
     # drops zero-downtime deploys, and needs an entrypoint chown (container runs
     # as uid 10001, Render mounts disks as root). Uncomment only if you accept that.
     # disk:
-    #   name: advanta-uploads
+    #   name: adgeniehq-uploads
     #   mountPath: /app/uploads
     #   sizeGB: 1
     envVars:
-      - fromGroup: advanta-shared
+      - fromGroup: adgeniehq-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: advanta-postgres
+          name: adgeniehq-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: advanta-redis
+          name: adgeniehq-redis
           type: redis
           property: connectionString
       - key: CORS_ORIGINS
-        value: '["https://getadvanta.app","https://www.getadvanta.app"]'
+        value: '["https://adgeniehq.com","https://www.adgeniehq.com"]'
       # Dispatch slow tasks to the worker instead of running them inline.
       - key: WORKERS_ENABLED
         value: "1"
@@ -194,7 +194,7 @@ services:
   # fee accrual + autopilot scan once per replica. To scale workers, split beat
   # into its own dedicated single-replica service first.
   - type: worker
-    name: advanta-worker
+    name: adgeniehq-worker
     runtime: docker
     dockerfilePath: ./infra/docker/Dockerfile.api
     dockerContext: .
@@ -203,14 +203,14 @@ services:
     preDeployCommand: alembic upgrade head
     dockerCommand: celery -A app.core.celery_app.celery_app worker --beat --loglevel=info --concurrency=4
     envVars:
-      - fromGroup: advanta-shared
+      - fromGroup: adgeniehq-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: advanta-postgres
+          name: adgeniehq-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
-          name: advanta-redis
+          name: adgeniehq-redis
           type: redis
           property: connectionString
 
@@ -219,26 +219,26 @@ services:
   # image (infra/docker/Dockerfile.web + infra/nginx/spa.conf) is kept as the
   # "full nginx control" alternative and for the docker-compose stack.
   - type: web
-    name: advanta-web
+    name: adgeniehq-web
     runtime: static
     # Monorepo build: corepack picks up packageManager (pnpm@9.15.4) from the
     # root package.json. VITE_* below are injected as build env — Vite inlines
     # import.meta.env.VITE_* at build time.
-    buildCommand: corepack enable && pnpm install --frozen-lockfile=false && pnpm --filter @advanta/web build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile=false && pnpm --filter @adgeniehq/web build
     staticPublishPath: ./apps/web/dist
     autoDeploy: true
     domains:
-      - getadvanta.app
-      - www.getadvanta.app
+      - adgeniehq.com
+      - www.adgeniehq.com
     envVars:
       # Pin the build Node to match the Docker image (root engines: node >=20).
       - key: NODE_VERSION
         value: "20"
       # Must point at the API's public origin + /api/v1.
       - key: VITE_API_BASE_URL
-        value: https://api.getadvanta.app/api/v1
+        value: https://api.adgeniehq.com/api/v1
       - key: VITE_APP_NAME
-        value: AdVanta
+        value: AdGenieHQ
     # SPA client routing: serve index.html for any path with no matching file.
     # Render serves real asset files first, so /assets/* still resolve directly.
     routes:
@@ -264,4 +264,4 @@ services:
         value: max-age=63072000; includeSubDomains
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' https://cdn.paddle.com https://*.paddle.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' data: https://rsms.me; img-src 'self' data: blob: https:; connect-src 'self' https://api.getadvanta.app https://*.paddle.com; frame-src https://*.paddle.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
+        value: "default-src 'self'; script-src 'self' https://cdn.paddle.com https://*.paddle.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' data: https://rsms.me; img-src 'self' data: blob: https:; connect-src 'self' https://api.adgeniehq.com https://*.paddle.com; frame-src https://*.paddle.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"

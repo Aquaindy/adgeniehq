@@ -1,6 +1,6 @@
 # Deployment
 
-This is the production runbook. AdVanta is shaped to run on **Render** out of the box (see [`infra/render/render.yaml`](../infra/render/render.yaml)) and on any **Docker** host via the production compose file.
+This is the production runbook. AdGenieHQ is shaped to run on **Render** out of the box (see [`infra/render/render.yaml`](../infra/render/render.yaml)) and on any **Docker** host via the production compose file.
 
 ---
 
@@ -39,15 +39,15 @@ Visit `http://localhost:8080` (web) and `http://localhost:8000/api/v1/docs` (API
 The blueprint provisions everything: Postgres, Redis, the API web service, the
 Celery worker (with beat), and the SPA as a free **static site** (global CDN, no
 container — its CSP/security headers live in the blueprint `headers:` block).
-Domain wiring for **getadvanta.app** is baked into
+Domain wiring for **adgeniehq.com** is baked into
 [`render.yaml`](../infra/render/render.yaml) — only secrets are entered by hand.
 
 1. Push the repo to GitHub.
 2. Render → **New** → **Blueprint**, point at the repo. It auto-discovers
    [`infra/render/render.yaml`](../infra/render/render.yaml) and provisions the
-   database, Redis, the **`advanta-shared`** env-var group, and all four services.
-3. Set the secret (`sync: false`) env vars **once on the `advanta-shared`
-   environment group** (Render → **Env Groups → advanta-shared**). Because the
+   database, Redis, the **`adgeniehq-shared`** env-var group, and all four services.
+3. Set the secret (`sync: false`) env vars **once on the `adgeniehq-shared`
+   environment group** (Render → **Env Groups → adgeniehq-shared**). Because the
    api and worker both reference the group, a value entered here applies to both
    — no per-service copying. `APP_SECRET_KEY` is auto-generated in the group and
    shared automatically. The full list is in **§3.3** below; the must-have ones:
@@ -60,28 +60,28 @@ Domain wiring for **getadvanta.app** is baked into
 
    `FRONTEND_URL`, `BACKEND_URL`, `CORS_ORIGINS`, `GOOGLE_LOGIN_REDIRECT_URI`,
    `PADDLE_ENVIRONMENT=production`, the LLM provider/model values, and
-   `VITE_API_BASE_URL` are **already set** to the getadvanta.app values in the
+   `VITE_API_BASE_URL` are **already set** to the adgeniehq.com values in the
    blueprint — no manual entry.
 4. `alembic upgrade head` runs as a `preDeployCommand` on both the API and the
    worker, so every release applies pending migrations before traffic shifts.
 
-### 3.1 Domains & DNS (getadvanta.app)
+### 3.1 Domains & DNS (adgeniehq.com)
 
 | Host | Render service | Serves |
 |---|---|---|
-| `getadvanta.app` (apex) | `advanta-web` | SPA — marketing + app |
-| `www.getadvanta.app` | `advanta-web` | SPA |
-| `api.getadvanta.app` | `advanta-api` | FastAPI |
+| `adgeniehq.com` (apex) | `adgeniehq-web` | SPA — marketing + app |
+| `www.adgeniehq.com` | `adgeniehq-web` | SPA |
+| `api.adgeniehq.com` | `adgeniehq-api` | FastAPI |
 
 These are declared under each service's `domains:` in the blueprint. After the
 first deploy, open each service → **Settings → Custom Domains** to read the
 **exact** DNS target Render assigns, then add these records at your registrar
-for `getadvanta.app`:
+for `adgeniehq.com`:
 
 | Type | Name | Value |
 |---|---|---|
-| CNAME | `www` | the `*.onrender.com` target Render shows for `advanta-web` |
-| CNAME | `api` | the `*.onrender.com` target Render shows for `advanta-api` |
+| CNAME | `www` | the `*.onrender.com` target Render shows for `adgeniehq-web` |
+| CNAME | `api` | the `*.onrender.com` target Render shows for `adgeniehq-api` |
 | A / ALIAS | `@` (apex) | the apex target Render shows — use ALIAS/ANAME if your registrar supports it, otherwise Render's A record IP |
 
 Render provisions and auto-renews TLS once DNS verifies. The apex can't use a
@@ -103,23 +103,23 @@ The blueprint creates these resources:
 
 | Resource | Type | Notes |
 |---|---|---|
-| `advanta-postgres` | Postgres DB | provides `DATABASE_URL` to api + worker |
-| `advanta-redis` | Redis | internal-only; provides `REDIS_URL` |
-| `advanta-shared` | Env-var group | shared secrets/config for api + worker |
-| `advanta-api` | Web (FastAPI, Docker, `starter`) | `api.getadvanta.app`, health `/api/v1/health/ready` |
-| `advanta-worker` | Worker (Celery+beat, Docker, `starter`) | single replica |
-| `advanta-web` | Static Site (SPA, CDN, **free**) | `getadvanta.app`, `www` — CSP/headers in blueprint |
+| `adgeniehq-postgres` | Postgres DB | provides `DATABASE_URL` to api + worker |
+| `adgeniehq-redis` | Redis | internal-only; provides `REDIS_URL` |
+| `adgeniehq-shared` | Env-var group | shared secrets/config for api + worker |
+| `adgeniehq-api` | Web (FastAPI, Docker, `starter`) | `api.adgeniehq.com`, health `/api/v1/health/ready` |
+| `adgeniehq-worker` | Worker (Celery+beat, Docker, `starter`) | single replica |
+| `adgeniehq-web` | Static Site (SPA, CDN, **free**) | `adgeniehq.com`, `www` — CSP/headers in blueprint |
 
 **Already set by the blueprint — no action:**
 
 | Where | Vars |
 |---|---|
-| `advanta-shared` | `APP_ENV`, `APP_DEBUG`, `APP_SECRET_KEY` (auto-generated), `FRONTEND_URL`, `BACKEND_URL`, `LLM_PROVIDER`, `ANTHROPIC_MODEL`, `LLM_MODEL`, `LLM_FAST_MODEL`, `PADDLE_ENVIRONMENT`, `GOOGLE_LOGIN_REDIRECT_URI` |
-| `advanta-api` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `WORKERS_ENABLED=1` |
-| `advanta-worker` | `DATABASE_URL`, `REDIS_URL` |
-| `advanta-web` | `VITE_API_BASE_URL`, `VITE_APP_NAME` |
+| `adgeniehq-shared` | `APP_ENV`, `APP_DEBUG`, `APP_SECRET_KEY` (auto-generated), `FRONTEND_URL`, `BACKEND_URL`, `LLM_PROVIDER`, `ANTHROPIC_MODEL`, `LLM_MODEL`, `LLM_FAST_MODEL`, `PADDLE_ENVIRONMENT`, `GOOGLE_LOGIN_REDIRECT_URI` |
+| `adgeniehq-api` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `WORKERS_ENABLED=1` |
+| `adgeniehq-worker` | `DATABASE_URL`, `REDIS_URL` |
+| `adgeniehq-web` | `VITE_API_BASE_URL`, `VITE_APP_NAME` |
 
-**You set these by hand on the `advanta-shared` group** (applies to api + worker):
+**You set these by hand on the `adgeniehq-shared` group** (applies to api + worker):
 
 | Group | Var | Required? |
 |---|---|---|
@@ -138,7 +138,7 @@ The blueprint creates these resources:
 | Observability | `SENTRY_DSN` | Optional |
 | Website agent | `PAGESPEED_API_KEY` | Optional (Lighthouse/PageSpeed) |
 
-> The `advanta-web` SPA needs **no secrets** — only the two baked `VITE_*` values.
+> The `adgeniehq-web` SPA needs **no secrets** — only the two baked `VITE_*` values.
 > Redis and Postgres need no manual env vars.
 
 ---
@@ -146,10 +146,10 @@ The blueprint creates these resources:
 ## 4. OAuth callbacks
 
 Each provider's OAuth app must whitelist the **backend** callback exactly
-(`BACKEND_URL` = `https://api.getadvanta.app`):
+(`BACKEND_URL` = `https://api.adgeniehq.com`):
 
 ```
-https://api.getadvanta.app/api/v1/integrations/{provider}/callback
+https://api.adgeniehq.com/api/v1/integrations/{provider}/callback
 ```
 
 Where `{provider}` is one of `google_ads`, `google_analytics`,
@@ -159,7 +159,7 @@ For Google **sign-in** (the separate login client), the registered redirect URI
 is the backend callback:
 
 ```
-https://api.getadvanta.app/api/v1/auth/google/callback
+https://api.adgeniehq.com/api/v1/auth/google/callback
 ```
 
 (The backend then redirects the browser to the frontend finish page
@@ -174,7 +174,7 @@ Recurring billing runs on **Paddle** (Merchant of Record). In the Paddle
 dashboard → **Developer Tools → Notifications**, add a destination:
 
 ```
-https://api.getadvanta.app/api/v1/billing/paddle/webhook
+https://api.adgeniehq.com/api/v1/billing/paddle/webhook
 ```
 
 Subscribe to the subscription + transaction events:
@@ -201,12 +201,12 @@ prices, API key, client token, webhook destination + secret, and customers do
 not carry over. Redo every step in Live.
 
 **1. Account & domain approval (Live only)**
-- [ ] Submit your business + website for verification; Paddle reviews `getadvanta.app`.
+- [ ] Submit your business + website for verification; Paddle reviews `adgeniehq.com`.
 - [ ] Site exposes: product description, **Pricing** (`/pricing`), **Terms** (`/terms`), **Privacy** (`/privacy`), **Refund & Cancellation** (`/refund`), and a **contact** email — all present.
-- [ ] Add `getadvanta.app` under **Checkout → Approved domains** so the overlay runs in Live.
+- [ ] Add `adgeniehq.com` under **Checkout → Approved domains** so the overlay runs in Live.
 
 **2. Catalog — one Product, six Prices**
-- [ ] Create a Product (e.g. "AdVanta") with recurring Prices:
+- [ ] Create a Product (e.g. "AdGenieHQ") with recurring Prices:
 
   | Plan | Monthly | Annual |
   |---|---|---|
@@ -222,11 +222,11 @@ not carry over. Redo every step in Live.
 **4. Client-side token** — Developer Tools → Authentication → client-side tokens (Live).
 
 **5. Webhook destination** — Developer Tools → Notifications:
-- [ ] URL `https://api.getadvanta.app/api/v1/billing/paddle/webhook` (exact — a typo silently returns 404 at Paddle, not an app error).
+- [ ] URL `https://api.adgeniehq.com/api/v1/billing/paddle/webhook` (exact — a typo silently returns 404 at Paddle, not an app error).
 - [ ] Events: `subscription.created`, `subscription.activated`, `subscription.updated`, `subscription.canceled`, `subscription.past_due`, `transaction.completed` (+ `transaction.paid`).
 - [ ] Copy the destination's **signing secret**.
 
-**6. Set env on `advanta-api` (+ the shared group), then redeploy:**
+**6. Set env on `adgeniehq-api` (+ the shared group), then redeploy:**
 ```
 PADDLE_ENVIRONMENT=production
 PADDLE_API_KEY=<live key>
@@ -258,11 +258,11 @@ Env changes only take effect after a redeploy.
 the blueprint:
 
 ```env
-CORS_ORIGINS=["https://getadvanta.app","https://www.getadvanta.app"]
+CORS_ORIGINS=["https://adgeniehq.com","https://www.adgeniehq.com"]
 ```
 
 Add/remove origins here if you change the canonical host. Cookies
-(`advanta_refresh`) require `credentials: include` from the browser; CORS allows
+(`adgeniehq_refresh`) require `credentials: include` from the browser; CORS allows
 credentials, which it already does in [`main.py`](../apps/api/main.py). Origins
 must be exact (scheme + host, no trailing slash).
 
@@ -285,7 +285,7 @@ In production, this is the `preDeployCommand` on Render and the manual step in t
 ## 8. Promoting a superuser
 
 The first superuser must be created out-of-band. On Render, open the
-`advanta-api` service → **Shell** and run the snippet below (drop the
+`adgeniehq-api` service → **Shell** and run the snippet below (drop the
 `docker compose … run --rm api` prefix — you're already inside the container).
 On a Docker host, run it as a one-off:
 

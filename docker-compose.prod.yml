@@ -11,13 +11,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: advanta
-      POSTGRES_PASSWORD: advanta
-      POSTGRES_DB: advanta_ai
+      POSTGRES_USER: adgeniehq
+      POSTGRES_PASSWORD: adgeniehq
+      POSTGRES_DB: adgeniehq_ai
     volumes:
-      - advanta_pg:/var/lib/postgresql/data
+      - adgeniehq_pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U advanta -d advanta_ai"]
+      test: ["CMD-SHELL", "pg_isready -U adgeniehq -d adgeniehq_ai"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -26,7 +26,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
-      - advanta_redis:/data
+      - adgeniehq_redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -44,7 +44,7 @@ services:
       # Dispatch slow tasks to the worker below instead of running them inline
       # in the request (which would block requests + risk proxy timeouts).
       WORKERS_ENABLED: "1"
-      DATABASE_URL: postgresql+psycopg://advanta:advanta@postgres:5432/advanta_ai
+      DATABASE_URL: postgresql+psycopg://adgeniehq:adgeniehq@postgres:5432/adgeniehq_ai
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: '["http://localhost:8080","http://localhost:5173"]'
       FRONTEND_URL: http://localhost:8080
@@ -79,7 +79,7 @@ services:
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
-      DATABASE_URL: postgresql+psycopg://advanta:advanta@postgres:5432/advanta_ai
+      DATABASE_URL: postgresql+psycopg://adgeniehq:adgeniehq@postgres:5432/adgeniehq_ai
       REDIS_URL: redis://redis:6379/0
       APP_SECRET_KEY: ${APP_SECRET_KEY:?set APP_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
@@ -113,5 +113,5 @@ services:
       - "8080:80"
 
 volumes:
-  advanta_pg:
-  advanta_redis:
+  adgeniehq_pg:
+  adgeniehq_redis:
