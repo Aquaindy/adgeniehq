@@ -13,10 +13,15 @@
 # (tokens encrypted by one service must decrypt in the other).
 
 databases:
+  # Service label is adgeniehq-postgres, but databaseName/user keep their
+  # original values: the live instance was created as advanta_ai/advanta and
+  # Postgres cannot rename them in place. They live inside DATABASE_URL only
+  # (never user-visible), so a rename would mean a new instance + data
+  # migration. Keep these matching the live DB so the blueprint stays accurate.
   - name: adgeniehq-postgres
     plan: starter
-    databaseName: adgeniehq_ai
-    user: adgeniehq
+    databaseName: advanta_ai
+    user: advanta
 
 # ---------------------------------------------------------------------------
 # Shared secrets/config for the api + worker. DATABASE_URL / REDIS_URL are NOT
