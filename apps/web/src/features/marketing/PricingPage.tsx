@@ -118,7 +118,7 @@ const FEATURE_MATRIX: FeatureGroup[] = [
 
 
 /**
- * AdVanta Concierge — managed-service add-on. Sold on top of any SaaS
+ * AdGenieHQ Concierge — managed-service add-on. Sold on top of any SaaS
  * tier for customers who want a documented operational rhythm with a
  * human reviewer in the loop. Hours and scope follow the playbook in
  * docs/human-in-the-loop-playbook.md.
@@ -178,7 +178,7 @@ export function PricingPage() {
             Pricing that grows with your spend.
           </h1>
           <p className="mt-3 text-slate-600">
-            AdVanta is your AI ad-creation platform: build campaigns, generate
+            AdGenieHQ is your AI ad-creation platform: build campaigns, generate
             ad copy and creative, and publish to Google, Meta &amp; LinkedIn in
             one click — then let the agents optimize spend, SEO, and conversion.
             Every tier ships the full agent suite, risk-gated approvals, and the
@@ -328,7 +328,7 @@ function ConciergeSection() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <header className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-grape-700">
-            AdVanta Concierge · Optional add-on
+            AdGenieHQ Concierge · Optional add-on
           </p>
           <h2 className="mt-3 text-3xl font-semibold text-ink sm:text-4xl">
             When you want a human in the loop.
@@ -379,7 +379,7 @@ function ConciergeSection() {
                   ))}
                 </ul>
                 <a
-                  href="mailto:support@aimarketinghub.io?subject=AdVanta%20Concierge%20%E2%80%94%20interest"
+                  href="mailto:support@aimarketinghub.io?subject=AdGenieHQ%20Concierge%20%E2%80%94%20interest"
                   className={cn(
                     "rounded-xl px-4 py-2 text-center text-sm font-semibold transition",
                     tier.highlight
@@ -403,7 +403,7 @@ function ConciergeSection() {
             workspaces, or scopes outside the playbook —{" "}
             <a
               className="text-grape-700 underline"
-              href="mailto:support@aimarketinghub.io?subject=AdVanta%20Concierge%20%E2%80%94%20enterprise"
+              href="mailto:support@aimarketinghub.io?subject=AdGenieHQ%20Concierge%20%E2%80%94%20enterprise"
             >
               email us
             </a>{" "}
@@ -412,7 +412,7 @@ function ConciergeSection() {
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-400">
-          Concierge is a separate engagement, billed alongside your AdVanta SaaS
+          Concierge is a separate engagement, billed alongside your AdGenieHQ SaaS
           subscription. 12-month minimum on Standard and Premium tiers.
         </p>
       </div>

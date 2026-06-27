@@ -301,7 +301,7 @@ function FeeDashboard({
         }
       />
       <p className="mt-2 text-sm text-slate-500">
-        AdVanta charges a platform fee on ad activity managed through the app — a one-time
+        AdGenieHQ charges a platform fee on ad activity managed through the app — a one-time
         listing fee per campaign plus a monthly run fee. Fees accrue here and are billed
         on an invoice.
       </p>
@@ -323,7 +323,7 @@ function FeeDashboard({
             </div>
           ) : (
             <div className="mt-4 rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400">
-              No fees accrued yet. Fees appear here once you launch campaigns through AdVanta.
+              No fees accrued yet. Fees appear here once you launch campaigns through AdGenieHQ.
             </div>
           )}
 

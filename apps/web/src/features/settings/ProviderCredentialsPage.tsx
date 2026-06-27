@@ -3,7 +3,7 @@ import { useWorkspaceStore } from "@/stores/workspace-store";
 
 /**
  * BYOK page — workspace-scoped provider credentials (OpenAI, Anthropic,
- * Google AI). AdVanta uses these on the workspace's behalf for LLM-backed
+ * Google AI). AdGenieHQ uses these on the workspace's behalf for LLM-backed
  * agents and skills.
  */
 export function ProviderCredentialsPage() {

@@ -275,7 +275,7 @@ export function OnboardingWizardPage() {
           Tell us about your business
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          AdVanta uses these answers to generate your Growth DNA Profile — readiness scores,
+          AdGenieHQ uses these answers to generate your Growth DNA Profile — readiness scores,
           recommended first campaigns, and a 30-day plan. You can refine answers later.
         </p>
       </header>
@@ -636,7 +636,7 @@ function BrandStep({ form, setField }: StepProps) {
         />
         <p className="text-xs text-slate-500">
           When you click <span className="font-medium text-grape-700">Generate Growth DNA Profile</span>,
-          AdVanta will compute readiness scores, recommended first campaigns, and your 30-day plan
+          AdGenieHQ will compute readiness scores, recommended first campaigns, and your 30-day plan
           from these answers — all derived from your inputs, no fabricated metrics.
         </p>
       </div>

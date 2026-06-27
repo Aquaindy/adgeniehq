@@ -22,8 +22,8 @@ import {
  *
  * Distinction from the section above:
  *   - "Your API keys" = OUTBOUND. Keys *external clients* use to call the
- *     AdVanta API on this workspace's behalf.
- *   - "Provider credentials" = INBOUND. Keys *AdVanta uses* to call OpenAI,
+ *     AdGenieHQ API on this workspace's behalf.
+ *   - "Provider credentials" = INBOUND. Keys *AdGenieHQ uses* to call OpenAI,
  *     Anthropic, Google AI on this workspace's behalf for LLM-backed work.
  *
  * Keys are encrypted with Fernet at rest. The plaintext is never returned
@@ -74,7 +74,7 @@ export function ProviderCredentialsCard({
     <Card>
       <CardHeader
         title="Provider credentials (BYOK)"
-        subtitle="Workspace-scoped keys for OpenAI, Anthropic, and Google AI. AdVanta uses these on your behalf for LLM-backed agents and skills. Encrypted at rest with Fernet — only the last four characters are shown after saving."
+        subtitle="Workspace-scoped keys for OpenAI, Anthropic, and Google AI. AdGenieHQ uses these on your behalf for LLM-backed agents and skills. Encrypted at rest with Fernet — only the last four characters are shown after saving."
       />
 
       {specs.isLoading || list.isLoading ? (

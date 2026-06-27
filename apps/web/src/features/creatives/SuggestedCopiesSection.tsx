@@ -89,7 +89,7 @@ export function SuggestedCopiesSection({ workspaceId }: { workspaceId: string })
     setError(null);
     try {
       const blob = await fetchSuggestedCopiesBundleBlob(workspaceId, format);
-      saveBlob(blob, `suggested_copies_${slugify(productName ?? "advanta")}.${format}`);
+      saveBlob(blob, `suggested_copies_${slugify(productName ?? "adgeniehq")}.${format}`);
     } catch {
       setError(`Could not download the ${format.toUpperCase()} bundle.`);
     }

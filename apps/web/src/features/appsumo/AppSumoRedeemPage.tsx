@@ -21,7 +21,7 @@ import { useWorkspaceStore } from "@/stores/workspace-store";
 
 /**
  * Public AppSumo redemption page, intentionally OUTSIDE the dashboard shell so
- * AppSumo can link buyers straight to getadvanta.app/appsumo/redeem. Requires
+ * AppSumo can link buyers straight to adgeniehq.com/appsumo/redeem. Requires
  * an account + workspace to actually grant the lifetime plan; unauthenticated
  * visitors get a clear sign-up/sign-in path.
  */
@@ -35,7 +35,7 @@ export function AppSumoRedeemPage() {
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2">
             <Logomark />
-            <span className="text-sm font-semibold text-ink">AdVanta</span>
+            <span className="text-sm font-semibold text-ink">AdGenieHQ</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -50,7 +50,7 @@ export function AppSumoRedeemPage() {
           Redeem your AppSumo code
         </h1>
         <p className="mt-3 text-base text-slate-600">
-          Enter the code from your AppSumo purchase to unlock AdVanta for
+          Enter the code from your AppSumo purchase to unlock AdGenieHQ for
           life. Stack up to three codes to climb tiers — more agent runs,
           landing pages, and seats at each level.
         </p>
@@ -80,7 +80,7 @@ function SignedOutCta() {
       </h2>
       <p className="mt-2 text-sm text-slate-600">
         Redemption attaches the lifetime plan to a workspace, so you'll need an
-        AdVanta account first. It takes under a minute — then come back here and
+        AdGenieHQ account first. It takes under a minute — then come back here and
         enter your code.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">

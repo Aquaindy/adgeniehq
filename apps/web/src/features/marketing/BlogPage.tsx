@@ -52,7 +52,7 @@ function BlogHero({ hasPosts }: { hasPosts: boolean }) {
       <div className="relative mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-24">
         <p className="inline-flex items-center gap-2 rounded-full border border-grape-200 bg-surface/70 px-3 py-1 text-xs font-medium uppercase tracking-wider text-grape-700 backdrop-blur">
           <span className="h-1.5 w-1.5 rounded-full bg-grape-700" />
-          The AdVanta blog
+          The AdGenieHQ blog
         </p>
         <h1 className="mt-5 text-4xl font-semibold tracking-tight text-ink sm:text-5xl">
           Growth playbooks,
@@ -63,7 +63,7 @@ function BlogHero({ hasPosts }: { hasPosts: boolean }) {
           Hands-on guides for paid ads, SEO &amp; GEO, conversion, and
           operating an AI growth team.
           {hasPosts ? null : (
-            <span> Written from the same data the AdVanta agents read every day.</span>
+            <span> Written from the same data the AdGenieHQ agents read every day.</span>
           )}
         </p>
       </div>
@@ -152,7 +152,7 @@ function ComingSoonNotice() {
             We're publishing the blog from inside the product.
           </h2>
           <p className="mt-3 text-base text-slate-600">
-            The blog you'll read here is the same surface AdVanta workspaces
+            The blog you'll read here is the same surface AdGenieHQ workspaces
             use to draft, review, and publish — Content-Drafts in the
             dashboard graduate to public posts on this domain. Once we drop
             the first set of posts, this page becomes the live archive.

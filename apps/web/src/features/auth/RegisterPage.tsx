@@ -43,7 +43,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your AdVanta account"
+      title="Create your AdGenieHQ account"
       subtitle="Free to start. Connect real accounts to activate your AI growth team."
       footer={
         <span>

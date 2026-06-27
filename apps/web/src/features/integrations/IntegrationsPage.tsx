@@ -209,7 +209,7 @@ function IntegrationCard({ entry }: { entry: IntegrationStatus }) {
             checked={enableWrite}
             onChange={(e) => setEnableWrite(e.target.checked)}
           />
-          Enable write access — lets AdVanta run &amp; manage ads (not just read
+          Enable write access — lets AdGenieHQ run &amp; manage ads (not just read
           analytics). You can reconnect to change this later.
         </label>
       ) : null}

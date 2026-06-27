@@ -118,7 +118,7 @@ export function CampaignDetailPage() {
             <dd className="mt-0.5 font-mono text-slate-700">{c.external_account_id ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-slate-400">AdVanta ID</dt>
+            <dt className="text-slate-400">AdGenieHQ ID</dt>
             <dd className="mt-0.5 break-all font-mono text-slate-700">{c.id}</dd>
           </div>
         </dl>
@@ -303,7 +303,7 @@ function FeeQuoteCard({ campaignId }: { campaignId: string }) {
     <Card className="border-grape-100 bg-grape-soft/30">
       <CardHeader
         title="Platform fees for running this"
-        subtitle="What AdVanta charges to run this campaign. Billed monthly — ad spend is paid directly to the platform."
+        subtitle="What AdGenieHQ charges to run this campaign. Billed monthly — ad spend is paid directly to the platform."
       />
       <dl className="mt-3 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
         <div>

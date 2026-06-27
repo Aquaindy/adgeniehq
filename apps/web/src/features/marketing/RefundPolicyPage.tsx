@@ -18,7 +18,7 @@ export function RefundPolicyPage() {
 
         <Section title="1. Subscriptions">
           <p>
-            AdVanta subscriptions (Starter, Pro, Agency) are billed in advance
+            AdGenieHQ subscriptions (Starter, Pro, Agency) are billed in advance
             on a recurring basis — monthly or annually, depending on the plan
             you choose — through our payment provider, Paddle, who acts as the
             merchant of record.
@@ -62,7 +62,7 @@ export function RefundPolicyPage() {
 
         <Section title="5. Platform fees">
           <p>
-            AdVanta also charges usage-based platform fees on ad activity managed
+            AdGenieHQ also charges usage-based platform fees on ad activity managed
             through the app (a one-time listing fee per campaign plus a monthly
             run fee). These fees are earned when the activity occurs and are
             non-refundable once accrued.

@@ -1,16 +1,16 @@
 {
-  "name": "advanta-ai",
+  "name": "adgeniehq",
   "version": "0.0.1",
   "private": true,
-  "description": "AdVanta — AI Growth Command Center for paid ads, SEO/GEO, and website conversion.",
+  "description": "AdGenieHQ — AI Growth Command Center for paid ads, SEO/GEO, and website conversion.",
   "packageManager": "pnpm@9.15.4",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev:web": "pnpm --filter @advanta/web dev",
-    "build:web": "pnpm --filter @advanta/web build",
-    "lint:web": "pnpm --filter @advanta/web lint",
-    "typecheck:web": "pnpm --filter @advanta/web typecheck"
+    "dev:web": "pnpm --filter @adgeniehq/web dev",
+    "build:web": "pnpm --filter @adgeniehq/web build",
+    "lint:web": "pnpm --filter @adgeniehq/web lint",
+    "typecheck:web": "pnpm --filter @adgeniehq/web typecheck"
   }
 }

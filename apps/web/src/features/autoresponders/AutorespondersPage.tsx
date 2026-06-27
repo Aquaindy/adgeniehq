@@ -60,7 +60,7 @@ export function AutorespondersPage() {
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           Connect your autoresponder, then sync contacts both ways — push ad leads into
-          your lists and pull subscribers back into AdVanta. API keys are encrypted at rest;
+          your lists and pull subscribers back into AdGenieHQ. API keys are encrypted at rest;
           connecting requires the workspace Admin role.
         </p>
       </header>

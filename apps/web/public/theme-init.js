@@ -3,7 +3,7 @@
 // without needing 'unsafe-inline' or a per-build hash.
 (function () {
   try {
-    var stored = localStorage.getItem("advanta-theme");
+    var stored = localStorage.getItem("adgeniehq-theme");
     var dark = stored
       ? stored === "dark"
       : window.matchMedia("(prefers-color-scheme: dark)").matches;

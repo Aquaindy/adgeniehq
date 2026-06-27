@@ -13,7 +13,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       setCurrentWorkspaceId: (id) => set({ currentWorkspaceId: id }),
     }),
     {
-      name: "advanta.workspace",
+      name: "adgeniehq.workspace",
     },
   ),
 );

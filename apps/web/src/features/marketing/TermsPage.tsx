@@ -11,15 +11,15 @@ export function TermsPage() {
 
         <Section title="1. Acceptance">
           <p>
-            By creating an AdVanta account or workspace you agree to these
-            Terms. If you're using AdVanta on behalf of a company, you
+            By creating an AdGenieHQ account or workspace you agree to these
+            Terms. If you're using AdGenieHQ on behalf of a company, you
             represent that you have authority to bind that company.
           </p>
         </Section>
 
         <Section title="2. Your data + connected accounts">
           <p>
-            You authorize AdVanta to read and (where you've explicitly
+            You authorize AdGenieHQ to read and (where you've explicitly
             approved) write to ad accounts, analytics platforms, and websites
             you connect via OAuth. Tokens are encrypted at rest and used
             only to perform the actions you approve.
@@ -36,17 +36,17 @@ export function TermsPage() {
             Sensitive actions (campaign launches, budget changes, audience
             edits) require explicit approval. Autopilot Mode, when enabled,
             executes within rules you set and can be disabled at any time.
-            AdVanta is not liable for ad spend incurred via approved
+            AdGenieHQ is not liable for ad spend incurred via approved
             actions.
           </p>
         </Section>
 
         <Section title="4. Acceptable use">
           <p>
-            Don't use AdVanta to send unsolicited spam, run misleading ad
+            Don't use AdGenieHQ to send unsolicited spam, run misleading ad
             campaigns, infringe third-party rights, or violate the terms of
             connected platforms (Google, Meta, LinkedIn, etc.). Outreach
-            emails sent via AdVanta must include an unsubscribe path —
+            emails sent via AdGenieHQ must include an unsubscribe path —
             we add one automatically.
           </p>
         </Section>
@@ -74,7 +74,7 @@ export function TermsPage() {
 
         <Section title="7. Liability">
           <p>
-            AdVanta is provided "as is." Our aggregate liability for any
+            AdGenieHQ is provided "as is." Our aggregate liability for any
             claim is limited to the fees you paid in the 12 months
             preceding the event giving rise to the claim.
           </p>

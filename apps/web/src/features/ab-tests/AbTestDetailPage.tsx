@@ -74,10 +74,10 @@ function InstallSnippetCard({ test }: { test: AbTestPublic }) {
   const apiBase =
     typeof window !== "undefined"
       ? window.location.origin.replace(/:5173$/, ":8000")
-      : "https://api.advantaai.com";
-  const redirectSnippet = `<script\n  src="${apiBase}/static/advanta-ab.js"\n  data-test="${test.id}"\n  data-mode="redirect"\n></script>`;
-  const inplaceSnippet = `<script\n  src="${apiBase}/static/advanta-ab.js"\n  data-test="${test.id}"\n></script>\n\n<!-- Wrap each variant: -->\n<div data-advanta-variant="control" style="display:none">…</div>\n<div data-advanta-variant="treatment" style="display:none">…</div>`;
-  const convertSnippet = `// Fire on form submit / purchase / signup\nwindow.advantaConvert("${test.id}", { value_cents: 4900 });`;
+      : "https://api.adgeniehq.com";
+  const redirectSnippet = `<script\n  src="${apiBase}/static/adgeniehq-ab.js"\n  data-test="${test.id}"\n  data-mode="redirect"\n></script>`;
+  const inplaceSnippet = `<script\n  src="${apiBase}/static/adgeniehq-ab.js"\n  data-test="${test.id}"\n></script>\n\n<!-- Wrap each variant: -->\n<div data-adgeniehq-variant="control" style="display:none">…</div>\n<div data-adgeniehq-variant="treatment" style="display:none">…</div>`;
+  const convertSnippet = `// Fire on form submit / purchase / signup\nwindow.adgeniehqConvert("${test.id}", { value_cents: 4900 });`;
 
   return (
     <Card>

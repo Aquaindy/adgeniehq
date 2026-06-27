@@ -48,8 +48,8 @@ export function PrivacyPage() {
             workspace settings. EU/UK residents have the rights described
             in GDPR / UK GDPR; California residents have the rights in
             CCPA. Email{" "}
-            <a className="text-grape-700" href="mailto:privacy@advantaai.com">
-              privacy@advantaai.com
+            <a className="text-grape-700" href="mailto:support@aimarketinghub.io">
+              support@aimarketinghub.io
             </a>
             .
           </p>
@@ -57,7 +57,7 @@ export function PrivacyPage() {
 
         <Section title="Outreach + inbound email">
           <p>
-            Outreach emails sent via AdVanta carry a Reply-To address
+            Outreach emails sent via AdGenieHQ carry a Reply-To address
             that routes replies back to your workspace. Reply payloads are
             stored only to update the linked outreach status — we don't
             persist the message body beyond the inbound webhook log.
@@ -75,8 +75,8 @@ export function PrivacyPage() {
         <Section title="Contact">
           <p>
             Reach us at{" "}
-            <a className="text-grape-700" href="mailto:privacy@advantaai.com">
-              privacy@advantaai.com
+            <a className="text-grape-700" href="mailto:support@aimarketinghub.io">
+              support@aimarketinghub.io
             </a>
             .
           </p>

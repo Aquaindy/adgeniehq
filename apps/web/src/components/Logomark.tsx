@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * AdVanta brand mark — a stylized "A" monogram on the grape-gradient tile.
+ * AdGenieHQ brand mark — a stylized "A" monogram on the grape-gradient tile.
  *
  * Used everywhere a small logo appears (marketing nav, dashboard sidebar /
  * topbar, auth layout, footer). When the time comes to replace it with a

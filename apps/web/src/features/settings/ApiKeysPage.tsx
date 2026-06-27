@@ -9,9 +9,9 @@ const SUB_TABS: { to: string; label: string }[] = [
 
 /**
  * `/settings/api-keys` layout. Two sub-tabs:
- *   - Your API keys — outbound. External clients calling AdVanta on your
+ *   - Your API keys — outbound. External clients calling AdGenieHQ on your
  *     workspace's behalf.
- *   - Provider credentials (BYOK) — inbound. AdVanta calling OpenAI /
+ *   - Provider credentials (BYOK) — inbound. AdGenieHQ calling OpenAI /
  *     Anthropic / Google AI on your behalf with your own billing.
  */
 export function ApiKeysPage() {
@@ -21,8 +21,8 @@ export function ApiKeysPage() {
         <h1 className="text-2xl font-semibold text-ink sm:text-3xl">API keys</h1>
         <p className="mt-2 text-sm text-slate-500">
           Two kinds of keys live here. <strong>Your API keys</strong> let
-          external clients call AdVanta on this workspace's behalf.{" "}
-          <strong>Provider credentials</strong> let AdVanta call OpenAI,
+          external clients call AdGenieHQ on this workspace's behalf.{" "}
+          <strong>Provider credentials</strong> let AdGenieHQ call OpenAI,
           Anthropic, or Google AI on your behalf with your own billing.
         </p>
       </header>

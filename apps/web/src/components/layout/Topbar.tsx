@@ -98,7 +98,7 @@ export function Topbar() {
               >
                 <span>
                   <span className="block font-medium text-ink">{m.name}</span>
-                  <span className="block text-xs text-slate-500">advanta.ai/{m.slug}</span>
+                  <span className="block text-xs text-slate-500">adgeniehq.com/{m.slug}</span>
                 </span>
                 <span className="pill pill-grape">{m.role}</span>
               </button>

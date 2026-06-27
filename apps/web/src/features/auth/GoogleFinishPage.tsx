@@ -7,7 +7,7 @@ import { refreshRequest } from "@/lib/auth";
 import { useAuthStore } from "@/stores/auth-store";
 
 /**
- * After /auth/google/callback the backend sets the advanta_refresh cookie
+ * After /auth/google/callback the backend sets the adgeniehq_refresh cookie
  * and 302-redirects here. We call /auth/refresh to mint an access token,
  * stash the session, and route the user where they were heading.
  */

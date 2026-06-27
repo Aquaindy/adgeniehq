@@ -134,7 +134,7 @@ function PostFooter({ post }: { post: PublicBlogPost }) {
           Keep reading
         </p>
         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-          More from the AdVanta blog
+          More from the AdGenieHQ blog
         </h2>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -147,7 +147,7 @@ function PostFooter({ post }: { post: PublicBlogPost }) {
             to="/register"
             className="rounded-xl border border-slate-200 bg-surface px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Try AdVanta free
+            Try AdGenieHQ free
           </Link>
         </div>
         {post.keywords && post.keywords.length > 0 ? (

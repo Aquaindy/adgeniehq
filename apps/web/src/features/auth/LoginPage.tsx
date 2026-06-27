@@ -63,7 +63,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in to AdVanta"
+      title="Sign in to AdGenieHQ"
       subtitle="Connect your accounts and let your AI growth team get to work."
       footer={
         <span>

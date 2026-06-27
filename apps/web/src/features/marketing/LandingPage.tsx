@@ -5,7 +5,7 @@ import { MarketingLayout } from "@/features/marketing/MarketingLayout";
 /**
  * Landing page rhythm modeled on the gomega.ai shape (hero → agent grid →
  * platform overview → social proof → integrations → final CTA), but rewritten
- * with AdVanta's voice ("Premium, Calm, Executive, Intelligent") and the
+ * with AdGenieHQ's voice ("Premium, Calm, Executive, Intelligent") and the
  * production-honest constraints from CLAUDE.md §1 — no fabricated testimonials,
  * no fake metrics, no demo data.
  *
@@ -56,7 +56,7 @@ function Hero() {
         <div>
           <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-white backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-white" />
-            AdVanta · AI Ad Creation Platform
+            AdGenieHQ · AI Ad Creation Platform
           </p>
           <h1 className="mt-5 text-5xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
             Turn ad chaos
@@ -737,7 +737,7 @@ function ProductionGuarantees() {
 function FaqSection() {
   const items = [
     {
-      q: "Does AdVanta actually change my campaigns, or just suggest things?",
+      q: "Does AdGenieHQ actually change my campaigns, or just suggest things?",
       a: "Both, on your terms. By default every recommendation is suggestion-only until you approve it. Once approved, we apply the change on the connected platform — with prior-state captured so any single write is reversible. Autopilot Mode auto-approves recommendations that pass every guardrail you set; until you turn it on, nothing ships without a human.",
     },
     {
@@ -757,7 +757,7 @@ function FaqSection() {
       a: "Every approval, rejection, execution, autopilot decision, webhook event, API-key mint or revoke, and 2FA enable / disable — tagged with actor type (User / Agent / System), IP, user-agent, and the diff of what changed. Visible to Owners and Admins.",
     },
     {
-      q: "Can I program against AdVanta?",
+      q: "Can I program against AdGenieHQ?",
       a: "Yes. Owner-only API keys: workspace-scoped, role-floored, plaintext returned exactly once, SHA-256 hashed at rest. Authenticate with Authorization: ApiKey ak_<prefix>.<secret> on any endpoint a human session can reach.",
     },
   ];

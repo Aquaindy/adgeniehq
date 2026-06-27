@@ -1,6 +1,6 @@
-# AdVanta — Frontend (Vite + React)
+# AdGenieHQ — Frontend (Vite + React)
 
-React 18 + TypeScript + Tailwind frontend for the AdVanta Growth Command Center.
+React 18 + TypeScript + Tailwind frontend for the AdGenieHQ Growth Command Center.
 
 ## Setup
 

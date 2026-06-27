@@ -108,7 +108,7 @@ export function WorkspaceSelectorPage() {
                 >
                   <div>
                     <div className="font-semibold text-ink">{m.name}</div>
-                    <div className="text-xs text-slate-500">advanta.ai/{m.slug}</div>
+                    <div className="text-xs text-slate-500">adgeniehq.com/{m.slug}</div>
                   </div>
                   <span className="pill pill-grape">{m.role}</span>
                 </button>

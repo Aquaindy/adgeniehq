@@ -19,7 +19,7 @@ export function AuthLayout({
         <div className="flex items-center gap-3 pb-8">
           <Logomark size="lg" />
           <div>
-            <div className="text-base font-semibold text-ink">AdVanta</div>
+            <div className="text-base font-semibold text-ink">AdGenieHQ</div>
             <div className="text-xs text-slate-500">Growth Command Center</div>
           </div>
         </div>

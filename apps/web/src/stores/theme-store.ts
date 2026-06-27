@@ -11,7 +11,7 @@ import { create } from "zustand";
 export type ThemeMode = "light" | "dark" | "system";
 type Resolved = "light" | "dark";
 
-const STORAGE_KEY = "advanta-theme";
+const STORAGE_KEY = "adgeniehq-theme";
 
 function systemPrefersDark(): boolean {
   return (

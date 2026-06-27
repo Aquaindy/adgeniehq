@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 
-const COLLAPSE_STORAGE_KEY = "advanta.sidebar.collapsed";
+const COLLAPSE_STORAGE_KEY = "adgeniehq.sidebar.collapsed";
 
 type NavItem = {
   to: string;
@@ -156,7 +156,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center gap-2 px-5 border-b border-white/10">
         <Logomark />
         <div>
-          <div className="text-sm font-semibold text-white">AdVanta</div>
+          <div className="text-sm font-semibold text-white">AdGenieHQ</div>
           <div className="text-xs text-white/60 truncate max-w-[10rem]">
             {current?.name ?? "Growth Command Center"}
           </div>

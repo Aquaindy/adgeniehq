@@ -28,7 +28,7 @@ export const useAuthStore = create<AuthState>()(
       clear: () => set({ accessToken: null, user: null }),
     }),
     {
-      name: "advanta.auth",
+      name: "adgeniehq.auth",
       // SECURITY: the access token is kept in MEMORY ONLY (never persisted to
       // localStorage) so an XSS payload can't exfiltrate a live bearer token.
       // We persist only the non-sensitive `user` for an instant UI hydrate; on

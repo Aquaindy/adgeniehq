@@ -31,7 +31,7 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
 
 /**
  * Workspace API keys — outbound. External clients use these to call the
- * AdVanta API on this workspace's behalf via
+ * AdGenieHQ API on this workspace's behalf via
  * `Authorization: ApiKey ak_…`. Plaintext is shown exactly once at
  * creation.
  */
