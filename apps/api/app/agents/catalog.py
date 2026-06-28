@@ -2,6 +2,7 @@ from app.agents.base import BaseAgent
 from app.agents.campaign_builder import CampaignBuilderAgent
 from app.agents.content_writer import ContentWriterAgent
 from app.agents.creative_strategy import CreativeStrategyAgent
+from app.agents.email_marketing import EmailMarketingAgent
 from app.agents.growth_content import GrowthContentAgent
 from app.agents.icp_persona import IcpPersonaAgent
 from app.agents.landing_page_audit import LandingPageAuditAgent
@@ -26,6 +27,7 @@ AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     GrowthContentAgent.type: GrowthContentAgent,
     CampaignBuilderAgent.type: CampaignBuilderAgent,
     TrackingAttributionAgent.type: TrackingAttributionAgent,
+    EmailMarketingAgent.type: EmailMarketingAgent,
     MasterOrchestratorAgent.type: MasterOrchestratorAgent,
 }
 

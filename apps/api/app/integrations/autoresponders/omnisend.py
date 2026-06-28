@@ -155,6 +155,49 @@ class OmnisendAdapter(AutoresponderAdapter):
         return out
 
     # ------------------------------------------------------------------
+    # Email-campaign analytics (beyond the contact-sync interface).
+    # Omnisend exposes campaigns at GET /v3/campaigns; the campaign object
+    # carries engagement + deliverability counts whose field names vary across
+    # API revisions, so we look them up defensively and keep the raw payload.
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def list_campaigns(
+        cls, *, api_key: str | None, max_campaigns: int = 500
+    ) -> list[dict]:
+        """Pull email campaigns with their metrics. Returns normalized dicts
+        (see ``_normalize_campaign``). Raises AutoresponderAuthError on bad keys."""
+        headers = _headers(api_key)
+        out: list[dict] = []
+        offset = 0
+        page = 100
+        while len(out) < max_campaigns:
+            try:
+                resp = httpx.get(
+                    f"{API_BASE}/campaigns",
+                    headers=headers,
+                    params={"limit": page, "offset": offset},
+                    timeout=30.0,
+                )
+            except httpx.HTTPError as exc:
+                raise AutoresponderError(f"Could not reach Omnisend: {exc}") from exc
+            _raise_for_auth(resp)
+            if resp.status_code >= 400:
+                raise AutoresponderError(
+                    f"Omnisend campaign list returned HTTP {resp.status_code}."
+                )
+            body = resp.json() if resp.content else {}
+            rows = body.get("campaigns") or body.get("data") or []
+            if not rows:
+                break
+            for raw in rows:
+                out.append(_normalize_campaign(raw))
+            if len(rows) < page:
+                break
+            offset += page
+        return out[:max_campaigns]
+
+    # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
@@ -213,3 +256,95 @@ class OmnisendAdapter(AutoresponderAdapter):
             tags=list(raw.get("tags") or []),
             raw=raw,
         )
+
+
+# ---------------------------------------------------------------------------
+# Campaign normalization — tolerant of Omnisend field-name variation across
+# API revisions. Metrics may sit top-level or under a nested container.
+# ---------------------------------------------------------------------------
+
+_ID_KEYS = ("campaignID", "campaignId", "id", "ID")
+_SUBJECT_KEYS = ("subject", "emailSubject", "subjectLine")
+_FROM_KEYS = ("fromName", "senderName", "from_name")
+_SENT_AT_KEYS = ("startDate", "sendDate", "sentAt", "scheduledDate", "created", "createdAt")
+_STATUS_KEYS = ("status", "state")
+_TYPE_KEYS = ("type", "channel", "campaignType")
+_SENT_KEYS = ("sent", "sends", "sentCount", "delivered", "recipients", "totalRecipients")
+_OPEN_KEYS = ("opened", "opens", "uniqueOpens", "openedCount", "opensCount")
+_CLICK_KEYS = ("clicked", "clicks", "uniqueClicks", "clickedCount", "clicksCount")
+_BOUNCE_KEYS = ("bounced", "bounces", "bouncedCount", "hardBounces")
+_COMPLAINT_KEYS = ("complained", "complaints", "spam", "spamReports", "complaintsCount")
+_UNSUB_KEYS = ("unsubscribed", "unsubscribes", "unsubscribedCount", "optOuts")
+_REVENUE_KEYS = ("revenue", "totalRevenue", "sales")
+_METRIC_CONTAINERS = ("campaignDetails", "statistics", "stats", "report", "metrics", "summary")
+
+
+def _flatten_metrics(raw: dict) -> dict:
+    """Merge any nested metric containers + scalar top-level fields into one
+    flat lookup dict (top-level wins on key collisions)."""
+    flat: dict = {}
+    for container in _METRIC_CONTAINERS:
+        val = raw.get(container)
+        if isinstance(val, dict):
+            flat.update(val)
+    flat.update({k: v for k, v in raw.items() if not isinstance(v, (dict, list))})
+    return flat
+
+
+def _first(d: dict, keys: tuple[str, ...]):
+    for k in keys:
+        if k in d and d[k] is not None:
+            return d[k]
+    return None
+
+
+def _to_int(v) -> int:
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _parse_dt(v):
+    if not v:
+        return None
+    if isinstance(v, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(v), tz=timezone.utc)
+        except (OverflowError, OSError, ValueError):
+            return None
+    s = str(v).strip().replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(s)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def _normalize_campaign(raw: dict) -> dict:
+    flat = _flatten_metrics(raw)
+    revenue = _first(flat, _REVENUE_KEYS)
+    revenue_cents = None
+    if revenue is not None:
+        try:
+            revenue_cents = int(round(float(revenue) * 100))
+        except (TypeError, ValueError):
+            revenue_cents = None
+    return {
+        "external_id": str(_first(raw, _ID_KEYS) or _first(flat, _ID_KEYS) or ""),
+        "name": raw.get("name"),
+        "subject": _first(raw, _SUBJECT_KEYS),
+        "from_name": _first(raw, _FROM_KEYS),
+        "campaign_type": _first(raw, _TYPE_KEYS),
+        "status": _first(raw, _STATUS_KEYS),
+        "sent_at": _parse_dt(_first(raw, _SENT_AT_KEYS) or _first(flat, _SENT_AT_KEYS)),
+        "sent": _to_int(_first(flat, _SENT_KEYS)),
+        "opened": _to_int(_first(flat, _OPEN_KEYS)),
+        "clicked": _to_int(_first(flat, _CLICK_KEYS)),
+        "bounced": _to_int(_first(flat, _BOUNCE_KEYS)),
+        "complained": _to_int(_first(flat, _COMPLAINT_KEYS)),
+        "unsubscribed": _to_int(_first(flat, _UNSUB_KEYS)),
+        "revenue_cents": revenue_cents,
+        "currency": _first(flat, ("currency",)),
+        "raw": raw,
+    }

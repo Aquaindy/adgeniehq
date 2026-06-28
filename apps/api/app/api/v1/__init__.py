@@ -14,6 +14,7 @@ from app.api.v1 import (
     billing,
     campaigns,
     content_drafts,
+    email_campaigns,
     fees,
     health,
     inbound,
@@ -46,6 +47,7 @@ api_router.include_router(
     integrations.public_router, prefix="/integrations", tags=["integrations"]
 )
 api_router.include_router(campaigns.router, prefix="/workspaces", tags=["campaigns"])
+api_router.include_router(email_campaigns.router, prefix="/workspaces", tags=["email-campaigns"])
 api_router.include_router(seo.router, prefix="/workspaces", tags=["seo"])
 api_router.include_router(landing_pages.router, prefix="/workspaces", tags=["website"])
 api_router.include_router(reports.router, prefix="/workspaces", tags=["reports"])

@@ -32,6 +32,7 @@ from app.models.campaign_metric import CampaignMetric
 from app.models.connected_account import ConnectedAccount, ConnectionStatus
 from app.models.content_draft import ContentDraft, ContentDraftStatus, ContentDraftType
 from app.models.creative import Creative, CreativeSource, CreativeType
+from app.models.email_campaign import EmailCampaign
 from app.models.fee_accrual import FeeAccrual, FeeAccrualStatus, FeeType
 from app.models.fee_invoice import FeeInvoice, FeeInvoiceStatus
 from app.models.fee_rule import FeeRule
@@ -104,6 +105,7 @@ __all__ = [
     "Creative",
     "CreativeSource",
     "CreativeType",
+    "EmailCampaign",
     "FeeAccrual",
     "FeeAccrualStatus",
     "FeeType",
