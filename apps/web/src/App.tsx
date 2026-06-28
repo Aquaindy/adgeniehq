@@ -44,6 +44,7 @@ const BillingPage = lazyPage(() => import("@/features/billing/BillingPage"), "Bi
 const CampaignDetailPage = lazyPage(() => import("@/features/campaigns/CampaignDetailPage"), "CampaignDetailPage");
 const CampaignsPage = lazyPage(() => import("@/features/campaigns/CampaignsPage"), "CampaignsPage");
 const CreativesPage = lazyPage(() => import("@/features/creatives/CreativesPage"), "CreativesPage");
+const EmailCampaignsPage = lazyPage(() => import("@/features/email/EmailCampaignsPage"), "EmailCampaignsPage");
 const ContentDraftDetailPage = lazyPage(() => import("@/features/content/ContentDraftDetailPage"), "ContentDraftDetailPage");
 const ContentDraftsPage = lazyPage(() => import("@/features/content/ContentDraftsPage"), "ContentDraftsPage");
 const BlogEditorPage = lazyPage(() => import("@/features/blog/BlogEditorPage"), "BlogEditorPage");
@@ -154,6 +155,7 @@ export function App() {
                 <Route path="campaigns" element={<CampaignsPage />} />
                 <Route path="campaigns/:campaignId" element={<CampaignDetailPage />} />
                 <Route path="creatives" element={<CreativesPage />} />
+                <Route path="email" element={<EmailCampaignsPage />} />
                 <Route path="autoresponders" element={<AutorespondersPage />} />
                 <Route path="content" element={<ContentDraftsPage />} />
                 <Route path="content/:draftId" element={<ContentDraftDetailPage />} />

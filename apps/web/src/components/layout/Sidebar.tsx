@@ -41,6 +41,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/campaigns", label: "Campaigns" },
       { to: "/creatives", label: "Creatives" },
+      { to: "/email", label: "Email campaigns" },
       { to: "/autoresponders", label: "Autoresponders" },
     ],
   },

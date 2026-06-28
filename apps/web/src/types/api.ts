@@ -1357,3 +1357,103 @@ export type FeeInvoice = {
   paid_at: string | null;
   created_at: string;
 };
+
+// ---- Email campaigns (Omnisend) ----
+
+export type EmailCampaignPublic = {
+  id: string;
+  provider: string;
+  external_id: string;
+  name: string | null;
+  subject: string | null;
+  from_name: string | null;
+  campaign_type: string | null;
+  status: string | null;
+  sent_at: string | null;
+  sent_count: number;
+  opened_count: number;
+  clicked_count: number;
+  bounced_count: number;
+  complained_count: number;
+  unsubscribed_count: number;
+  open_rate: number | null;
+  click_rate: number | null;
+  bounce_rate: number | null;
+  complaint_rate: number | null;
+  unsubscribe_rate: number | null;
+  revenue_cents: number | null;
+  currency: string | null;
+  ad_campaign_id: string | null;
+  synced_at: string;
+};
+
+// Shape of the `email_marketing` agent's output_payload. Every section is
+// optional/loose because the agent degrades gracefully (no-LLM fallback, missing
+// months, no subjects, etc.). The `skipped` branch is the empty-data state.
+export type EmailSegment = { segment: string; why: string };
+
+export type EmailMarketingReport = {
+  skipped?: boolean;
+  reason?: string;
+  generated_at?: string;
+  scope?: {
+    provider?: string;
+    campaigns_analyzed?: number;
+    total_sent?: number;
+  };
+  data_caveats?: string[];
+  executive_summary?: string;
+  section_1_audit?: {
+    score: number;
+    grade: string;
+    subscores?: Record<string, number>;
+    weighted_rates?: Record<string, number>;
+    benchmarks?: Record<string, number>;
+  };
+  section_2_segments?: {
+    note?: string;
+    recommended_segments?: EmailSegment[];
+    ai_suggestions?: EmailSegment[];
+  };
+  section_3_black_friday?: {
+    segment?: string;
+    angle?: string;
+    subject_lines?: string[];
+    template_draft?: string;
+    note?: string;
+  };
+  section_4_open_rate_trend?: {
+    monthly?: { month: string; open_rate: number | null; sent: number }[];
+    latest_month?: string;
+    delta_vs_prev?: number;
+    relative_change?: number;
+    direction?: "up" | "down" | "flat";
+    note?: string;
+  };
+  section_5_best_send_day?: {
+    caveat?: string;
+    by_day_of_week?: { day: string; open_rate: number | null; sent: number }[];
+    best_day?: string | null;
+  };
+  section_6_subject_patterns?: {
+    window_days?: number;
+    patterns?: {
+      pattern: string;
+      campaigns_with: number;
+      open_rate_with: number;
+      open_rate_without: number;
+      lift: number;
+    }[];
+    top_subjects?: { subject: string; open_rate: number; sent: number }[];
+    note?: string;
+  };
+  section_7_deliverability?: {
+    verdict?: "healthy" | "at_risk";
+    flags?: string[];
+    complaint_rate?: number;
+    bounce_rate?: number;
+    unsubscribe_rate?: number;
+    limits?: Record<string, number>;
+    not_covered?: string;
+  };
+};
