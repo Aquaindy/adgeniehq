@@ -20,6 +20,7 @@ from app.api.v1 import (
     inbound,
     integrations,
     landing_pages,
+    omnisend,
     onboarding,
     outreach,
     provider_credentials,
@@ -52,6 +53,7 @@ api_router.include_router(campaigns.router, prefix="/workspaces", tags=["campaig
 api_router.include_router(email_campaigns.router, prefix="/workspaces", tags=["email-campaigns"])
 api_router.include_router(traffic.router, prefix="/workspaces", tags=["traffic"])
 api_router.include_router(solo_ads.router, prefix="/workspaces", tags=["solo-ads"])
+api_router.include_router(omnisend.router, prefix="/workspaces", tags=["omnisend"])
 api_router.include_router(seo.router, prefix="/workspaces", tags=["seo"])
 api_router.include_router(landing_pages.router, prefix="/workspaces", tags=["website"])
 api_router.include_router(reports.router, prefix="/workspaces", tags=["reports"])

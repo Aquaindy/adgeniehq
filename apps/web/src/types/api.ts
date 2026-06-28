@@ -1701,3 +1701,75 @@ export type SoloAdsPlaybook = {
   tracking_plan?: string[];
   compliance_notes?: string[];
 };
+
+// ---- Omnisend journeys (Phase 5) ----
+
+export type JourneyStep = { label: string; delay: string };
+
+export type JourneyType = {
+  slug: string;
+  name: string;
+  description: string;
+  default_channel: string;
+  trigger: string;
+  recommended_for: string[];
+  default_steps: JourneyStep[];
+};
+
+export type GenerateJourneyRequest = {
+  journey_type: string;
+  channel?: string;
+  offer_name?: string;
+  offer_url?: string;
+  audience?: string;
+  flow_name?: string;
+  tag?: string;
+  segment_name?: string;
+  campaign_name?: string;
+};
+
+export type JourneyEmail = {
+  step: number;
+  delay: string;
+  subject: string;
+  preheader?: string;
+  body: string;
+  cta?: string;
+  personalization_tokens?: string[];
+};
+
+export type JourneySms = { delay: string; message: string };
+
+export type OmnisendJourney = {
+  journey_type?: string;
+  journey_name?: string;
+  flow_name?: string;
+  channel?: string;
+  trigger?: string;
+  segmentation_rules?: string;
+  generation?: string;
+  email_sequence?: JourneyEmail[];
+  sms_sequence?: JourneySms[];
+  exit_conditions?: string[];
+  conversion_goal?: string;
+  implementation_notes?: string[];
+};
+
+export type CampaignMapping = {
+  traffic_campaign_id: string;
+  source: string;
+  segment_name: string;
+  tag: string;
+  flow_name: string;
+  lead_source_field: string;
+  recommended_journey_type: string;
+  how_to: string;
+};
+
+export type SyncLeadSourceResult = {
+  tag: string;
+  requested: number;
+  succeeded: number;
+  failed: number;
+  status: string;
+};

@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MetaPills, formatBudget } from "@/features/traffic/TrafficBits";
 import { ApiError } from "@/lib/api-client";
+import { mapCampaign } from "@/lib/omnisend";
 import {
   deleteTrafficCampaign,
   generateTrafficAssets,
@@ -14,7 +15,7 @@ import {
   getTrafficCatalog,
 } from "@/lib/traffic";
 import { useWorkspaceStore } from "@/stores/workspace-store";
-import type { TrafficCampaignAsset } from "@/types/api";
+import type { CampaignMapping, TrafficCampaignAsset } from "@/types/api";
 
 export function TrafficCampaignDetailPage() {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
@@ -114,6 +115,13 @@ export function TrafficCampaignDetailPage() {
         </Card>
       ) : null}
 
+      <OmnisendFollowupCard
+        workspaceId={workspaceId!}
+        campaignId={c.id}
+        segment={c.omnisend_segment}
+        flow={c.omnisend_flow}
+      />
+
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold text-ink">Generated assets</h2>
         {assets.length === 0 ? (
@@ -183,5 +191,70 @@ function Meta({ label, value }: { label: string; value: string }) {
       <dt className="text-xs text-slate-400">{label}</dt>
       <dd className="text-slate-700">{value}</dd>
     </div>
+  );
+}
+
+function OmnisendFollowupCard({
+  workspaceId,
+  campaignId,
+  segment,
+  flow,
+}: {
+  workspaceId: string;
+  campaignId: string;
+  segment: string | null;
+  flow: string | null;
+}) {
+  const queryClient = useQueryClient();
+  const [mapping, setMapping] = useState<CampaignMapping | null>(null);
+  const map = useMutation({
+    mutationFn: () => mapCampaign(workspaceId, { traffic_campaign_id: campaignId }),
+    onSuccess: (data) => {
+      setMapping(data);
+      queryClient.invalidateQueries({ queryKey: ["traffic", "campaign", workspaceId, campaignId] });
+    },
+  });
+
+  const segmentName = mapping?.segment_name ?? segment;
+  const flowName = mapping?.flow_name ?? flow;
+
+  return (
+    <Card>
+      <CardHeader
+        title="Omnisend follow-up"
+        subtitle="Map this campaign to an Omnisend segment + automation so its leads get nurtured."
+        action={
+          <Button variant="secondary" className="text-xs" onClick={() => map.mutate()} disabled={map.isPending}>
+            {map.isPending ? "Setting up…" : segmentName ? "Re-generate mapping" : "Set up mapping"}
+          </Button>
+        }
+      />
+      {segmentName ? (
+        <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+          <Meta label="Segment / tag" value={segmentName} />
+          <Meta label="Automation (flow)" value={flowName ?? "—"} />
+          {mapping?.tag ? <Meta label="Trigger tag" value={mapping.tag} /> : null}
+          {mapping?.lead_source_field ? <Meta label="Lead source" value={mapping.lead_source_field} /> : null}
+        </dl>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">
+          No Omnisend mapping yet. Generate one to get a consistent segment name, trigger tag, and a
+          recommended journey.
+        </p>
+      )}
+      {mapping?.how_to ? (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{mapping.how_to}</p>
+      ) : null}
+      {mapping ? (
+        <div className="mt-3">
+          <Link
+            to={`/traffic/omnisend?type=${mapping.recommended_journey_type}&tag=${encodeURIComponent(mapping.tag)}`}
+            className="text-sm font-medium text-grape-700 hover:text-grape-800"
+          >
+            Generate the {mapping.recommended_journey_type.replace(/_/g, " ")} journey →
+          </Link>
+        </div>
+      ) : null}
+    </Card>
   );
 }

@@ -7,6 +7,7 @@ from app.agents.growth_content import GrowthContentAgent
 from app.agents.icp_persona import IcpPersonaAgent
 from app.agents.landing_page_audit import LandingPageAuditAgent
 from app.agents.market_intelligence import MarketIntelligenceAgent
+from app.agents.omnisend_journey import OmnisendJourneyAgent
 from app.agents.onboarding_insight import OnboardingInsightAgent
 from app.agents.orchestrator import MasterOrchestratorAgent
 from app.agents.paid_ads import PaidAdsAgent
@@ -34,6 +35,7 @@ AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     TrafficRecommendationAgent.type: TrafficRecommendationAgent,
     TrafficAssetAgent.type: TrafficAssetAgent,
     SoloAdsAgent.type: SoloAdsAgent,
+    OmnisendJourneyAgent.type: OmnisendJourneyAgent,
     MasterOrchestratorAgent.type: MasterOrchestratorAgent,
 }
 

@@ -52,6 +52,7 @@ const navGroups: NavGroup[] = [
       { to: "/traffic/recommendation", label: "AI recommendation" },
       { to: "/traffic/campaigns", label: "Traffic campaigns" },
       { to: "/traffic/solo-ads", label: "Solo Ads" },
+      { to: "/traffic/omnisend", label: "Omnisend journeys" },
       { to: "/traffic/utm-builder", label: "UTM builder" },
       { to: "/traffic/dashboard", label: "Traffic dashboard" },
     ],
