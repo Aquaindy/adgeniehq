@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Traffic Module (Traffic Genie) — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Traffic Genie cheat sheet: 32 traffic sources, AI source recommendation, traffic campaigns + asset generation, Solo Ads Quality Guard, Omnisend journeys, UTM builder, and the analytics dashboard." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/traffic-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-paid{background:#ede9fe;color:#5b21b6}
+  .b-email{background:#e0e7ff;color:#3730a3}
+  .b-org{background:#dcfce7;color:#166534}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  .pillrow{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  @media (max-width:640px){.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a href="/ads-module.html">Ads</a>
+    <a class="active" href="/traffic-module.html">Traffic</a>
+    <a href="/email-marketing-module.html">Email</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Traffic Module — "Traffic Genie"</h1>
+    <p>A planning &amp; tracking command center for every way you can drive traffic: 32 sources across 10 categories, AI that recommends where to start, generators that write the assets, and a dashboard that scores real results.</p>
+    <div class="chips">
+      <span class="chip">32 sources</span>
+      <span class="chip">AI recommendation</span>
+      <span class="chip">Asset generation</span>
+      <span class="chip">Solo Ads Quality Guard</span>
+      <span class="chip">Omnisend journeys</span>
+      <span class="chip">UTM builder</span>
+    </div>
+  </section>
+
+  <div class="callout warn">
+    <p class="t">Read this first — why Traffic sources are NOT on the Integrations page</p>
+    <p>Most traffic sources (solo ads, paid email, forums, communities, organic social…) have <b>no OAuth API</b> — you can't "connect" them. So Traffic Genie treats them as a <b>plan &amp; track</b> layer: you create campaigns, generate the assets, run the traffic on the real platform, then <b>log results</b> so the analytics and Quality Guard work off your real numbers. The <a href="/ads-module.html">Integrations page</a> stays reserved for genuine OAuth platforms.</p>
+  </div>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#sources">Traffic sources catalog</a></li>
+      <li><a href="#recommend">AI recommendation</a></li>
+      <li><a href="#campaigns">Traffic campaigns + assets</a></li>
+      <li><a href="#solo">Solo Ads &amp; Quality Guard</a></li>
+      <li><a href="#omnisend">Omnisend journeys</a></li>
+      <li><a href="#utm">UTM builder</a></li>
+      <li><a href="#dashboard">Traffic dashboard &amp; optimizer</a></li>
+      <li><a href="#catalog">Full source list</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p><b>Traffic sources</b> → pick a source → <b>create a campaign</b> → <b>Generate assets</b> → run the traffic → <b>Traffic dashboard</b> → <b>Log results</b> → <b>Optimize</b>. For paid email, use <b>Solo Ads</b>; for follow-up, use <b>Omnisend journeys</b>.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="sources"><span class="num">1</span>Traffic sources catalog <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic</span></h2>
+  <p>Browse <b>32 sources</b> across <b>10 categories</b>. Each source card tells you what it's best for, speed, cost, difficulty, what content it needs, the recommended goal, how to track it, and the follow-up flow. Outcome-based <b>recipes</b> bundle several sources for a goal (e.g. "Get my first 100 leads", "Launch my SaaS", "Fill my webinar").</p>
+  <table>
+    <tr><th>Category</th><th>What's inside</th></tr>
+    <tr><td>Search Ads</td><td>Google Ads, Microsoft Ads</td></tr>
+    <tr><td>Social Ads</td><td>Meta, LinkedIn, TikTok, Pinterest, Reddit, X/Twitter, Snapchat</td></tr>
+    <tr><td>Video Ads</td><td>YouTube Ads</td></tr>
+    <tr><td>Marketplace Ads</td><td>Amazon Ads</td></tr>
+    <tr><td>Display &amp; Retargeting</td><td>Programmatic Display</td></tr>
+    <tr><td>Paid Email Traffic</td><td>Solo Ads, Newsletter Sponsorships, Partner Email Promotions</td></tr>
+    <tr><td>Organic Search</td><td>SEO Content Traffic</td></tr>
+    <tr><td>Organic Social</td><td>LinkedIn, TikTok, Instagram Reels, YouTube + Shorts, Facebook, Pinterest, X</td></tr>
+    <tr><td>Community &amp; Authority</td><td>Reddit, Quora, Communities &amp; Groups, Podcasts</td></tr>
+    <tr><td>Growth Loops</td><td>Referral, Affiliate, Influencer/Creator, Newsletter Growth</td></tr>
+  </table>
+  <div class="pillrow">
+    <span class="badge b-paid">paid</span>
+    <span class="badge b-email">paid email</span>
+    <span class="badge b-org">organic</span>
+    <span class="badge b-live">active = already API-integrated</span>
+    <span class="badge b-manual">manual = plan + AI assets</span>
+  </div>
+
+  <!-- 2 -->
+  <h2 id="recommend"><span class="num">2</span>AI recommendation <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/recommendation</span></h2>
+  <p>Not sure where to start? Tell the recommender your business type, monthly budget, preference (paid / organic / hybrid), and goal. It scores every source against your inputs and returns:</p>
+  <ul class="tight">
+    <li>A <b>primary source</b> + why it fits</li>
+    <li>Supporting sources for a balanced mix</li>
+    <li>A <b>7-day launch plan</b> you can act on immediately</li>
+  </ul>
+
+  <!-- 3 -->
+  <h2 id="campaigns"><span class="num">3</span>Traffic campaigns + asset generation <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/campaigns</span></h2>
+  <ol class="steps">
+    <li><b>Create a campaign</b> — pick a source, name it, add the offer, audience, and budget.</li>
+    <li><b>Generate assets</b> — one AI generator writes the right assets for that source: ad angles, headlines, primary text, CTAs, video hooks/scripts, SEO clusters, email swipes, pin titles… whatever the source supports.</li>
+    <li><b>Review &amp; edit</b> — every asset is saved to the campaign, traceable to the agent run that produced it.</li>
+    <li><b>Map a follow-up</b> — connect the campaign to an Omnisend journey (see §5).</li>
+  </ol>
+  <p class="updated">Asset generation works with no LLM key too (deterministic fallback), so you always get usable drafts.</p>
+
+  <!-- 4 -->
+  <h2 id="solo"><span class="num">4</span>Solo Ads &amp; Quality Guard <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/solo-ads</span></h2>
+  <p>A dedicated workspace for buying email traffic, with three tabs:</p>
+  <h3>Orders &amp; ROI</h3>
+  <p>Log each order's real numbers (clicks delivered, unique clicks, cost, opt-ins, sales, revenue). AdGenieHQ derives the economics for you:</p>
+  <ul class="tight">
+    <li><b>CPC</b> (cost per click), <b>CPL</b> (cost per lead), <b>EPC</b> (earnings per click)</li>
+    <li><b>ROI / ROAS</b>, opt-in rate</li>
+  </ul>
+  <h3>Quality Guard</h3>
+  <p>Click <b>Quality score</b> on an order to get a deterministic <b>0–100 score</b>, a verdict, and flags (e.g. low unique-click ratio, weak opt-in rate, no sales). A vendor's <b>rolling quality</b> is the average of its scored orders — so good and bad vendors separate themselves over time.</p>
+  <h3>Vendors &amp; Playbook</h3>
+  <ul class="tight">
+    <li><b>Vendors</b> — track each seller, niche, average CPC, and rolling quality score.</li>
+    <li><b>Playbook</b> — the Solo Ads agent gives 10 subject lines, 3 email swipes, a 10-point vendor-screening checklist, follow-up, tracking plan, and compliance notes.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">Honest by design</p>
+    <p>Scores and economics come only from numbers <b>you enter</b> — nothing is fabricated. The playbook never implies solo ads guarantee sales.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="omnisend"><span class="num">5</span>Omnisend journeys <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/omnisend</span></h2>
+  <p>Turn raw traffic into nurtured leads. Pick from <b>13 core journey types</b> (welcome, solo-ads nurture, abandoned-cart, webinar, re-engagement…) and the agent generates a full automation <b>blueprint</b>: trigger, segmentation, an email + SMS sequence with delays/subjects/body/CTA, exit conditions, and a conversion goal.</p>
+  <ol class="steps">
+    <li><b>Generate a journey</b> blueprint for your offer.</li>
+    <li><b>Map a campaign</b> — stores a "Source – Vendor – Campaign" segment + tag on the traffic campaign.</li>
+    <li><b>Tag opt-ins</b> — sync leads into Omnisend with that tag (real contact tagging), which triggers the automation you built.</li>
+  </ol>
+  <div class="callout warn">
+    <p class="t">API boundary (important)</p>
+    <p>Omnisend's API is <b>tag-based</b> — it can't create automations or segments for you. So journeys are blueprints you build <b>once</b> in Omnisend; AdGenieHQ then tags the right contacts to trigger them. You'll see this clearly in the UI.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="utm"><span class="num">6</span>UTM builder <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/utm-builder</span></h2>
+  <ul class="tight">
+    <li>Build clean, consistent tracking links: destination + source / medium / campaign / content / term.</li>
+    <li>Values are <b>normalized</b> automatically (lowercased, spaces → underscores) and your original query string is preserved.</li>
+    <li>Every link is saved so your team reuses the same conventions — no more messy, inconsistent UTMs.</li>
+  </ul>
+
+  <!-- 7 -->
+  <h2 id="dashboard"><span class="num">7</span>Traffic dashboard &amp; optimizer <span style="font-weight:400;font-size:14px;color:var(--muted)">— /traffic/dashboard</span></h2>
+  <p>Where all your real results come together. Until you log data, it stays empty (by design — no fake metrics).</p>
+  <ol class="steps">
+    <li><b>Log results</b> — record per-source, per-day numbers (clicks, leads, sales, cost, revenue). Solo Ads orders feed in automatically.</li>
+    <li><b>Read the rollups</b> — totals plus per-source and per-campaign economics (CPC / CPL / CPS / ROAS / EPC / conversion), with a paid vs paid-email vs organic split.</li>
+    <li><b>Traffic quality score</b> — each source gets a 0–100 score so winners and losers are obvious; profitable sources sort first.</li>
+    <li><b>Optimize</b> — the Traffic Optimizer agent surfaces prioritized next-best-actions (Scale / Fix-or-pause / Improve / Double-down) and saves them as recommendations with an AI narrative.</li>
+  </ol>
+
+  <!-- 8 -->
+  <h2 id="catalog"><span class="num">8</span>Full source list (32)</h2>
+  <table>
+    <tr><th>Source</th><th>Type</th><th>Best for</th></tr>
+    <tr><td>Google Ads <span class="badge b-live">active</span></td><td><span class="badge b-paid">paid</span></td><td>High-intent search demand</td></tr>
+    <tr><td>Microsoft Ads</td><td><span class="badge b-paid">paid</span></td><td>Search reach beyond Google</td></tr>
+    <tr><td>Meta Ads <span class="badge b-live">active</span></td><td><span class="badge b-paid">paid</span></td><td>Leads &amp; sales at scale</td></tr>
+    <tr><td>LinkedIn Ads <span class="badge b-live">active</span></td><td><span class="badge b-paid">paid</span></td><td>B2B decision-makers</td></tr>
+    <tr><td>TikTok Ads</td><td><span class="badge b-paid">paid</span></td><td>Short-form discovery</td></tr>
+    <tr><td>Pinterest Ads</td><td><span class="badge b-paid">paid</span></td><td>Visual product discovery</td></tr>
+    <tr><td>Reddit Ads</td><td><span class="badge b-paid">paid</span></td><td>Niche community demand</td></tr>
+    <tr><td>X / Twitter Ads</td><td><span class="badge b-paid">paid</span></td><td>Founder-led &amp; tech reach</td></tr>
+    <tr><td>Snapchat Ads</td><td><span class="badge b-paid">paid</span></td><td>Younger, mobile-first</td></tr>
+    <tr><td>YouTube Ads</td><td><span class="badge b-paid">paid</span></td><td>Video demand + retargeting</td></tr>
+    <tr><td>Amazon Ads</td><td><span class="badge b-paid">paid</span></td><td>Marketplace product sales</td></tr>
+    <tr><td>Programmatic Display</td><td><span class="badge b-paid">paid</span></td><td>Awareness + re-engagement</td></tr>
+    <tr><td>Solo Ads</td><td><span class="badge b-email">paid email</span></td><td>Fast lead generation</td></tr>
+    <tr><td>Newsletter Sponsorships</td><td><span class="badge b-email">paid email</span></td><td>Targeted audience placement</td></tr>
+    <tr><td>Partner Email Promotions</td><td><span class="badge b-email">paid email</span></td><td>Borrow partner audiences</td></tr>
+    <tr><td>SEO Content Traffic <span class="badge b-live">active</span></td><td><span class="badge b-org">organic</span></td><td>Compounding visibility</td></tr>
+    <tr><td>LinkedIn Organic</td><td><span class="badge b-org">organic</span></td><td>B2B trust + inbound</td></tr>
+    <tr><td>TikTok Organic</td><td><span class="badge b-org">organic</span></td><td>Discovery + virality</td></tr>
+    <tr><td>Instagram Reels</td><td><span class="badge b-org">organic</span></td><td>Discovery + brand</td></tr>
+    <tr><td>YouTube Organic</td><td><span class="badge b-org">organic</span></td><td>Evergreen video traffic</td></tr>
+    <tr><td>YouTube Shorts</td><td><span class="badge b-org">organic</span></td><td>Fast discovery</td></tr>
+    <tr><td>Facebook Organic</td><td><span class="badge b-org">organic</span></td><td>Community + local</td></tr>
+    <tr><td>Pinterest Organic</td><td><span class="badge b-org">organic</span></td><td>Evergreen visual traffic</td></tr>
+    <tr><td>X Organic</td><td><span class="badge b-org">organic</span></td><td>Founder audience growth</td></tr>
+    <tr><td>Reddit Organic</td><td><span class="badge b-org">organic</span></td><td>Niche credibility</td></tr>
+    <tr><td>Quora Organic</td><td><span class="badge b-org">organic</span></td><td>Evergreen answer traffic</td></tr>
+    <tr><td>Community &amp; Groups</td><td><span class="badge b-org">organic</span></td><td>Trust-based traffic</td></tr>
+    <tr><td>Podcast Traffic</td><td><span class="badge b-org">organic</span></td><td>Authority + referral</td></tr>
+    <tr><td>Referral Traffic</td><td><span class="badge b-org">organic</span></td><td>Customers → traffic</td></tr>
+    <tr><td>Affiliate Partner Traffic</td><td><span class="badge b-org">organic</span></td><td>Partner-driven sales</td></tr>
+    <tr><td>Influencer &amp; Creator Traffic</td><td><span class="badge b-org">organic</span></td><td>Creator-led reach + UGC</td></tr>
+    <tr><td>Newsletter Growth</td><td><span class="badge b-org">organic</span></td><td>Grow + nurture subscribers</td></tr>
+  </table>
+  <p class="updated">Paid platforms marked <span class="badge b-live">active</span> can also be connected for real API sync in the <a href="/ads-module.html">Ads Module</a>. Everything else is fully usable for planning &amp; AI assets today.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>The Traffic pages look empty — is something broken?</h3>
+    <p>No. There's no fake data anywhere in AdGenieHQ. Campaigns, Solo Ads orders, and the dashboard fill in only once you create/log real records.</p>
+    <h3>What's the difference between a Traffic campaign and an Ads campaign?</h3>
+    <p>An <a href="/ads-module.html">Ads campaign</a> is synced live from Google/Meta/LinkedIn via API. A Traffic campaign is your plan + generated assets + logged results for any of the 32 sources — including channels with no API.</p>
+    <h3>How do solo ads connect to email follow-up?</h3>
+    <p>Log the order in Solo Ads → map the campaign to an Omnisend journey → tag the opt-ins. The tag triggers the automation you built once in Omnisend.</p>
+    <h3>Do I need a paid LLM key?</h3>
+    <p>No — recommendation, asset generation, journeys, and the optimizer all have deterministic fallbacks. A key just makes the copy richer.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/ads-module.html">Ads module</a>
+  <a href="/traffic-module.html">Traffic module</a>
+  <a href="/email-marketing-module.html">Email module</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated June 2026</div>
+</footer>
+</body>
+</html>

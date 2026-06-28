@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Email Marketing Module — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Email Marketing cheat sheet: connect Omnisend/GetResponse/custom autoresponders, sync campaigns, push & pull contacts, and run the AI email audit for a scored 7-section report." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/email-marketing-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-key{background:#ede9fe;color:#5b21b6}
+  .b-no{background:#fee2e2;color:#991b1b}
+  .b-yes{background:#dcfce7;color:#166534}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  ol.rep{counter-reset:r;list-style:none;padding:0;margin:10px 0}
+  ol.rep li{position:relative;padding:8px 0 8px 38px;border-bottom:1px solid var(--line)}
+  ol.rep li:last-child{border-bottom:0}
+  ol.rep li::before{counter-increment:r;content:counter(r);position:absolute;left:0;top:9px;width:24px;height:24px;border-radius:7px;background:var(--lav);color:var(--grape);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+  @media (max-width:640px){.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a href="/ads-module.html">Ads</a>
+    <a href="/traffic-module.html">Traffic</a>
+    <a class="active" href="/email-marketing-module.html">Email</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Email Marketing Module</h1>
+    <p>Connect your autoresponder, sync contacts both ways, pull in your email campaigns with real engagement &amp; deliverability metrics, and run an AI audit that scores your program and tells you exactly what to fix.</p>
+    <div class="chips">
+      <span class="chip">Omnisend · GetResponse · Custom</span>
+      <span class="chip">Two-way contact sync</span>
+      <span class="chip">Campaign metrics</span>
+      <span class="chip">AI email audit</span>
+      <span class="chip">Link to paid ads</span>
+    </div>
+  </section>
+
+  <p class="lead">Two pages do the work: <span class="path">Autoresponders</span> (connect providers &amp; sync contacts) and <span class="path">Email campaigns</span> (sync sends &amp; run the audit). API keys are encrypted at rest; connecting requires the Admin role.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#connect">Connect an autoresponder</a></li>
+      <li><a href="#providers">Supported providers</a></li>
+      <li><a href="#contacts">Push &amp; pull contacts</a></li>
+      <li><a href="#campaigns">Sync email campaigns</a></li>
+      <li><a href="#audit">AI email audit (7 sections)</a></li>
+      <li><a href="#link">Link email ↔ paid ads</a></li>
+      <li><a href="#copies">Suggested email copy</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p><b>Autoresponders</b> → connect <b>Omnisend</b> with your API key → <b>Email campaigns</b> → <b>Sync now</b> → <b>Run audit</b> → read your score &amp; the 7-section report. Push ad leads into a tag any time from the Autoresponders page.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="connect"><span class="num">1</span>Connect an autoresponder <span style="font-weight:400;font-size:14px;color:var(--muted)">— /autoresponders</span></h2>
+  <p>Go to <span class="path">Autoresponders</span> (sidebar → Advertising). Each provider shows a card with its status. To connect, paste your <b>API key</b> (plus any config fields) and click <b>Connect</b> — AdGenieHQ validates the key and pulls your account name.</p>
+  <ul class="tight">
+    <li>Keys are encrypted at rest; the browser never sees the raw token.</li>
+    <li>Connecting / disconnecting requires the <b>Admin</b> role and is audit-logged.</li>
+    <li>A connected card shows <i>Connected · Last sync</i> and any last error.</li>
+  </ul>
+
+  <!-- 2 -->
+  <h2 id="providers"><span class="num">2</span>Supported providers <span style="font-weight:400;font-size:14px;color:var(--muted)">— external sources</span></h2>
+  <table>
+    <tr><th>Provider</th><th>Connect with</th><th>Audiences</th><th>What it does</th></tr>
+    <tr>
+      <td><b>Omnisend</b></td>
+      <td><span class="badge b-key">API key</span></td>
+      <td>Tag-based (free-text)</td>
+      <td>Push &amp; pull contacts (by tag) · <b>sync email campaigns + metrics</b></td>
+    </tr>
+    <tr>
+      <td><b>GetResponse</b></td>
+      <td><span class="badge b-key">API key</span></td>
+      <td>List dropdown</td>
+      <td>Push &amp; pull contacts to a chosen list</td>
+    </tr>
+    <tr>
+      <td><b>Custom / Webhook</b></td>
+      <td><span class="badge b-key">URL + optional token</span></td>
+      <td>Free-text list</td>
+      <td>Push to your endpoint · pull from your endpoint — covers Mailchimp, ActiveCampaign, ConvertKit, Klaviyo, Brevo, etc.</td>
+    </tr>
+  </table>
+  <div class="callout warn">
+    <p class="t">Two honest limits to know</p>
+    <p>1) <b>Email-campaign analytics are pulled from Omnisend</b> today — GetResponse &amp; custom are for contact sync. 2) Omnisend's API is <b>tag-based</b>: it can't create automations for you. You build the automation once in Omnisend, and AdGenieHQ tags the right contacts to trigger it.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="contacts"><span class="num">3</span>Push &amp; pull contacts <span style="font-weight:400;font-size:14px;color:var(--muted)">— two-way sync</span></h2>
+  <p>On a connected provider's card, use the <b>Sync contacts</b> panel:</p>
+  <ol class="steps">
+    <li><b>Pick the audience</b> — choose a list (GetResponse) or type a tag (Omnisend / custom).</li>
+    <li><b>Push to list</b> — paste contacts (one per line: <code>email, First, Last</code>) to send ad leads into your ESP.</li>
+    <li><b>Pull from list</b> — fetch subscribers back into AdGenieHQ (up to 100 shown inline).</li>
+    <li><b>Check the activity feed</b> — every push/pull is logged with succeeded / partial / failed counts and timestamps.</li>
+  </ol>
+  <p class="updated">Partial failures are recorded honestly (e.g. 90/100 succeeded = "partial"), never silently dropped.</p>
+
+  <!-- 4 -->
+  <h2 id="campaigns"><span class="num">4</span>Sync email campaigns <span style="font-weight:400;font-size:14px;color:var(--muted)">— /email</span></h2>
+  <p>Open <span class="path">Email campaigns</span> and click <b>Sync now</b> to pull every Omnisend send with full engagement &amp; deliverability metrics:</p>
+  <table>
+    <tr><th>Tracked per campaign</th></tr>
+    <tr><td>Name &amp; subject line · sent date · status &amp; type</td></tr>
+    <tr><td>Sent · opened · clicked · bounced · complained · unsubscribed (counts)</td></tr>
+    <tr><td>Open rate · click rate · bounce rate · complaint rate · unsubscribe rate</td></tr>
+    <tr><td>Revenue (when Omnisend provides it)</td></tr>
+  </table>
+  <p>Bounce rate over 2% is flagged red so list-hygiene problems jump out.</p>
+
+  <!-- 5 -->
+  <h2 id="audit"><span class="num">5</span>AI email audit <span style="font-weight:400;font-size:14px;color:var(--muted)">— "Run audit"</span></h2>
+  <p>Click <b>Run audit</b> to run the <code>email_marketing</code> agent. It scores your program out of 100 and returns a <b>7-section report</b>:</p>
+  <ol class="rep">
+    <li><b>Audit &amp; score (/100)</b> — graded Excellent / Healthy / Needs work / At risk, with subscores for open, click, bounce, complaint, and unsubscribe health.</li>
+    <li><b>Segments</b> — heuristic segments (lapsed / never-opened, engaged clickers/VIP, opened-not-clicked) plus AI suggestions.</li>
+    <li><b>Black Friday campaign draft</b> — AI-written subject lines, hook, and CTA (deterministic template if no LLM).</li>
+    <li><b>Open-rate trend</b> — month-by-month series with deltas and an up/down/flat direction.</li>
+    <li><b>Best send day</b> — open rate by day-of-week with the top day ranked.</li>
+    <li><b>Subject-line patterns</b> — lift from emoji, personalization, numbers, questions, urgency, and length, plus your top 5 subjects.</li>
+    <li><b>Deliverability</b> — verdict (healthy / at-risk) with flags for complaint, bounce, and unsubscribe red lines.</li>
+  </ol>
+  <div class="callout safe">
+    <p class="t">Straight about the data</p>
+    <p>The report says what it <b>can't</b> see: Omnisend's API has no recipient country or hour-of-day (so "best send day" is day-of-week only), and deliverability is based on reputation signals (complaints/bounces), not seed-inbox testing or SPF/DKIM/DMARC checks. No campaigns with send/open data yet? The audit returns a clean "nothing to audit" state.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="link"><span class="num">6</span>Link email ↔ paid ads</h2>
+  <p>On each email campaign row, pick a <b>linked paid-ads campaign</b> from the dropdown (or "Not linked"). This ties email engagement to the ad campaign that drove the leads, for cross-channel reporting. Select "Not linked" to unlink. The change is audit-logged.</p>
+
+  <!-- 7 -->
+  <h2 id="copies"><span class="num">7</span>Suggested email copy</h2>
+  <p>From your <b>Growth DNA Profile</b>, the Content Studio can generate ready-to-use copy — including <b>email</b> (lifecycle / nurture) drafts alongside ad copy, landing pages, social posts, and more. Find these under <span class="path">Creatives</span> / suggested copies, filter by the <code>email</code> type, and download as TXT or DOCX.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>I connected Omnisend but see no campaigns.</h3>
+    <p>Connecting only stores the key. Go to <b>Email campaigns → Sync now</b> to pull your sends. The page starts empty by design — no fake data.</p>
+    <h3>Can AdGenieHQ send the emails for me?</h3>
+    <p>The module <b>syncs</b> campaign results from your ESP and <b>tags</b> contacts to trigger automations you build there. It doesn't replace your ESP's send engine — it makes your existing program measurable and adds an AI audit on top.</p>
+    <h3>Which provider should I use for the audit?</h3>
+    <p>Use <b>Omnisend</b> — campaign analytics (and therefore the audit) are pulled from Omnisend today. GetResponse and custom webhooks are for contact push/pull.</p>
+    <h3>Does the audit need an OpenAI key?</h3>
+    <p>No. The score, trends, send-day, subject patterns, and deliverability are deterministic. A key just enriches the executive summary, segment ideas, and Black Friday draft.</p>
+    <h3>How do I move ad leads into email follow-up?</h3>
+    <p>Push them to an Omnisend tag from the Autoresponders page, then trigger an Omnisend automation — or plan the whole flow in <a href="/traffic-module.html">Traffic Genie → Omnisend journeys</a>.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/ads-module.html">Ads module</a>
+  <a href="/traffic-module.html">Traffic module</a>
+  <a href="/email-marketing-module.html">Email module</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated June 2026</div>
+</footer>
+</body>
+</html>

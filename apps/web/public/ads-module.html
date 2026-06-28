@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ads Module — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Ads Module cheat sheet: connect Google/Meta/LinkedIn Ads, sync campaigns, build ad sets, run AI agents, approve recommendations, and use Autopilot guardrails." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/ads-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/ads-module.html">Ads</a>
+    <a href="/traffic-module.html">Traffic</a>
+    <a href="/email-marketing-module.html">Email</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Ads Module</h1>
+    <p>Connect real ad accounts, sync your campaigns, let AI agents find waste and opportunities, then approve changes safely — or hand controlled actions to Autopilot inside hard guardrails.</p>
+    <div class="chips">
+      <span class="chip">Google · Meta · LinkedIn</span>
+      <span class="chip">Campaign sync</span>
+      <span class="chip">Ad-set & ad builder</span>
+      <span class="chip">AI recommendations</span>
+      <span class="chip">Approvals & Autopilot</span>
+    </div>
+  </section>
+
+  <p class="lead">Everything in this module works off <b>real data</b> — synced campaigns, your inputs, and saved AI outputs. Nothing is connected? You'll see a clean empty state with a connect button, never fake charts.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#connect">Connect ad platforms</a></li>
+      <li><a href="#campaigns">Campaigns dashboard</a></li>
+      <li><a href="#detail">Campaign detail & actions</a></li>
+      <li><a href="#builder">Ad-set & ad builder</a></li>
+      <li><a href="#creatives">Creatives library</a></li>
+      <li><a href="#agents">AI agents</a></li>
+      <li><a href="#recs">Recommendations & approvals</a></li>
+      <li><a href="#autopilot">Autopilot & guardrails</a></li>
+      <li><a href="#reports">Reports</a></li>
+      <li><a href="#faq">FAQ & tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p>Settings → Integrations → <b>Connect</b> Google/Meta/LinkedIn → open <b>Campaigns</b> → <b>Sync now</b> → run the <b>Paid Ads</b> agent → review <b>Recommendations</b> → Approve. Done.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="connect"><span class="num">1</span>Connect your ad platforms <span style="font-weight:400;font-size:14px;color:var(--muted)">— external sources</span></h2>
+  <p>This is the only place "connections" live. Go to <span class="path">Settings → Integrations</span> (Admin role required). OAuth tokens are encrypted at rest; access tokens are never exposed to the browser.</p>
+  <table>
+    <tr><th>Platform</th><th>What it brings in</th><th>Access</th><th>Status</th></tr>
+    <tr><td><b>Google Ads</b></td><td>Campaigns, budgets, structure, performance</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>Meta Ads</b> (Facebook/Instagram)</td><td>Campaigns, budgets, structure, performance</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>LinkedIn Ads</b></td><td>B2B campaigns & reporting</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>Google Analytics 4</b></td><td>Conversions & funnel data for ROAS/attribution</td><td>Read</td><td><span class="badge b-read">OAuth</span></td></tr>
+    <tr><td><b>Google Search Console</b></td><td>Search queries, impressions, CTR</td><td>Read</td><td><span class="badge b-read">OAuth</span></td></tr>
+  </table>
+  <ul class="tight">
+    <li><b>Write access toggle</b> — each ad platform card has an "Enable write access" checkbox. Leave it off for analytics-only (Advisor); turn it on to let AdGenieHQ run & manage ads. You can reconnect to change this later.</li>
+    <li><b>Disconnected = empty state</b>, not fake data. Connect, then <b>Sync</b> to pull records.</li>
+    <li>Connecting/disconnecting is an Admin action and is written to the audit log.</li>
+  </ul>
+
+  <!-- 2 -->
+  <h2 id="campaigns"><span class="num">2</span>Campaigns dashboard <span style="font-weight:400;font-size:14px;color:var(--muted)">— /campaigns</span></h2>
+  <p>A unified, cross-platform view of every synced campaign.</p>
+  <ol class="steps">
+    <li><b>Sync now</b> — pulls the latest campaigns from all connected ad platforms into AdGenieHQ.</li>
+    <li><b>Filter</b> by platform (Google / Meta / LinkedIn) and status (Active / Paused / Ended / Archived).</li>
+    <li><b>Read the summary cards</b> — total, active, paused, plus warnings: <i>active campaigns with no budget</i> and <i>stale active</i> (past end-date).</li>
+    <li><b>Open a campaign</b> to see detail, metrics, fees, and actions.</li>
+  </ol>
+  <div class="callout warn">
+    <p class="t">Heads up</p>
+    <p>Campaigns are primarily <b>synced</b> from the ad platforms — AdGenieHQ mirrors what's in your accounts. Use the builder (below) to draft and publish new structure as <b>paused</b>, then go live in approval.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="detail"><span class="num">3</span>Campaign detail & actions <span style="font-weight:400;font-size:14px;color:var(--muted)">— /campaigns/:id</span></h2>
+  <p>On a campaign you can see budgets, schedule, identifiers, platform fees, metrics, and the raw provider payload. Sensitive actions are routed through the approval flow:</p>
+  <table>
+    <tr><th>Action</th><th>What happens</th><th>Risk / gate</th></tr>
+    <tr><td><b>Pause</b></td><td>Requests a pause on the live platform</td><td><span class="badge b-low">Low</span> · routed via approval</td></tr>
+    <tr><td><b>Resume</b></td><td>Requests resume on the live platform</td><td><span class="badge b-low">Low</span> · routed via approval</td></tr>
+    <tr><td><b>Edit budget</b></td><td>Inline form ($) to change the daily budget</td><td><span class="badge b-med">Medium</span> · routed via approval</td></tr>
+  </table>
+  <p>Each action shows an approval status banner (pending → approved → executed, or rejected). Failed executions can be retried; succeeded ones can be reverted by an Admin (restores the prior state captured before the change).</p>
+
+  <!-- 4 -->
+  <h2 id="builder"><span class="num">4</span>Ad-set &amp; ad builder</h2>
+  <p>Inside a campaign, the <b>Ad structure</b> section lets you build a launch-ready hierarchy and publish it safely.</p>
+  <ol class="steps">
+    <li><b>Add ad set</b> — name, daily budget, optimization goal, locations, age range, interests. Saves as a draft.</li>
+    <li><b>Add ad</b> under an ad set — name, landing page URL, and an attached creative.</li>
+    <li><b>Create creative</b> — type, headline, primary text, description, CTA, image/video URL.</li>
+    <li><b>Publish</b> — pushes the ad set / ad to the live platform <b>paused</b>, as a recommendation that needs approval before it spends.</li>
+  </ol>
+  <p>Hierarchy: <b>Campaign → Ad set → Ad → Creative</b>. Drafts you build never go live until approved.</p>
+
+  <!-- 5 -->
+  <h2 id="creatives"><span class="num">5</span>Creatives library <span style="font-weight:400;font-size:14px;color:var(--muted)">— /creatives</span></h2>
+  <ul class="tight">
+    <li>Every creative the <b>Creative Strategy</b> agent generates, plus anything synced from your ad platforms.</li>
+    <li>Filter by <b>type</b> (search, responsive display, single image, video, carousel, UGC, other) and <b>source</b> (AI-generated, platform-synced, user-uploaded).</li>
+    <li>Click a creative to <b>edit inline</b> (headline, primary text, CTA, media URLs) before attaching it to an ad.</li>
+    <li>Platform-synced edits are local — push them back via the provider's own UI.</li>
+  </ul>
+
+  <!-- 6 -->
+  <h2 id="agents"><span class="num">6</span>AI agents <span style="font-weight:400;font-size:14px;color:var(--muted)">— /agents</span></h2>
+  <p>Each agent runs against your real workspace data, saves its outputs and tasks, and emits recommendations. Open <span class="path">Agents</span>, pick an agent card, and click <b>Run now</b> — then <b>View last run</b> for tasks, outputs, and recommendations.</p>
+  <table>
+    <tr><th>Agent</th><th>Type</th><th>What it does</th></tr>
+    <tr><td><b>Paid Ads</b></td><td><code>paid_ads</code></td><td>Reads synced campaigns; flags budget gaps, stale campaigns, and platform-diversity risk.</td></tr>
+    <tr><td><b>Creative Strategy</b></td><td><code>creative_strategy</code></td><td>Generates 3–6 ad-copy variants from your offer/audience and saves them as creatives.</td></tr>
+    <tr><td><b>Campaign Builder</b></td><td><code>campaign_builder</code></td><td>Produces a launch-ready blueprint (objective, structure, budget split, tracking checklist).</td></tr>
+    <tr><td><b>Tracking &amp; Attribution</b></td><td><code>tracking_attribution</code></td><td>Rates how trustworthy your conversion measurement is (0–100) from connected analytics.</td></tr>
+    <tr><td><b>Market Intelligence</b></td><td><code>market_intelligence</code></td><td>Competitor matrix, positioning gaps, and fresh ad-angle ideas.</td></tr>
+    <tr><td><b>ICP &amp; Persona</b></td><td><code>icp_persona</code></td><td>Buyer personas, awareness-stage map, and a messaging matrix.</td></tr>
+  </table>
+  <p class="updated">Agents work even without an LLM key — they fall back to deterministic outputs so you always get a real result.</p>
+
+  <!-- 7 -->
+  <h2 id="recs"><span class="num">7</span>Recommendations &amp; approvals <span style="font-weight:400;font-size:14px;color:var(--muted)">— /recommendations</span></h2>
+  <p>Everything agents find lands here, grouped by risk. Each card shows what was found, why it matters, expected impact, the suggested action, and its source run.</p>
+  <ol class="steps">
+    <li><b>Review</b> — open a recommendation for the full summary, impact, and audit trail.</li>
+    <li><b>Edit before applying</b> (Admin+) — tighten the title, summary, impact, or action.</li>
+    <li><b>Approve &amp; apply</b> — optionally toggle "apply to {platform} on approve" to execute the change.</li>
+    <li><b>Reject</b> with a reason, or <b>revert</b> a succeeded execution to its prior state.</li>
+  </ol>
+  <p><b>Role gating by risk:</b> <span class="badge b-low">low → Marketer+</span> &nbsp; <span class="badge b-med">medium → Admin+</span> &nbsp; <span class="badge b-high">high → Owner</span>. Every approve/reject/edit is audit-logged with actor, IP, and user agent.</p>
+
+  <!-- 8 -->
+  <h2 id="autopilot"><span class="num">8</span>Autopilot &amp; guardrails <span style="font-weight:400;font-size:14px;color:var(--muted)">— /autopilot</span></h2>
+  <p>Off by default. Choose the execution mode for the workspace:</p>
+  <table>
+    <tr><th>Mode</th><th>Behavior</th></tr>
+    <tr><td><b>Off / Advisor</b></td><td>Agents only analyze and recommend. No external actions.</td></tr>
+    <tr><td><b>Approval</b></td><td>AI proposes; a human must approve before anything executes. <i>(Recommended default.)</i></td></tr>
+    <tr><td><b>Autopilot</b></td><td>Recommendations that pass <b>all</b> guardrails are auto-approved and audit-logged as <code>SYSTEM</code>. Anything that fails a rule falls back to manual approval.</td></tr>
+  </table>
+  <h3>Guardrails you set (Owner only)</h3>
+  <ul class="tight">
+    <li>Max daily spend increase &amp; max daily spend total (caps)</li>
+    <li>Max % increase per change</li>
+    <li>Minimum recent conversions before scaling spend up</li>
+    <li><b>Risk ceiling</b> — low (safest) / medium / high</li>
+    <li><b>Allowed action types</b> — whitelist, e.g. <code>campaign.pause</code>, <code>campaign.update_budget</code></li>
+  </ul>
+  <h3>Autonomous action tiers (each opt-in)</h3>
+  <ul class="tight">
+    <li><code>campaign.pause</code> — pause past-end-date campaigns (spend-down, reversible)</li>
+    <li><code>campaign.update_budget</code> — trim on CPA spikes / scale winners within caps</li>
+    <li><code>ad_set.create</code> &amp; <code>ad.create</code> — publish human-built drafts (paused)</li>
+  </ul>
+  <div class="callout warn">
+    <p class="t">🛑 Stop-loss</p>
+    <p>One switch on the Autopilot page. While active, Autopilot refuses <b>every</b> recommendation regardless of guardrails — your emergency brake. The <b>Preview</b> section always shows exactly what would auto-approve right now before you commit.</p>
+  </div>
+
+  <!-- 9 -->
+  <h2 id="reports"><span class="num">9</span>Reports <span style="font-weight:400;font-size:14px;color:var(--muted)">— /reports</span></h2>
+  <ul class="tight">
+    <li>Generate daily / weekly / monthly reports from connected data and saved AI outputs.</li>
+    <li>Download as <b>PDF</b> or <b>CSV</b>; email summaries supported.</li>
+    <li>Reports require connected data or completed agent runs — no data, no fabricated numbers.</li>
+  </ul>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Why didn't a new integration appear on the Integrations page?</h3>
+    <p>The Integrations page is only for OAuth platforms (Google, Meta, LinkedIn, GA4, Search Console, Stripe). Other channels live in the <a href="/traffic-module.html">Traffic Module</a> as a planning + tracking layer, because they have no API to connect to.</p>
+    <h3>Can AI spend my money without me?</h3>
+    <p>Only if you explicitly enable Autopilot, whitelist the action type, and it passes every guardrail. By default everything waits for human approval, gated by role and risk.</p>
+    <h3>Do agents need an OpenAI key?</h3>
+    <p>No. Every agent has a deterministic fallback, so you get real output even with no LLM configured. With a key, outputs become richer.</p>
+    <h3>What's the safest way to start?</h3>
+    <p>Connect read-only (write toggle off) → sync → run Paid Ads + Tracking &amp; Attribution → read recommendations in Advisor mode. Turn on write access and approvals only when you're ready to act.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/ads-module.html">Ads module</a>
+  <a href="/traffic-module.html">Traffic module</a>
+  <a href="/email-marketing-module.html">Email module</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated June 2026</div>
+</footer>
+</body>
+</html>
