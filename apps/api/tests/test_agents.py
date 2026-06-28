@@ -24,7 +24,7 @@ def _complete_onboarding(client: TestClient, workspace_id: str, **overrides) -> 
         "industry": "B2B SaaS",
         "target_audience": "Series A founders",
         "offer_description": (
-            "AdVanta is the AI growth command center that turns chaotic ad spend "
+            "AdGenieHQ is the AI growth command center that turns chaotic ad spend "
             "into measurable pipeline by deploying specialized agents across paid "
             "media, SEO, and website conversion."
         ),
@@ -68,6 +68,12 @@ def test_list_agents_returns_catalog_with_no_runs(client: TestClient) -> None:
         "growth_content",
         "campaign_builder",
         "tracking_attribution",
+        "email_marketing",
+        "traffic_recommendation",
+        "traffic_assets",
+        "traffic_optimizer",
+        "solo_ads",
+        "omnisend_journey",
         "master_orchestrator",
     }
     assert all(entry["last_run"] is None for entry in catalog)
@@ -158,7 +164,7 @@ def test_website_audit_runs_skills_against_fetched_html(client: TestClient) -> N
     <html>
       <head>
         <title>Acme — Pipeline From Paid, SEO, And Conversion</title>
-        <meta name='description' content='AdVanta is the growth command center for SaaS marketers, deploying AI skill agents across paid, SEO, and conversion to remove busywork.'>
+        <meta name='description' content='AdGenieHQ is the growth command center for SaaS marketers, deploying AI skill agents across paid, SEO, and conversion to remove busywork.'>
         <meta name='viewport' content='width=device-width, initial-scale=1'>
       </head>
       <body>
