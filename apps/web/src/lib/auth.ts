@@ -31,11 +31,26 @@ export function registerRequest(payload: {
   });
 }
 
-export function refreshRequest() {
-  return apiFetch<TokenResponse>("/auth/refresh", {
+let inFlightRefresh: Promise<TokenResponse> | null = null;
+
+/**
+ * Single-flight refresh. Concurrent callers (app `bootstrapAuth`, the Google
+ * `/auth/google/finish` page, and the 401-retry handler) share ONE in-flight
+ * request. Refresh tokens are single-use and rotated server-side, so two
+ * requests carrying the same cookie make the second look like a replay →
+ * `RefreshTokenReuseError`, which revokes the whole session (this is what broke
+ * Google sign-in with `?error=google_refresh_token_reuse`). Deduping guarantees
+ * exactly one rotation; the guard clears once the request settles.
+ */
+export function refreshRequest(): Promise<TokenResponse> {
+  if (inFlightRefresh) return inFlightRefresh;
+  inFlightRefresh = apiFetch<TokenResponse>("/auth/refresh", {
     method: "POST",
     skipAuth: true,
+  }).finally(() => {
+    inFlightRefresh = null;
   });
+  return inFlightRefresh;
 }
 
 export function logoutRequest() {
