@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date as _Date
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -78,8 +79,8 @@ class TrafficCampaignPublic(BaseModel):
     budget_cents: int | None = None
     currency: str | None = None
     status: str
-    start_date: date | None = None
-    end_date: date | None = None
+    start_date: _Date | None = None
+    end_date: _Date | None = None
     omnisend_segment: str | None = None
     omnisend_flow: str | None = None
     ai_summary: str | None = None
@@ -164,3 +165,55 @@ class CreateUtmLinkRequest(BaseModel):
     term: str | None = None
     vendor_name: str | None = None
     campaign_id: UUID | None = None
+
+
+# --- Analytics (Phase 6) ---
+
+class TrafficMetricPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    traffic_campaign_id: UUID | None = None
+    source_slug: str
+    medium: str | None = None
+    date: _Date | None = None
+    visitors: int
+    sessions: int
+    clicks: int
+    unique_clicks: int
+    leads: int
+    sales: int
+    revenue_cents: int
+    cost_cents: int
+    currency: str | None = None
+    bounce_rate: float | None = None
+    avg_session_duration_sec: int | None = None
+    email_opens: int
+    email_clicks: int
+    unsubscribes: int
+    spam_complaints: int
+    refunds: int
+    created_at: datetime
+
+
+class LogMetricRequest(BaseModel):
+    source_slug: str
+    traffic_campaign_id: UUID | None = None
+    medium: str | None = None
+    date: _Date | None = None
+    visitors: int | None = None
+    sessions: int | None = None
+    clicks: int | None = None
+    unique_clicks: int | None = None
+    leads: int | None = None
+    sales: int | None = None
+    revenue_cents: int | None = None
+    cost_cents: int | None = None
+    currency: str | None = None
+    bounce_rate: float | None = None
+    avg_session_duration_sec: int | None = None
+    email_opens: int | None = None
+    email_clicks: int | None = None
+    unsubscribes: int | None = None
+    spam_complaints: int | None = None
+    refunds: int | None = None

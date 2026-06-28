@@ -1773,3 +1773,85 @@ export type SyncLeadSourceResult = {
   failed: number;
   status: string;
 };
+
+// ---- Traffic analytics (Phase 6) ----
+
+export type TrafficRollup = {
+  clicks: number;
+  leads: number;
+  sales: number;
+  cost_cents: number;
+  revenue_cents: number;
+  refunds: number;
+  visitors: number;
+  sessions: number;
+  profit_cents: number;
+  cpc_cents: number | null;
+  cpl_cents: number | null;
+  cps_cents: number | null;
+  epc_cents: number | null;
+  roas: number | null;
+  lead_rate: number | null;
+  conversion_rate: number | null;
+  refund_rate: number | null;
+  bounce_rate: number | null;
+  quality_score?: number | null;
+  quality_verdict?: string | null;
+};
+
+export type SourceRollup = TrafficRollup & {
+  source_slug: string;
+  source_name: string;
+  source_type: string;
+};
+
+export type CampaignRollup = TrafficRollup & {
+  campaign_id: string;
+  name: string;
+  source_slug: string | null;
+};
+
+export type TrafficAnalyticsOverview = {
+  has_data: boolean;
+  currency: string;
+  totals: TrafficRollup;
+  sources: SourceRollup[];
+  campaigns: CampaignRollup[];
+  by_type: Record<string, TrafficRollup>;
+};
+
+export type TrafficAction = {
+  type: string;
+  priority: "high" | "medium" | "low";
+  source: string;
+  title: string;
+  detail: string;
+};
+
+export type TrafficOptimization = {
+  has_data?: boolean;
+  reason?: string;
+  generated_at?: string;
+  totals?: TrafficRollup;
+  by_type?: Record<string, TrafficRollup>;
+  top_sources?: SourceRollup[];
+  top_campaigns?: CampaignRollup[];
+  next_best_actions?: TrafficAction[];
+  executive_summary?: string;
+};
+
+export type LogMetricRequest = {
+  source_slug: string;
+  traffic_campaign_id?: string | null;
+  medium?: string | null;
+  date?: string | null;
+  currency?: string | null;
+  clicks?: number | null;
+  leads?: number | null;
+  sales?: number | null;
+  revenue_cents?: number | null;
+  cost_cents?: number | null;
+  visitors?: number | null;
+  sessions?: number | null;
+  refunds?: number | null;
+};

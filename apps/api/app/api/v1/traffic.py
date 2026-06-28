@@ -16,17 +16,19 @@ from app.schemas.traffic import (
     CreateTrafficCampaignRequest,
     CreateUtmLinkRequest,
     GenerateAssetsRequest,
+    LogMetricRequest,
     RecommendationRequest,
     TrafficCampaignAssetPublic,
     TrafficCampaignDetail,
     TrafficCampaignPublic,
     TrafficCatalogResponse,
+    TrafficMetricPublic,
     UpdateTrafficCampaignRequest,
     UtmLinkPublic,
 )
 from app.security.dependencies import get_current_member, require_role
 from app.security.permissions import Role
-from app.services import traffic_service, utm_service
+from app.services import traffic_analytics_service, traffic_service, utm_service
 from app.traffic import catalog as cat
 
 router = APIRouter()
@@ -260,4 +262,59 @@ def delete_utm_link(
         link_id=link_id,
         actor_user_id=member.user_id,
         request=request,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Analytics & optimization (Phase 6)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{workspace_id}/traffic/analytics/overview", response_model=dict)
+def traffic_analytics_overview(
+    workspace_id: UUID,
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> dict:
+    return traffic_analytics_service.compute_overview(db, workspace_id=workspace_id)
+
+
+@router.get("/{workspace_id}/traffic/metrics", response_model=list[TrafficMetricPublic])
+def list_traffic_metrics(
+    workspace_id: UUID,
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> list[TrafficMetricPublic]:
+    rows = traffic_analytics_service.list_metrics(db, workspace_id=workspace_id)
+    return [TrafficMetricPublic.model_validate(r) for r in rows]
+
+
+@router.post(
+    "/{workspace_id}/traffic/metrics",
+    response_model=TrafficMetricPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+def log_traffic_metric(
+    workspace_id: UUID,
+    payload: LogMetricRequest,
+    request: Request,
+    member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
+    db: Session = Depends(get_db),
+) -> TrafficMetricPublic:
+    metric = traffic_analytics_service.log_metric(
+        db, workspace_id=workspace_id, actor_user_id=member.user_id,
+        data=payload.model_dump(exclude_unset=True), request=request,
+    )
+    return TrafficMetricPublic.model_validate(metric)
+
+
+@router.post("/{workspace_id}/traffic/analytics/optimize", response_model=dict)
+def optimize_traffic(
+    workspace_id: UUID,
+    request: Request,
+    member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
+    db: Session = Depends(get_db),
+) -> dict:
+    return traffic_analytics_service.run_optimizer(
+        db, workspace_id=workspace_id, actor_user_id=member.user_id,
     )

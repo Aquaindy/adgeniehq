@@ -58,6 +58,7 @@ from app.models.solo_ad import SoloAdOrder, SoloAdVendor
 from app.models.suggested_copy import SuggestedCopy, SuggestedCopyType
 from app.models.sync_log import SyncLog, SyncLogStatus
 from app.models.traffic_campaign import TrafficCampaign, TrafficCampaignAsset
+from app.models.traffic_metric import TrafficMetric
 from app.models.usage_event import UsageEvent, UsageEventType
 from app.models.user import User
 from app.models.utm_link import UtmLink
@@ -149,6 +150,7 @@ __all__ = [
     "SyncLogStatus",
     "TrafficCampaign",
     "TrafficCampaignAsset",
+    "TrafficMetric",
     "UsageEvent",
     "UsageEventType",
     "User",

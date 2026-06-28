@@ -15,6 +15,7 @@ from app.agents.seo_audit import SEOAuditAgent
 from app.agents.solo_ads import SoloAdsAgent
 from app.agents.tracking_attribution import TrackingAttributionAgent
 from app.agents.traffic_assets import TrafficAssetAgent
+from app.agents.traffic_optimizer import TrafficOptimizerAgent
 from app.agents.traffic_recommendation import TrafficRecommendationAgent
 from app.agents.website_audit import WebsiteAuditAgent
 
@@ -34,6 +35,7 @@ AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     EmailMarketingAgent.type: EmailMarketingAgent,
     TrafficRecommendationAgent.type: TrafficRecommendationAgent,
     TrafficAssetAgent.type: TrafficAssetAgent,
+    TrafficOptimizerAgent.type: TrafficOptimizerAgent,
     SoloAdsAgent.type: SoloAdsAgent,
     OmnisendJourneyAgent.type: OmnisendJourneyAgent,
     MasterOrchestratorAgent.type: MasterOrchestratorAgent,

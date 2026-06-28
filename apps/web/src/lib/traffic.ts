@@ -2,10 +2,13 @@ import { apiFetch } from "@/lib/api-client";
 import type {
   CreateTrafficCampaignRequest,
   CreateUtmLinkRequest,
+  LogMetricRequest,
+  TrafficAnalyticsOverview,
   TrafficCampaign,
   TrafficCampaignAsset,
   TrafficCampaignDetail,
   TrafficCatalog,
+  TrafficOptimization,
   TrafficRecommendation,
   TrafficRecommendationRequest,
   UtmLink,
@@ -96,5 +99,21 @@ export function createUtmLink(workspaceId: string, body: CreateUtmLinkRequest) {
 export function deleteUtmLink(workspaceId: string, linkId: string) {
   return apiFetch<void>(`${base(workspaceId)}/utm-links/${linkId}`, {
     method: "DELETE",
+  });
+}
+
+// --- Analytics (Phase 6) ---
+
+export function getTrafficAnalyticsOverview(workspaceId: string) {
+  return apiFetch<TrafficAnalyticsOverview>(`${base(workspaceId)}/analytics/overview`);
+}
+
+export function logTrafficMetric(workspaceId: string, body: LogMetricRequest) {
+  return apiFetch(`${base(workspaceId)}/metrics`, { method: "POST", body });
+}
+
+export function optimizeTraffic(workspaceId: string) {
+  return apiFetch<TrafficOptimization>(`${base(workspaceId)}/analytics/optimize`, {
+    method: "POST",
   });
 }
