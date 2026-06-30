@@ -88,6 +88,22 @@ class GoogleAdsProvider(GoogleProviderBase):
                 results.append(cls._normalize(row, customer_id=customer_id))
         return results
 
+    @classmethod
+    def list_ad_accounts(cls, *, access_token: str) -> list[dict]:
+        """Customer IDs the connected user can access, excluding the configured
+        manager (login-customer-id). Used to resolve the campaign-launch target:
+        the connected account stores the OAuth user id, not an Ads customer id."""
+        developer_token = cls._developer_token()
+        customer_ids = cls._fetch_accessible_customers(
+            access_token=access_token, developer_token=developer_token
+        )
+        manager = cls._login_customer_id()
+        return [
+            {"id": cid, "name": f"Customer {cid}"}
+            for cid in customer_ids
+            if cid != manager
+        ]
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------

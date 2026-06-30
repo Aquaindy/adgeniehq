@@ -41,6 +41,7 @@ export function NewCampaignPanel({
   const [name, setName] = useState("");
   const [campaignType, setCampaignType] = useState("leads");
   const [budgetDollars, setBudgetDollars] = useState("20");
+  const [adAccountId, setAdAccountId] = useState("");
   const [result, setResult] = useState<CampaignLaunchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +67,8 @@ export function NewCampaignPanel({
         name: name.trim(),
         campaign_type: campaignType,
         daily_budget_cents: budgetCents,
+        external_account_id:
+          provider === "google_ads" && adAccountId.trim() ? adAccountId.trim() : undefined,
       }),
     onSuccess: (data) => {
       setError(null);
@@ -116,6 +119,23 @@ export function NewCampaignPanel({
           />
         </Field>
       </div>
+
+      {provider === "google_ads" ? (
+        <div className="mt-3">
+          <Field label="Google Ads account ID">
+            <input
+              value={adAccountId}
+              onChange={(e) => setAdAccountId(e.target.value)}
+              placeholder="e.g. 959-335-5662"
+              className={inputCls}
+            />
+          </Field>
+          <p className="mt-1 text-xs text-slate-400">
+            The 10-digit customer ID of the account to launch into — not your manager
+            account. Leave blank to auto-detect if you only have one.
+          </p>
+        </div>
+      ) : null}
 
       {quote.data ? (
         <div className="mt-3 rounded-xl bg-grape-soft/40 px-4 py-3 text-sm">

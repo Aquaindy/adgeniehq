@@ -19,7 +19,7 @@ from uuid import UUID
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.models.agent_run import AgentRun, AgentRunStatus
 from app.models.approval import Approval, ApprovalStatus
 from app.models.audit_log import AuditActorType
@@ -36,12 +36,12 @@ ACTION_CREATE = "campaign.create"
 LAUNCH_RISK = RiskLevel.MEDIUM
 
 
-class ProviderNotConnectedError(AdVantaError):
+class ProviderNotConnectedError(AdGenieError):
     status_code = 409
     code = "provider_not_connected"
 
 
-class InvalidLaunchError(AdVantaError):
+class InvalidLaunchError(AdGenieError):
     status_code = 422
     code = "invalid_launch"
 
@@ -91,7 +91,7 @@ def build_create_payload(
             "daily_budget_cents": daily_budget_cents,
             "currency": "USD",
         }
-    raise InvalidLaunchError(f"Provider `{provider}` does not support launching from AdVanta.")
+    raise InvalidLaunchError(f"Provider `{provider}` does not support launching from AdGenieHQ.")
 
 
 @dataclass
@@ -106,6 +106,56 @@ class LaunchResult:
     message: str
 
 
+def _normalize_google_customer_id(value: str) -> str:
+    digits = "".join(ch for ch in value if ch.isdigit())
+    if len(digits) != 10:
+        raise InvalidLaunchError(
+            "Enter a valid Google Ads account ID — 10 digits, e.g. 959-335-5662."
+        )
+    return digits
+
+
+def _resolve_target_account_id(
+    db: Session, *, provider: str, account: ConnectedAccount, requested: str | None
+) -> str:
+    """Resolve which ad-account id to publish into.
+
+    Google Ads is special: the connected account stores the OAuth *user* id
+    (from userinfo), NOT an Ads customer id — so we never use
+    provider_account_id there. The operator can pass the customer id
+    explicitly; otherwise we try to auto-resolve a single accessible
+    (non-manager) account, and ask them to pick if it's ambiguous. Meta and
+    LinkedIn already persist the ad-account id as provider_account_id.
+    """
+    if provider == "google_ads":
+        if requested:
+            return _normalize_google_customer_id(requested)
+        # Deferred imports avoid an import cycle and keep the provider optional.
+        from app.integrations.google_ads import GoogleAdsProvider
+        from app.services import integration_service
+
+        try:
+            token = integration_service.get_fresh_access_token(db, account=account)
+            accounts = GoogleAdsProvider.list_ad_accounts(access_token=token)
+        except Exception:
+            accounts = []
+        if len(accounts) == 1:
+            return accounts[0]["id"]
+        raise InvalidLaunchError(
+            "Couldn't determine which Google Ads account to launch into. Enter your "
+            "Google Ads account ID (10 digits, e.g. 959-335-5662) in the launch form."
+        )
+
+    if requested:
+        return requested.strip()
+    if not account.provider_account_id:
+        raise InvalidLaunchError(
+            f"The connected {provider} account has no ad-account id on record — "
+            "reconnect the integration and try again."
+        )
+    return account.provider_account_id
+
+
 def launch_campaign(
     db: Session,
     *,
@@ -116,6 +166,7 @@ def launch_campaign(
     name: str,
     campaign_type: str,
     daily_budget_cents: int,
+    external_account_id: str | None = None,
     request: Request | None = None,
 ) -> LaunchResult:
     if provider not in LAUNCHABLE_PROVIDERS:
@@ -143,12 +194,16 @@ def launch_campaign(
             f"{provider} is not connected — connect it before launching a campaign."
         )
 
+    target_account_id = _resolve_target_account_id(
+        db, provider=provider, account=account, requested=external_account_id
+    )
+
     payload = build_create_payload(
         provider, name=name, campaign_type=campaign_type, daily_budget_cents=daily_budget_cents
     )
     metadata = {
         "provider": provider,
-        "external_account_id": account.provider_account_id,
+        "external_account_id": target_account_id,
         "action": ACTION_CREATE,
         "payload": payload,
         "daily_budget_cents": daily_budget_cents,
@@ -187,7 +242,7 @@ def launch_campaign(
         recommendation_type=ACTION_CREATE,
         risk_level=LAUNCH_RISK,
         expected_impact="Starts a new campaign (paused) on the connected ad account.",
-        suggested_action=f"Create the campaign on {provider} and add it to AdVanta.",
+        suggested_action=f"Create the campaign on {provider} and add it to AdGenieHQ.",
         status=RecommendationStatus.OPEN,
         platform=provider,
         metadata_json=metadata,

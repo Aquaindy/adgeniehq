@@ -71,6 +71,14 @@ class CampaignLaunchRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     campaign_type: str = Field(default="other", max_length=64)
     daily_budget_cents: int = Field(gt=0)
+    external_account_id: str | None = Field(
+        default=None,
+        max_length=64,
+        description=(
+            "Target ad-account id. For Google Ads, the 10-digit customer id "
+            "(e.g. 959-335-5662); leave blank to auto-detect a single account."
+        ),
+    )
 
 
 class CampaignLaunchResponse(BaseModel):

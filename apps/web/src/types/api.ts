@@ -718,6 +718,7 @@ export type CampaignLaunchRequest = {
   name: string;
   campaign_type: string;
   daily_budget_cents: number;
+  external_account_id?: string;
 };
 
 export type CampaignLaunchResponse = {

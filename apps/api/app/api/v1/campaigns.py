@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.db.session import get_db
 from app.models.campaign import CampaignStatus
 from app.models.workspace_member import WorkspaceMember
@@ -47,7 +47,7 @@ def _action_response(result: campaign_action_service.CampaignActionResult) -> Ca
     )
 
 
-class CampaignNotFoundError(AdVantaError):
+class CampaignNotFoundError(AdGenieError):
     status_code = 404
     code = "campaign_not_found"
 
@@ -132,6 +132,7 @@ def launch_campaign_endpoint(
         name=payload.name,
         campaign_type=payload.campaign_type,
         daily_budget_cents=payload.daily_budget_cents,
+        external_account_id=payload.external_account_id,
         request=request,
     )
     return CampaignLaunchResponse(
