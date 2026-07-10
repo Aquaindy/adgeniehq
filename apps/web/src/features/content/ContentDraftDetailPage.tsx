@@ -338,6 +338,11 @@ function ImageCard({ draft }: { draft: ContentDraftPublic }) {
   if (!draft.platform) return null;
 
   const editable = draft.status !== "published" && draft.status !== "archived";
+  const imgMeta = draft.seo_metadata as {
+    image_headline?: string;
+    image_style?: string;
+    image_model?: string;
+  } | null;
 
   const imageMut = useMutation({
     mutationFn: (s: ContentImageStyle) =>
@@ -437,6 +442,16 @@ function ImageCard({ draft }: { draft: ContentDraftPublic }) {
               {downloading === "txt" ? "…" : ".txt"}
             </Button>
           </div>
+          {imgMeta?.image_headline ? (
+            <p className="mt-2 text-xs text-slate-400">
+              Text sent to the image:{" "}
+              <span className="font-medium text-slate-600">
+                “{imgMeta.image_headline}”
+              </span>
+              {imgMeta.image_style ? ` · ${imgMeta.image_style}` : ""}
+              {imgMeta.image_model ? ` · ${imgMeta.image_model}` : ""}
+            </p>
+          ) : null}
         </>
       ) : (
         <p className="mt-3 text-sm text-slate-400">
