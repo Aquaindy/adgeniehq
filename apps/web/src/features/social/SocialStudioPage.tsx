@@ -74,6 +74,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
   const queryClient = useQueryClient();
 
   const [topic, setTopic] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
   const [keywordsRaw, setKeywordsRaw] = useState("");
   const [audience, setAudience] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
@@ -94,7 +95,8 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
   const mut = useMutation({
     mutationFn: () =>
       generateSocialPack(workspaceId!, {
-        topic,
+        topic: topic.trim() || null,
+        source_url: sourceUrl.trim() || null,
         platforms: selected,
         keywords: keywordsRaw
           .split(",")
@@ -123,8 +125,8 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    if (!topic.trim()) {
-      setError("Provide a topic to draft about.");
+    if (!topic.trim() && !sourceUrl.trim()) {
+      setError("Provide a topic or a source URL to generate from.");
       return;
     }
     if (selected.length === 0) {
@@ -140,7 +142,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
       <Card>
         <CardHeader
           title="Generate a social pack"
-          subtitle="One topic in, one tailored draft per platform out. The agent uses your configured LLM if available; otherwise a deterministic skeleton built from onboarding."
+          subtitle="Start from a topic or a web link — one tailored draft per platform out. The agent uses your configured LLM if available; otherwise a deterministic skeleton."
         />
         <form className="mt-4 flex flex-col gap-4" onSubmit={onSubmit}>
           <label className="flex flex-col gap-1.5 text-sm">
@@ -152,6 +154,23 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
               placeholder="e.g. Why first-touch attribution misleads B2B teams"
               className="rounded-xl border border-slate-200 bg-surface px-3 py-2 text-ink shadow-sm outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
             />
+          </label>
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-slate-text">
+              …or repurpose a web link
+            </span>
+            <input
+              type="url"
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder="https://yourblog.com/an-article-to-turn-into-posts"
+              className="rounded-xl border border-slate-200 bg-surface px-3 py-2 text-ink shadow-sm outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
+            />
+            <span className="text-xs text-slate-400">
+              We fetch the page and turn its content into posts and scripts. Leave
+              the topic blank to use the page's own title, or set both to angle it.
+            </span>
           </label>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -391,6 +410,20 @@ function DraftCard({
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
           This draft exceeds {platform?.label}'s limit once hashtags are added.
           Trim it before posting.
+        </p>
+      ) : null}
+
+      {typeof draft.seo_metadata?.source_url === "string" ? (
+        <p className="mt-2 text-xs text-slate-400">
+          Repurposed from{" "}
+          <a
+            href={draft.seo_metadata.source_url as string}
+            target="_blank"
+            rel="noreferrer"
+            className="text-grape hover:underline"
+          >
+            {(draft.seo_metadata.source_url as string).replace(/^https?:\/\//, "")}
+          </a>
         </p>
       ) : null}
 

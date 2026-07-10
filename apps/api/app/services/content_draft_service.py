@@ -55,6 +55,14 @@ class GenerationFailedError(AdGenieError):
     code = "content_generation_failed"
 
 
+class SourceContentError(AdGenieError):
+    """Bad generation input the caller can fix — unreachable/empty source URL,
+    or nothing to generate from. A 400, not a 500."""
+
+    status_code = 400
+    code = "source_content_error"
+
+
 # ---------------------------------------------------------------------------
 # Generate
 # ---------------------------------------------------------------------------
@@ -167,24 +175,52 @@ def generate_social_pack(
     *,
     workspace_id: UUID,
     actor_user_id: UUID,
-    topic: str,
+    topic: str | None = None,
     platforms: list[str],
     keywords: list[str] | None = None,
     audience: str | None = None,
     target_url: str | None = None,
     notes: str | None = None,
     call_to_action: str | None = None,
+    source_url: str | None = None,
     request: Request | None = None,
 ) -> list[ContentDraft]:
     """Run the SocialContent agent once and persist one ContentDraft per
     platform. Each draft lands in `draft` status like any other — social copy
     is never auto-published.
 
+    When `source_url` is given, the page is fetched once here (not per platform)
+    and its readable text is threaded into the agent so every draft repurposes
+    the same article. Either `topic` or `source_url` must be provided; a blank
+    topic is derived from the fetched page title.
+
     Credits are charged for the whole pack up front, so a workspace can't slip
     an N-platform fan-out past a budget that only had room for one draft."""
 
     if not platforms:
         raise GenerationFailedError("Select at least one platform.")
+
+    topic = (topic or "").strip()
+    source_title: str | None = None
+    source_content: str | None = None
+    if source_url:
+        from app.skills.website.extract import fetch_and_extract
+        from app.skills.website.fetch import WebsiteFetchError
+
+        try:
+            article = fetch_and_extract(source_url)
+        except WebsiteFetchError as exc:
+            # BlockedURLError (SSRF guard) and transport failures both land here,
+            # surfaced to the caller as a 400 without disclosing internals.
+            raise SourceContentError(f"Could not fetch {source_url}: {exc}") from exc
+        source_url = article.final_url
+        source_title = article.title
+        source_content = article.text
+        if not topic:
+            topic = source_title
+
+    if not topic:
+        raise SourceContentError("Provide a topic or a source URL to generate from.")
 
     billing_service.assert_within_credit_budget(
         db,
@@ -206,6 +242,9 @@ def generate_social_pack(
             "target_url": target_url,
             "notes": notes,
             "call_to_action": call_to_action,
+            "source_url": source_url,
+            "source_title": source_title,
+            "source_content": source_content,
         },
     )
 
@@ -729,20 +768,15 @@ def refresh_draft(
         content_type = source.type
         refreshed_from = {"draft_id": str(source.id), "title": source.title}
     elif source_url is not None:
-        from app.skills.website.fetch import WebsiteFetchError, fetch_html
+        from app.skills.website.extract import fetch_and_extract
+        from app.skills.website.fetch import WebsiteFetchError
 
         try:
-            page = fetch_html(source_url)
+            article = fetch_and_extract(source_url)
         except WebsiteFetchError as exc:
             raise AdGenieError(f"Could not fetch {source_url}: {exc}") from exc
-        from bs4 import BeautifulSoup
-
-        soup = BeautifulSoup(page.html, "html.parser")
-        # Best-effort title + body extraction from common semantic landmarks.
-        title_tag = soup.find("h1") or soup.find("title")
-        existing_title = (title_tag.get_text() if title_tag else source_url).strip()[:512]
-        article = soup.find("article") or soup.find("main") or soup.body
-        existing_body = (article.get_text("\n\n") if article else soup.get_text("\n\n")).strip()
+        existing_title = article.title
+        existing_body = article.text
         # Default to blog_post when fetching from URL.
         content_type = ContentDraftType.BLOG_POST
         target_url = source_url

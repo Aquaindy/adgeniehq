@@ -214,6 +214,108 @@ def test_validator_value_errors_serialize_as_422_not_500(client: TestClient) -> 
     assert "monthly_ad_budget_min_usd" in resp.text
 
 
+# ---------------------------------------------------------------------------
+# Generate from a web link
+# ---------------------------------------------------------------------------
+
+
+def _stub_article(monkeypatch, *, title: str, text: str, final_url: str | None = None):
+    """Replace the network fetch so tests never hit the wire (and the SSRF
+    guard doesn't reject test hosts). Patches the source module, which the
+    service imports at call time."""
+
+    from app.skills.website import extract as web_extract
+
+    def _fake(url: str, *, max_chars: int = 8000):
+        return web_extract.ExtractedArticle(
+            url=url, final_url=final_url or url, title=title, text=text
+        )
+
+    monkeypatch.setattr(web_extract, "fetch_and_extract", _fake)
+
+
+def test_generate_pack_from_source_url_repurposes_content(
+    client: TestClient, monkeypatch
+) -> None:
+    _stub_article(
+        monkeypatch,
+        title="Cookieless Attribution in 2026",
+        text=(
+            "Marketers relying on last-click are flying blind as third-party "
+            "cookies disappear. Server-side tagging plus modeled conversions "
+            "restore the signal. Teams that migrate early see lower CPA."
+        ),
+    )
+    ws = _signup_and_workspace(client)
+    body = client.post(
+        f"/api/v1/workspaces/{ws}/social/generate",
+        json={"source_url": "https://blog.example/attribution", "platforms": ["linkedin", "x"]},
+    ).json()
+
+    # Topic was derived from the page title.
+    assert body["topic"] == "Cookieless Attribution in 2026"
+    drafts = body["drafts"]
+    assert len(drafts) == 2
+    for draft in drafts:
+        assert draft["seo_metadata"]["source_url"] == "https://blog.example/attribution"
+        # Deterministic path (NullClient) surfaces the source excerpt.
+        assert "last-click" in draft["body"] or "cookies" in draft["body"]
+
+
+def test_generate_pack_topic_overrides_derived_title(
+    client: TestClient, monkeypatch
+) -> None:
+    """Both topic and source_url supplied → the explicit topic wins as the
+    label, while the source still grounds the content."""
+
+    _stub_article(monkeypatch, title="Some Page Title", text="A lengthy article body about server-side tagging and conversions.")
+    ws = _signup_and_workspace(client)
+    body = client.post(
+        f"/api/v1/workspaces/{ws}/social/generate",
+        json={
+            "topic": "Angle this for CFOs",
+            "source_url": "https://blog.example/x",
+            "platforms": ["linkedin"],
+        },
+    ).json()
+    assert body["topic"] == "Angle this for CFOs"
+    assert body["drafts"][0]["seo_metadata"]["source_url"] == "https://blog.example/x"
+
+
+def test_generate_pack_requires_topic_or_source(client: TestClient) -> None:
+    ws = _signup_and_workspace(client)
+    resp = client.post(
+        f"/api/v1/workspaces/{ws}/social/generate",
+        json={"platforms": ["x"]},
+    )
+    assert resp.status_code == 422
+    assert resp.json()["error"]["code"] == "validation_error"
+
+
+def test_generate_pack_unreachable_source_url_is_400_not_500(
+    client: TestClient, monkeypatch
+) -> None:
+    """A blocked/unreachable URL is the caller's problem, surfaced cleanly —
+    not a 500. The SSRF guard raises WebsiteFetchError, which the service maps
+    to a content-generation error."""
+
+    from app.skills.website import extract as web_extract
+    from app.skills.website.fetch import WebsiteFetchError
+
+    def _boom(url: str, *, max_chars: int = 8000):
+        raise WebsiteFetchError("Could not reach host", url=url)
+
+    monkeypatch.setattr(web_extract, "fetch_and_extract", _boom)
+
+    ws = _signup_and_workspace(client)
+    resp = client.post(
+        f"/api/v1/workspaces/{ws}/social/generate",
+        json={"source_url": "https://blocked.example", "platforms": ["x"]},
+    )
+    assert resp.status_code == 400, resp.text
+    assert resp.status_code != 500
+
+
 def test_generate_pack_dedupes_platforms(client: TestClient) -> None:
     """Duplicates must collapse before billing — one credit, one draft."""
 
@@ -350,3 +452,68 @@ def test_every_catalog_platform_generates_a_draft() -> None:
             if platform.hard_char_limit:
                 composed = len(payload.body) + _hashtag_block_length(payload.hashtags)
                 assert composed <= platform.hard_char_limit
+
+
+# ---------------------------------------------------------------------------
+# Article extraction (pure, fetch mocked)
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_and_extract_pulls_title_and_strips_noise(monkeypatch) -> None:
+    from app.skills.website import extract as web_extract
+    from app.skills.website.fetch import FetchedPage
+
+    html = """
+    <html><head><title>Fallback Title</title></head>
+    <body>
+      <nav>Home About</nav>
+      <script>var x = 'tracking junk';</script>
+      <style>.a{color:red}</style>
+      <article>
+        <h1>The Real Headline</h1>
+        <p>First substantive paragraph about server-side attribution and CPA.</p>
+        <p>Second paragraph with more detail.</p>
+      </article>
+    </body></html>
+    """
+    monkeypatch.setattr(
+        web_extract,
+        "fetch_html",
+        lambda url: FetchedPage(
+            url=url, final_url=url, status_code=200, content_type="text/html", html=html
+        ),
+    )
+
+    art = web_extract.fetch_and_extract("https://ex.example/post")
+    assert art.title == "The Real Headline"  # H1 wins over <title>
+    assert "tracking junk" not in art.text  # <script> stripped
+    assert "color:red" not in art.text  # <style> stripped
+    assert "server-side attribution" in art.text
+
+
+def test_fetch_and_extract_empty_page_raises(monkeypatch) -> None:
+    from app.skills.website import extract as web_extract
+    from app.skills.website.extract import ArticleExtractionError
+    from app.skills.website.fetch import FetchedPage
+
+    monkeypatch.setattr(
+        web_extract,
+        "fetch_html",
+        lambda url: FetchedPage(
+            url=url, final_url=url, status_code=200, content_type="text/html",
+            html="<html><body><script>x=1</script></body></html>",
+        ),
+    )
+    import pytest
+
+    with pytest.raises(ArticleExtractionError):
+        web_extract.fetch_and_extract("https://ex.example/empty")
+
+
+def test_source_lead_skips_nav_crumbs() -> None:
+    from app.skills.content.social import _source_lead
+
+    text = "Home\nMenu\n\nThis is the first genuinely substantive paragraph of the piece."
+    lead = _source_lead(text, max_chars=600)
+    assert lead.startswith("This is the first genuinely substantive")
+    assert "Home" not in lead

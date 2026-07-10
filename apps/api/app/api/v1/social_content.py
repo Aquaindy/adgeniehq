@@ -65,9 +65,18 @@ def generate_social_pack(
         target_url=payload.target_url,
         notes=payload.notes,
         call_to_action=payload.call_to_action,
+        source_url=payload.source_url,
         request=request,
     )
+    # Drafts share the topic actually used — the page title when generated from
+    # a link with no explicit topic. Reading it off the first draft keeps the
+    # response honest rather than echoing back an empty request topic.
+    resolved_topic = (
+        (drafts[0].seo_metadata or {}).get("topic")
+        if drafts
+        else None
+    ) or payload.topic or ""
     return SocialPackResponse(
-        topic=payload.topic,
+        topic=resolved_topic,
         drafts=[ContentDraftPublic.model_validate(d) for d in drafts],
     )

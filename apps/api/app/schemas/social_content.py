@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.schemas.content_drafts import ContentDraftPublic
 from app.social.catalog import PLATFORMS, SocialPlatform
@@ -44,7 +44,9 @@ class SocialPlatformPublic(BaseModel):
 
 
 class GenerateSocialPackRequest(BaseModel):
-    topic: str = Field(min_length=2, max_length=512)
+    # Optional because a source_url can stand in for it — the page title becomes
+    # the topic. At least one of the two must be present (see the validator).
+    topic: str | None = Field(default=None, max_length=512)
     # Platform slugs from GET /social/platforms. Bounded so one request can't
     # fan out into an unbounded number of metered LLM calls.
     platforms: list[str] = Field(min_length=1, max_length=9)
@@ -53,6 +55,21 @@ class GenerateSocialPackRequest(BaseModel):
     target_url: str | None = Field(default=None, max_length=1024)
     notes: str | None = Field(default=None, max_length=2000)
     call_to_action: str | None = Field(default=None, max_length=280)
+    # A page to repurpose into social content. Fetched server-side through the
+    # SSRF guard; its readable text grounds every draft.
+    source_url: str | None = Field(default=None, max_length=2048)
+
+    @model_validator(mode="after")
+    def _topic_or_source(self) -> "GenerateSocialPackRequest":
+        topic = (self.topic or "").strip()
+        source = (self.source_url or "").strip()
+        if not topic and not source:
+            raise ValueError("Provide a topic or a source URL to generate from.")
+        # A 1-char topic was previously rejected by min_length; keep that bar
+        # only when a topic is actually the input.
+        if topic and len(topic) < 2 and not source:
+            raise ValueError("Topic is too short.")
+        return self
 
     @field_validator("platforms")
     @classmethod

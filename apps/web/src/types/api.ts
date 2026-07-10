@@ -1084,13 +1084,16 @@ export type SocialPlatformPublic = {
 };
 
 export type GenerateSocialPackRequest = {
-  topic: string;
+  /** Optional when source_url is provided (page title becomes the topic). */
+  topic?: string | null;
   platforms: string[];
   keywords?: string[];
   audience?: string | null;
   target_url?: string | null;
   notes?: string | null;
   call_to_action?: string | null;
+  /** A page to repurpose into social content; fetched server-side. */
+  source_url?: string | null;
 };
 
 export type SocialPackResponse = {

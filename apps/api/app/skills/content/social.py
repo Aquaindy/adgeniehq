@@ -52,6 +52,12 @@ class SocialContentRequest:
     target_url: str | None = None
     notes: str | None = None
     call_to_action: str | None = None
+    # When the operator generates from a web link, the fetched article's title
+    # and readable text are threaded in here. Present → the draft repurposes
+    # this content instead of writing from the topic alone.
+    source_url: str | None = None
+    source_title: str | None = None
+    source_content: str | None = None
 
 
 @dataclass
@@ -106,7 +112,12 @@ def generate_social_content(
 # ---------------------------------------------------------------------------
 
 
-def _system_prompt(platform: SocialPlatform, profile: OnboardingProfile | None) -> str:
+def _system_prompt(
+    platform: SocialPlatform,
+    profile: OnboardingProfile | None,
+    *,
+    source_content: str | None = None,
+) -> str:
     voice = (
         (profile.brand_voice if profile and profile.brand_voice else None)
         or "Professional, concrete, no fluff."
@@ -128,6 +139,14 @@ def _system_prompt(platform: SocialPlatform, profile: OnboardingProfile | None) 
         "you cannot support from the information given. Write as the business, "
         "not about it."
     )
+    if source_content:
+        base += (
+            "\n\nThe user supplied a SOURCE ARTICLE (below the topic). Repurpose "
+            "its substance into a native post for this platform — pull the "
+            "strongest idea, stat, or takeaway from it and reframe it in the "
+            "platform's voice. Draw only from the source and the business facts "
+            "above; do not add claims the article doesn't support."
+        )
 
     if platform.is_video:
         low, high = platform.duration_seconds or (20, 60)
@@ -163,7 +182,7 @@ def _user_prompt(request: SocialContentRequest) -> str:
     p = request.platform
     parts = [
         f"Platform: {p.label}",
-        f"Topic: {request.topic}",
+        f"Topic: {request.topic or request.source_title or '(derive from the source article)'}",
         f"Keywords to weave in: {', '.join(request.keywords) if request.keywords else '(none)'}",
     ]
     if p.is_video:
@@ -184,6 +203,17 @@ def _user_prompt(request: SocialContentRequest) -> str:
         parts.append(f"Link to promote: {request.target_url}")
     if request.notes:
         parts.append(f"Notes: {request.notes}")
+    if request.source_content:
+        # Kept last and clearly delimited so the model treats it as reference
+        # material, not instructions.
+        parts.append(
+            "\nSOURCE ARTICLE to repurpose"
+            + (f" (from {request.source_url})" if request.source_url else "")
+            + ":\n"
+            + "\"\"\"\n"
+            + request.source_content
+            + "\n\"\"\""
+        )
     return "\n".join(parts)
 
 
@@ -196,7 +226,12 @@ def _generate_with_llm(
     workspace_id: UUID | None,
 ) -> SocialContentPayload:
     messages = [
-        LlmMessage(role="system", content=_system_prompt(request.platform, profile)),
+        LlmMessage(
+            role="system",
+            content=_system_prompt(
+                request.platform, profile, source_content=request.source_content
+            ),
+        ),
         LlmMessage(role="user", content=_user_prompt(request)),
     ]
     kwargs: dict[str, Any] = {
@@ -441,6 +476,8 @@ def _build_metadata(
         meta["target_duration_seconds"] = list(p.duration_seconds or (20, 60))
     if request.target_url:
         meta["target_url"] = request.target_url
+    if request.source_url:
+        meta["source_url"] = request.source_url
     return meta
 
 
@@ -473,6 +510,22 @@ def _fallback_hashtags(request: SocialContentRequest) -> list[str]:
     return normalize_hashtags(raw, platform=request.platform)
 
 
+def _source_lead(source_content: str, *, max_chars: int) -> str:
+    """The first substantive paragraph of the source, for the deterministic
+    path. Without an LLM we don't rewrite — we honestly surface a lead excerpt
+    the operator edits, rather than fabricating a repurposed post."""
+
+    for block in source_content.split("\n\n"):
+        candidate = " ".join(block.split()).strip()
+        if len(candidate) >= 40:  # skip nav crumbs / one-word lines
+            if len(candidate) > max_chars:
+                candidate = candidate[:max_chars].rsplit(" ", 1)[0].rstrip() + "…"
+            return candidate
+    # Nothing substantial — fall back to a flattened prefix.
+    flat = " ".join(source_content.split()).strip()
+    return flat[:max_chars]
+
+
 def generate_deterministic_social(
     *,
     request: SocialContentRequest,
@@ -500,7 +553,11 @@ def _generate_deterministic(
         or (profile.target_audience if profile and profile.target_audience else "growth teams")
     )
     offer = profile.offer_description if profile and profile.offer_description else None
-    topic = request.topic.strip() or "Your next campaign"
+    topic = (
+        request.topic.strip()
+        or (request.source_title or "").strip()
+        or "Your next campaign"
+    )
     kw_phrase = ", ".join(request.keywords) if request.keywords else topic
     cta = request.call_to_action or (
         f"Learn more: {request.target_url}" if request.target_url else "Follow for more."
@@ -509,13 +566,22 @@ def _generate_deterministic(
     hashtags = _fallback_hashtags(request)
     keywords = _normalize_keywords(request.keywords, fallback=[topic])
 
+    # When repurposing a link, ground the skeleton in a real excerpt from the
+    # page rather than the generic onboarding template.
+    lead = _source_lead(request.source_content, max_chars=600) if request.source_content else ""
+
     if p.is_video:
         low, high = p.duration_seconds or (20, 60)
+        first_beat = (
+            lead
+            if lead
+            else f"{audience} keep hitting the same wall with {kw_phrase}."
+        )
         script = {
             "hook": f"{topic} — here's what {audience} keep missing.",
             "beats": [
                 {
-                    "narration": f"{audience} keep hitting the same wall with {kw_phrase}.",
+                    "narration": first_beat,
                     "on_screen_text": topic,
                     "visual": "Talking head, direct to camera.",
                 },
@@ -540,17 +606,19 @@ def _generate_deterministic(
     else:
         script = None
         title = f"{p.label}: {topic}"
+        middle = lead if lead else f"For {audience}: {offer or kw_phrase}."
         body = _enforce_char_limit(
-            f"{topic}\n\n"
-            f"For {audience}: {offer or kw_phrase}.\n\n"
-            f"{cta}",
+            f"{topic}\n\n{middle}\n\n{cta}",
             platform=p,
             reserved=_hashtag_block_length(hashtags),
         )
 
     payload_meta = _build_metadata(body=body, hashtags=hashtags, request=request)
     payload_meta["fallback"] = (
-        "Drafted from your onboarding profile without an LLM. "
+        "Drafted from the source excerpt without an LLM — edit before posting. "
+        "Connect an LLM key for a full platform-tuned rewrite."
+        if lead
+        else "Drafted from your onboarding profile without an LLM. "
         "Connect an LLM key for platform-tuned copy."
     )
     return SocialContentPayload(

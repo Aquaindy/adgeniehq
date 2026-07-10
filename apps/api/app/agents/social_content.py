@@ -147,6 +147,9 @@ class SocialContentAgent(BaseAgent):
                 target_url=payload.get("target_url"),
                 notes=payload.get("notes"),
                 call_to_action=payload.get("call_to_action"),
+                source_url=payload.get("source_url"),
+                source_title=payload.get("source_title"),
+                source_content=payload.get("source_content"),
             )
 
             try:
