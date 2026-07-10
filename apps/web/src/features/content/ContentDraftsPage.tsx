@@ -40,13 +40,21 @@ const STATUS_PILL: Record<ContentDraftStatus, string> = {
   archived: "bg-slate-100 text-slate-500",
 };
 
+const PAGE_SIZE = 8;
+
 export function ContentDraftsPage() {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
+  const [page, setPage] = useState(0);
   const drafts = useQuery({
     queryKey: ["content-drafts", workspaceId],
     queryFn: () => listContentDrafts(workspaceId!),
     enabled: !!workspaceId,
   });
+
+  const all = drafts.data ?? [];
+  const pageCount = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const current = Math.min(page, pageCount - 1);
+  const paged = all.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
@@ -88,7 +96,7 @@ export function ContentDraftsPage() {
         />
       ) : (
         <ul className="flex flex-col gap-2">
-          {drafts.data?.map((d) => (
+          {paged.map((d) => (
             <li key={d.id}>
               <Link
                 to={`/content/${d.id}`}
@@ -139,6 +147,30 @@ export function ContentDraftsPage() {
           ))}
         </ul>
       )}
+
+      {pageCount > 1 ? (
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={current === 0}
+          >
+            ← Prev
+          </Button>
+          <span className="text-sm text-slate-500">
+            Page {current + 1} of {pageCount}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            disabled={current >= pageCount - 1}
+          >
+            Next →
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

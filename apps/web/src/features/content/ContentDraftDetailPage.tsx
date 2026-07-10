@@ -56,6 +56,12 @@ export function ContentDraftDetailPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <Link
+        to="/content"
+        className="text-sm font-medium text-grape-700 hover:text-grape-800"
+      >
+        ← All drafts
+      </Link>
       <DetailHeader draft={draft.data} />
       <BodyCard draft={draft.data} />
       <SocialCard draft={draft.data} />

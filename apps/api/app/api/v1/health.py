@@ -56,6 +56,26 @@ def health_ready(response: Response, db: Session = Depends(get_db)) -> dict:
     return {"status": "ok" if healthy else "degraded", "checks": checks}
 
 
+@router.get("/storage")
+def health_storage() -> dict:
+    """Which object-storage backend is active and whether it's fully wired —
+    booleans only, no secrets or URLs.
+
+    Diagnoses images that upload but don't persist/display: if `s3_enabled` is
+    false, a required `S3_*` var is missing and images fall back to ephemeral
+    local disk (wiped on redeploy). If `s3_enabled` is true but images still
+    404/403, R2 needs `S3_PUBLIC_URL` set (`public_url_set`)."""
+    return {
+        "backend": "s3" if settings.s3_enabled else "local_disk_ephemeral",
+        "s3_enabled": settings.s3_enabled,
+        "has_endpoint": bool(settings.s3_endpoint),
+        "has_access_key": bool(settings.s3_access_key_id),
+        "has_secret": bool(settings.s3_secret_access_key),
+        "has_bucket": bool(settings.s3_bucket),
+        "public_url_set": bool(settings.s3_public_url),
+    }
+
+
 @router.get("/db", response_model=ComponentHealth)
 def health_db(db: Session = Depends(get_db)) -> ComponentHealth:
     try:
