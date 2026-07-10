@@ -214,7 +214,9 @@ def _build_prompt(
             f"wrap it across up to 3 lines so every word fits fully in frame "
             f"with margins; never crop or cut off any word. "
             f"Feature {box} as a hero element with soft reflections and depth. "
-            f"Add a clear call-to-action button/bar with the text: “{cta}”. "
+            f"Add a PROMINENT, clearly readable call-to-action button/bar near "
+            f"the bottom — a solid rounded pill in an accent color — with the "
+            f"text: “{cta}”. This CTA must always be present and legible. "
             f"Include a few tasteful, topical icon / emoji-style graphics and "
             f"accents that reinforce the theme. "
             f"Use this only as thematic direction, never as extra rendered text: "
@@ -230,21 +232,24 @@ def _build_prompt(
         )
 
     if headline:
+        cta = _promo_cta(draft, profile)
         return (
             f"Design a scroll-stopping social media post graphic{context}. "
-            f"The ONLY text anywhere in the image is this exact headline, "
-            f"rendered as the bold, correctly spelled, legible focal point: "
-            f"“{headline}”. Show the COMPLETE headline — size the type and wrap "
-            f"it across up to 3 lines so EVERY word fits fully inside the frame "
-            f"with margins; never crop, truncate, or push any word out of view. "
+            f"Exactly TWO text elements, both spelled EXACTLY as written: "
+            f"(1) the headline as the bold, legible focal point — “{headline}” — "
+            f"shown COMPLETE, sized and wrapped across up to 3 lines so every "
+            f"word fits inside the frame with margins, never cropped; and "
+            f"(2) a PROMINENT, clearly readable call-to-action bar/button near "
+            f"the bottom — a solid rounded pill in an accent color — with the "
+            f"text: “{cta}”. The CTA must always be present and legible. "
             f"Use this only as thematic direction for the imagery, never as "
             f"rendered text: {subject}. "
-            "Support the headline with tasteful graphics — modern iconography, "
+            "Support them with tasteful graphics — modern iconography, "
             "geometric shapes, or a clean illustration — using a vibrant, "
             "high-contrast color palette with real depth, dimension, and "
             "lighting (avoid flat, washed-out looks). "
-            "Render NO other words — no platform name, labels, hashtags, "
-            "paragraphs, logos, watermarks, or UI. Only the headline above. "
+            "Render NO other words beyond the headline and the CTA — no platform "
+            "name, labels, hashtags, paragraphs, logos, watermarks, or UI. "
             "Balanced, professional composition."
         )
 
