@@ -159,7 +159,10 @@ def _system_prompt(
             "like a strong YouTube/TikTok title someone would click. It MUST be "
             "a real headline only — NEVER include the platform or format name "
             "(e.g. 'TikTok', 'Reel', 'Short', 'video', 'script') anywhere in "
-            "it), hook (string — the spoken first line, under 2 "
+            "it), overlay_headline (string — a punchy 3-to-5 word hook capturing "
+            "the core promise, for LARGE text on the cover image; plain words "
+            "only, no platform/format name, no ending punctuation), "
+            "hook (string — the spoken first line, under 2 "
             "seconds), beats (array of objects with keys: narration, "
             "on_screen_text, visual), cta (string), hashtags (array of "
             "strings), keywords (array of strings). Use 3 to 5 beats."
@@ -182,6 +185,9 @@ def _system_prompt(
         "characters. It MUST be a real headline only — NEVER include the "
         "platform or format name (e.g. 'LinkedIn post', 'X post', 'Facebook "
         "post', 'Instagram caption', 'Thread', 'Reel') anywhere in it), "
+        "overlay_headline (string — a punchy 3-to-5 word hook capturing the "
+        "core promise, for LARGE text on a promo image; plain words only, no "
+        "platform/format name, no ending punctuation), "
         "body (string — the post exactly as it should be pasted), hashtags "
         "(array of strings), keywords (array of strings)."
     )
@@ -278,6 +284,35 @@ def _strip_platform_label(title: str, platform: SocialPlatform) -> str:
     return s
 
 
+def _short_hook(text: Any, *, platform: SocialPlatform, fallback: str = "") -> str:
+    """A ≤5-word hook for LARGE on-image text.
+
+    Strips a platform label and any trailing subtitle, caps to 5 words / 36
+    chars, and drops trailing punctuation. Falls back to `fallback` (the title)
+    when `text` is empty, so every draft carries a short, image-friendly
+    headline in `seo_metadata.overlay_headline` — which the image generator
+    prefers over the (longer) title, giving each post its own crisp overlay."""
+
+    s = _strip_platform_label(str(text or "").strip(), platform)
+    if not s:
+        s = _strip_platform_label(str(fallback or "").strip(), platform)
+    if not s:
+        return ""
+    for sep in ("—", " – ", " - ", ": ", " | ", " • "):
+        if sep in s:
+            s = s.split(sep, 1)[0].strip()
+            break
+    words = s.split()
+    if len(words) > 5:
+        s = " ".join(words[:5])
+    s = s.strip(" .,:;!|—–-")
+    if len(s) > 36:
+        s = s[:36].rsplit(" ", 1)[0].strip() or s[:36]
+    if s and s[0].islower():
+        s = s[0].upper() + s[1:]
+    return s
+
+
 def _generate_with_llm(
     *,
     client: LlmClient,
@@ -334,13 +369,20 @@ def _generate_with_llm(
         reserved=_hashtag_block_length(hashtags),
     )
 
+    meta = _build_metadata(body=body, hashtags=hashtags, request=request)
+    hook = _short_hook(
+        parsed.get("overlay_headline"), platform=request.platform, fallback=title
+    )
+    if hook:
+        meta["overlay_headline"] = hook
+
     return SocialContentPayload(
         title=title[:512],
         body=body,
         hashtags=hashtags,
         keywords=keywords,
         script=script,
-        seo_metadata=_build_metadata(body=body, hashtags=hashtags, request=request),
+        seo_metadata=meta,
         model_used=completion.model,
         source="llm",
     )
@@ -703,6 +745,10 @@ def _generate_deterministic(
         else "Drafted from your onboarding profile without an LLM. "
         "Connect an LLM key for platform-tuned copy."
     )
+    hook = _short_hook(title, platform=request.platform, fallback=title)
+    if hook:
+        payload_meta["overlay_headline"] = hook
+
     return SocialContentPayload(
         title=title[:512],
         body=body,
