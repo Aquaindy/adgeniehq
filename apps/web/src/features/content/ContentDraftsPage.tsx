@@ -10,6 +10,7 @@ import { ApiError } from "@/lib/api-client";
 import {
   generateContentDraft,
   listContentDrafts,
+  resolveUploadUrl,
 } from "@/lib/content-drafts";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
@@ -91,38 +92,48 @@ export function ContentDraftsPage() {
             <li key={d.id}>
               <Link
                 to={`/content/${d.id}`}
-                className="card flex flex-col gap-2 p-4 transition hover:bg-grape-50"
+                className="card flex items-start gap-3 p-4 transition hover:bg-grape-50"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={cn("pill", STATUS_PILL[d.status])}>
-                      {d.status}
-                    </span>
-                    <span className="pill bg-slate-50 text-slate-500">
-                      {TYPE_LABELS[d.type]}
-                    </span>
-                    {d.platform ? (
-                      <span className="pill pill-grape">{d.platform}</span>
-                    ) : null}
-                    {d.source === "manual" ? (
-                      <span className="pill bg-slate-50 text-slate-500">manual</span>
-                    ) : null}
-                    {d.model_used ? (
-                      <span className="pill bg-grape-50 text-grape-700">
-                        {d.model_used}
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={cn("pill", STATUS_PILL[d.status])}>
+                        {d.status}
                       </span>
-                    ) : d.source === "agent" ? (
-                      <span className="pill bg-amber-50 text-amber-700">
-                        deterministic
+                      <span className="pill bg-slate-50 text-slate-500">
+                        {TYPE_LABELS[d.type]}
                       </span>
-                    ) : null}
+                      {d.platform ? (
+                        <span className="pill pill-grape">{d.platform}</span>
+                      ) : null}
+                      {d.source === "manual" ? (
+                        <span className="pill bg-slate-50 text-slate-500">manual</span>
+                      ) : null}
+                      {d.model_used ? (
+                        <span className="pill bg-grape-50 text-grape-700">
+                          {d.model_used}
+                        </span>
+                      ) : d.source === "agent" ? (
+                        <span className="pill bg-amber-50 text-amber-700">
+                          deterministic
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="text-xs text-slate-400">
+                      {new Date(d.created_at).toLocaleString()}
+                    </span>
                   </div>
-                  <span className="text-xs text-slate-400">
-                    {new Date(d.created_at).toLocaleString()}
-                  </span>
+                  <h3 className="text-sm font-semibold text-ink">{d.title}</h3>
+                  <p className="line-clamp-2 text-xs text-slate-500">{d.body}</p>
                 </div>
-                <h3 className="text-sm font-semibold text-ink">{d.title}</h3>
-                <p className="line-clamp-2 text-xs text-slate-500">{d.body}</p>
+                {d.image_url ? (
+                  <img
+                    src={resolveUploadUrl(d.image_url)}
+                    alt=""
+                    className="h-16 w-16 shrink-0 rounded-lg border border-slate-200 object-cover"
+                    loading="lazy"
+                  />
+                ) : null}
               </Link>
             </li>
           ))}

@@ -6,11 +6,17 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ApiError } from "@/lib/api-client";
 import {
+  type ContentImageStyle,
+  type ExportFormat,
   approveContentDraft,
   archiveContentDraft,
+  fetchContentDraftBlob,
+  generateContentDraftImage,
   getContentDraft,
   publishContentDraft,
   rejectContentDraft,
+  resolveUploadUrl,
+  saveBlob,
   updateContentDraft,
 } from "@/lib/content-drafts";
 import { composeForClipboard, readVideoScript } from "@/lib/social-content";
@@ -53,6 +59,7 @@ export function ContentDraftDetailPage() {
       <DetailHeader draft={draft.data} />
       <BodyCard draft={draft.data} />
       <SocialCard draft={draft.data} />
+      <ImageCard draft={draft.data} />
       <SeoCard draft={draft.data} />
       <ActionsCard draft={draft.data} />
 
@@ -311,6 +318,126 @@ function SocialCard({ draft }: { draft: ContentDraftPublic }) {
           </div>
         </div>
       ) : null}
+    </Card>
+  );
+}
+
+function ImageCard({ draft }: { draft: ContentDraftPublic }) {
+  const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
+  const queryClient = useQueryClient();
+  const [style, setStyle] = useState<ContentImageStyle>("concept");
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null);
+
+  // Only social drafts get the styled promo-image generator.
+  if (!draft.platform) return null;
+
+  const editable = draft.status !== "published" && draft.status !== "archived";
+
+  const imageMut = useMutation({
+    mutationFn: (s: ContentImageStyle) =>
+      generateContentDraftImage(workspaceId!, draft.id, s),
+    onSuccess: (updated) => {
+      // Update the cached draft in place so the new image shows immediately.
+      queryClient.setQueryData(
+        ["content-draft", workspaceId, draft.id],
+        updated,
+      );
+      queryClient.invalidateQueries({ queryKey: ["content-drafts", workspaceId] });
+    },
+  });
+
+  async function download(format: ExportFormat) {
+    setDownloading(format);
+    try {
+      const blob = await fetchContentDraftBlob(workspaceId!, draft.id, format);
+      saveBlob(blob, `${draft.platform ?? "post"}.${format}`);
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        title="Image"
+        subtitle="Concept = headline + CTA + graphics; Product cover = 3D box mockup + CTA. Saved to this draft."
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value as ContentImageStyle)}
+              disabled={imageMut.isPending || !editable}
+              aria-label="Image style"
+              className="rounded-lg border border-slate-200 bg-surface px-2 py-1.5 text-xs text-slate-text outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
+            >
+              <option value="concept">Concept</option>
+              <option value="product">Product cover</option>
+            </select>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => imageMut.mutate(style)}
+              disabled={imageMut.isPending || !editable}
+            >
+              {imageMut.isPending
+                ? "Generating…"
+                : draft.image_url
+                  ? "Regenerate"
+                  : "Generate image"}
+            </Button>
+          </div>
+        }
+      />
+
+      {imageMut.error ? (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+          {imageMut.error instanceof ApiError
+            ? imageMut.error.message
+            : "Could not generate the image."}
+        </p>
+      ) : null}
+
+      {draft.image_url ? (
+        <>
+          <img
+            src={resolveUploadUrl(draft.image_url)}
+            alt={`Creative for the ${draft.platform} draft`}
+            className="mt-3 w-full rounded-xl border border-slate-200 object-cover"
+            loading="lazy"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <a
+              href={resolveUploadUrl(draft.image_url)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-grape hover:underline"
+            >
+              Open full size
+            </a>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => download("docx")}
+              disabled={downloading !== null}
+            >
+              {downloading === "docx" ? "…" : ".docx"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => download("txt")}
+              disabled={downloading !== null}
+            >
+              {downloading === "txt" ? "…" : ".txt"}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 text-sm text-slate-400">
+          No image yet. Pick a style and generate one — it's saved to this draft,
+          so you can come back and do the other platforms anytime.
+        </p>
+      )}
     </Card>
   );
 }
