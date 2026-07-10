@@ -235,6 +235,33 @@ def publish(
 
 
 @router.post(
+    "/{workspace_id}/content-drafts/{draft_id}/image",
+    response_model=ContentDraftPublic,
+)
+def generate_image(
+    workspace_id: UUID,
+    draft_id: UUID,
+    request: Request,
+    member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> ContentDraftPublic:
+    """Generate an AI creative image for the draft and stamp it onto
+    `image_url`. Requires an OpenAI key and Marketer+; costs image credits."""
+
+    from app.services import image_generation_service
+
+    draft = image_generation_service.generate_for_draft(
+        db,
+        workspace_id=workspace_id,
+        draft_id=draft_id,
+        actor_user_id=member.user_id,
+        actor_role=member.role,
+        request=request,
+    )
+    return ContentDraftPublic.model_validate(draft)
+
+
+@router.post(
     "/{workspace_id}/content-drafts/{draft_id}/archive",
     response_model=ContentDraftPublic,
 )

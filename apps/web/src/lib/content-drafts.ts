@@ -1,10 +1,24 @@
 import { apiFetch } from "@/lib/api-client";
+import { API_BASE_URL } from "@/lib/constants";
 import type {
   ContentDraftPublic,
   ContentDraftStatus,
   ContentDraftType,
   GenerateContentDraftRequest,
 } from "@/types/api";
+
+/** Uploaded/generated images are served from the API HOST at `/uploads/...`
+ * (outside `/api/v1`), while the SPA can live on a different origin. Resolve a
+ * stored relative image path against the API origin so `<img src>` works. */
+export function resolveUploadUrl(path: string | null | undefined): string {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  try {
+    return new URL(path, new URL(API_BASE_URL).origin).toString();
+  } catch {
+    return path;
+  }
+}
 
 export function listContentDrafts(
   workspaceId: string,
@@ -106,6 +120,13 @@ export function publishContentDraft(
 export function archiveContentDraft(workspaceId: string, draftId: string) {
   return apiFetch<ContentDraftPublic>(
     `/workspaces/${workspaceId}/content-drafts/${draftId}/archive`,
+    { method: "POST" },
+  );
+}
+
+export function generateContentDraftImage(workspaceId: string, draftId: string) {
+  return apiFetch<ContentDraftPublic>(
+    `/workspaces/${workspaceId}/content-drafts/${draftId}/image`,
     { method: "POST" },
   );
 }

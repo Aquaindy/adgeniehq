@@ -8,6 +8,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { UsageMeter } from "@/components/UsageMeter";
 import { ApiError } from "@/lib/api-client";
 import {
+  generateContentDraftImage,
+  resolveUploadUrl,
+} from "@/lib/content-drafts";
+import {
   composeForClipboard,
   generateSocialPack,
   listSocialPlatforms,
@@ -239,7 +243,25 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
         </form>
       </Card>
 
-      {pack ? <PackResults pack={pack} platforms={platforms} /> : null}
+      {pack ? (
+        <PackResults
+          pack={pack}
+          platforms={platforms}
+          workspaceId={workspaceId!}
+          onDraftUpdated={(updated) =>
+            setPack((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    drafts: prev.drafts.map((d) =>
+                      d.id === updated.id ? updated : d,
+                    ),
+                  }
+                : prev,
+            )
+          }
+        />
+      ) : null}
     </>
   );
 }
@@ -298,26 +320,68 @@ function PlatformGroup({
 function PackResults({
   pack,
   platforms,
+  workspaceId,
+  onDraftUpdated,
 }: {
   pack: SocialPackResponse;
   platforms: SocialPlatformPublic[];
+  workspaceId: string;
+  onDraftUpdated: (draft: ContentDraftPublic) => void;
 }) {
   const byslug = useMemo(
     () => new Map(platforms.map((p) => [p.slug, p])),
     [platforms],
   );
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+
+  // How many drafts still lack an image — drives the "generate all" affordance.
+  const missing = pack.drafts.filter((d) => !d.image_url);
+
+  async function generateAll() {
+    setBulkBusy(true);
+    setBulkError(null);
+    // Sequential, not parallel: each image is a metered call, and serial keeps
+    // the credit spend legible and avoids hammering the provider.
+    for (const draft of missing) {
+      try {
+        const updated = await generateContentDraftImage(workspaceId, draft.id);
+        onDraftUpdated(updated);
+      } catch (err) {
+        setBulkError(
+          err instanceof ApiError ? err.message : "Some images could not be generated.",
+        );
+        break;
+      }
+    }
+    setBulkBusy(false);
+  }
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-ink">
-        {pack.drafts.length} draft{pack.drafts.length === 1 ? "" : "s"} for “
-        {pack.topic}”
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-lg font-semibold text-ink">
+          {pack.drafts.length} draft{pack.drafts.length === 1 ? "" : "s"} for “
+          {pack.topic}”
+        </h2>
+        {missing.length > 0 ? (
+          <Button type="button" variant="secondary" onClick={generateAll} disabled={bulkBusy}>
+            {bulkBusy
+              ? "Generating images…"
+              : `Generate images for ${missing.length} draft${missing.length === 1 ? "" : "s"}`}
+          </Button>
+        ) : null}
+      </div>
+      {bulkError ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{bulkError}</p>
+      ) : null}
       {pack.drafts.map((draft) => (
         <DraftCard
           key={draft.id}
           draft={draft}
           platform={draft.platform ? byslug.get(draft.platform) : undefined}
+          workspaceId={workspaceId}
+          onUpdated={onDraftUpdated}
         />
       ))}
     </section>
@@ -327,12 +391,21 @@ function PackResults({
 function DraftCard({
   draft,
   platform,
+  workspaceId,
+  onUpdated,
 }: {
   draft: ContentDraftPublic;
   platform?: SocialPlatformPublic;
+  workspaceId: string;
+  onUpdated: (draft: ContentDraftPublic) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const script = readVideoScript(draft);
+
+  const imageMut = useMutation({
+    mutationFn: () => generateContentDraftImage(workspaceId, draft.id),
+    onSuccess: (updated) => onUpdated(updated),
+  });
 
   // The platform counts body + hashtags together, so surface the composed
   // number rather than the body length alone.
@@ -377,6 +450,18 @@ function DraftCard({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => imageMut.mutate()}
+            disabled={imageMut.isPending}
+          >
+            {imageMut.isPending
+              ? "Generating…"
+              : draft.image_url
+                ? "Regenerate image"
+                : "Generate image"}
+          </Button>
           <Button type="button" variant="secondary" onClick={copy}>
             {copied ? "Copied" : "Copy"}
           </Button>
@@ -388,6 +473,23 @@ function DraftCard({
           </Link>
         </div>
       </div>
+
+      {imageMut.error ? (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+          {imageMut.error instanceof ApiError
+            ? imageMut.error.message
+            : "Could not generate the image."}
+        </p>
+      ) : null}
+
+      {draft.image_url ? (
+        <img
+          src={resolveUploadUrl(draft.image_url)}
+          alt={`Creative for the ${platform?.label ?? draft.platform ?? ""} draft`}
+          className="mt-3 w-full rounded-xl border border-slate-200 object-cover"
+          loading="lazy"
+        />
+      ) : null}
 
       {overLimit ? (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">

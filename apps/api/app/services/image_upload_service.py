@@ -22,7 +22,7 @@ from uuid import UUID
 
 from fastapi import UploadFile
 
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 
 
 _MAX_BYTES: Final = 5 * 1024 * 1024  # 5 MB
@@ -44,17 +44,17 @@ _BLOG_IMAGES_SUBDIR: Final = "blog-images"
 _PUBLIC_URL_PREFIX: Final = "/uploads/blog-images"
 
 
-class ImageTooLargeError(AdVantaError):
+class ImageTooLargeError(AdGenieError):
     status_code = 413
     code = "image_too_large"
 
 
-class UnsupportedImageTypeError(AdVantaError):
+class UnsupportedImageTypeError(AdGenieError):
     status_code = 415
     code = "unsupported_image_type"
 
 
-class EmptyUploadError(AdVantaError):
+class EmptyUploadError(AdGenieError):
     status_code = 400
     code = "empty_upload"
 
@@ -89,6 +89,36 @@ def save_image(*, workspace_id: UUID, upload: UploadFile) -> dict:
             f"got {len(data) // 1024} KB."
         )
 
+    return _write_bytes(workspace_id=workspace_id, data=data, content_type=content_type)
+
+
+def save_image_bytes(
+    *, workspace_id: UUID, data: bytes, content_type: str = "image/png"
+) -> dict:
+    """Persist already-in-memory image bytes (e.g. an AI-generated image the
+    provider returned as base64). Same validation, storage layout, and return
+    shape as `save_image`. Caller must have authorized the actor first.
+
+    NOTE: like `save_image`, this writes to the local `uploads/` directory. On
+    an ephemeral-filesystem host (Render), these files do not survive a
+    redeploy — swap `_write_bytes` for an object-store backend for durability."""
+
+    content_type = (content_type or "").lower()
+    if content_type not in _ALLOWED_TYPES:
+        raise UnsupportedImageTypeError(
+            "Allowed types: " + ", ".join(sorted(_ALLOWED_TYPES.keys()))
+        )
+    if not data:
+        raise EmptyUploadError("Image is empty.")
+    if len(data) > _MAX_BYTES:
+        raise ImageTooLargeError(
+            f"Max image size is {_MAX_BYTES // 1024 // 1024} MB; "
+            f"got {len(data) // 1024} KB."
+        )
+    return _write_bytes(workspace_id=workspace_id, data=data, content_type=content_type)
+
+
+def _write_bytes(*, workspace_id: UUID, data: bytes, content_type: str) -> dict:
     workspace_dir = _UPLOADS_ROOT / _BLOG_IMAGES_SUBDIR / str(workspace_id)
     workspace_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 from dataclasses import dataclass, field
 from typing import Any
@@ -7,18 +9,18 @@ from typing import Any
 import httpx
 
 from app.core.config import settings
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.core.logging import get_logger
 
 log = get_logger(__name__)
 
 
-class LlmError(AdVantaError):
+class LlmError(AdGenieError):
     status_code = 502
     code = "llm_error"
 
 
-class LlmNotConfiguredError(AdVantaError):
+class LlmNotConfiguredError(AdGenieError):
     status_code = 503
     code = "llm_not_configured"
 
@@ -40,9 +42,15 @@ class LlmCompletion:
 
 @dataclass
 class ImageResult:
+    # For dall-e-3 (`response_format=url`) this is the OpenAI-hosted URL, which
+    # EXPIRES within ~1h — callers that need durability must re-host it. The
+    # gpt-image family returns bytes instead (url is ""), which the caller
+    # persists to get a stable URL.
     url: str
     model: str
     prompt: str
+    image_bytes: bytes | None = field(default=None)
+    content_type: str | None = field(default=None)
     raw: dict | None = field(default=None)
 
 
@@ -234,12 +242,41 @@ class OpenAIClient(LlmClient):
         )
 
     def generate_image(
-        self, *, prompt: str, size: str = "1024x1024"
+        self,
+        *,
+        prompt: str,
+        size: str = "1024x1024",
+        model: str | None = None,
+        quality: str | None = None,
     ) -> ImageResult:
+        """Generate one image.
+
+        Supports two response shapes on the same endpoint:
+          * `gpt-image-*` — takes `quality`, rejects `response_format`, and
+            returns base64 (`b64_json`). We decode it to bytes so the caller
+            can host it durably.
+          * `dall-e-3` — returns a (temporary) URL.
+        """
         if not self.is_configured():
             raise LlmNotConfiguredError(
                 "OPENAI_API_KEY is not set; image generation requires it."
             )
+
+        model = model or settings.openai_image_model or "gpt-image-2"
+        is_gpt_image = model.lower().startswith("gpt-image")
+
+        payload: dict[str, Any] = {
+            "model": model,
+            "prompt": prompt,
+            "size": size,
+            "n": 1,
+        }
+        if is_gpt_image:
+            # gpt-image always returns b64_json; passing response_format 400s.
+            payload["quality"] = quality or settings.openai_image_quality or "medium"
+        else:
+            payload["response_format"] = "url"
+
         try:
             response = httpx.post(
                 f"{self.base_url}/images/generations",
@@ -247,26 +284,42 @@ class OpenAIClient(LlmClient):
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "model": "dall-e-3",
-                    "prompt": prompt,
-                    "size": size,
-                    "n": 1,
-                    "response_format": "url",
-                },
-                timeout=settings.llm_http_timeout_seconds,
+                json=payload,
+                timeout=settings.image_http_timeout_seconds,
             )
         except httpx.HTTPError as exc:
             raise LlmError(f"OpenAI image request failed: {exc}") from exc
         if response.status_code >= 400:
             raise LlmError(
-                f"OpenAI image generation returned HTTP {response.status_code}: {response.text[:200]}"
+                f"OpenAI image generation returned HTTP {response.status_code}: "
+                f"{response.text[:300]}"
             )
         body = response.json()
-        urls = [d.get("url") for d in (body.get("data") or []) if d.get("url")]
+        data = body.get("data") or []
+
+        if is_gpt_image:
+            b64 = next((d.get("b64_json") for d in data if d.get("b64_json")), None)
+            if not b64:
+                raise LlmError("gpt-image response had no b64_json payload.")
+            try:
+                image_bytes = base64.b64decode(b64)
+            except (ValueError, binascii.Error) as exc:
+                raise LlmError(f"gpt-image returned undecodable base64: {exc}") from exc
+            # output_format defaults to png; the API echoes it when overridden.
+            fmt = (body.get("output_format") or "png").lower()
+            return ImageResult(
+                url="",
+                model=model,
+                prompt=prompt,
+                image_bytes=image_bytes,
+                content_type=f"image/{'jpeg' if fmt == 'jpg' else fmt}",
+                raw={k: v for k, v in body.items() if k != "data"},
+            )
+
+        urls = [d.get("url") for d in data if d.get("url")]
         if not urls:
             raise LlmError("OpenAI image response had no URL.")
-        return ImageResult(url=urls[0], model="dall-e-3", prompt=prompt, raw=body)
+        return ImageResult(url=urls[0], model=model, prompt=prompt, raw=body)
 
 
 # ---------------------------------------------------------------------------

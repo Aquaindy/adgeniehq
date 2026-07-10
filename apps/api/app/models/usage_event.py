@@ -26,6 +26,9 @@ class UsageEventType(StrEnum):
     # LLM token meter — quantity is set to (prompt_tokens + completion_tokens)
     # rather than 1 so plan caps can throttle by total tokens.
     LLM_CALL = "llm_call"
+    # One AI-generated creative image (gpt-image / dall-e). Priced separately
+    # because image generation costs materially more than a text draft.
+    IMAGE_GENERATION = "image_generation"
 
 
 class UsageEvent(Base, TimestampMixin):

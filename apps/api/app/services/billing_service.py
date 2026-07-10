@@ -22,7 +22,7 @@ from app.billing.plans import (
     UnknownPlanError,
     get_plan,
 )
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.core.logging import get_logger
 from app.core.superuser_context import is_superuser_request
 from app.integrations import paddle_billing
@@ -42,12 +42,12 @@ from app.security.permissions import MemberStatus
 log = get_logger(__name__)
 
 
-class PlanLimitExceededError(AdVantaError):
+class PlanLimitExceededError(AdGenieError):
     status_code = 402
     code = "plan_limit_exceeded"
 
 
-class InsufficientCreditsError(AdVantaError):
+class InsufficientCreditsError(AdGenieError):
     status_code = 402
     code = "insufficient_credits"
 
@@ -182,6 +182,9 @@ CREDIT_COST: dict[UsageEventType, int] = {
     UsageEventType.CONTENT_DRAFT: 5,
     UsageEventType.AB_TEST_CREATED: 3,
     UsageEventType.OUTREACH_EMAIL_SENT: 2,
+    # Image generation is the priciest per-unit AI action, so it costs the most
+    # credits.
+    UsageEventType.IMAGE_GENERATION: 10,
 }
 
 
@@ -328,6 +331,15 @@ def assert_within_content_draft_limit(db: Session, *, workspace_id: UUID) -> Non
         workspace_id=workspace_id,
         cost=CREDIT_COST[UsageEventType.CONTENT_DRAFT],
         action_label="a content draft",
+    )
+
+
+def assert_within_image_generation_limit(db: Session, *, workspace_id: UUID) -> None:
+    assert_within_credit_budget(
+        db,
+        workspace_id=workspace_id,
+        cost=CREDIT_COST[UsageEventType.IMAGE_GENERATION],
+        action_label="an AI image",
     )
 
 

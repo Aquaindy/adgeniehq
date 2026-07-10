@@ -98,6 +98,18 @@ class Settings(BaseSettings):
     llm_http_timeout_seconds: float = Field(
         default=120.0, alias="LLM_HTTP_TIMEOUT_SECONDS"
     )
+    # Image generation (OpenAI). The `gpt-image-*` family returns base64 and
+    # takes a `quality` param; `dall-e-3` returns a URL. The model id is
+    # configurable so it can be swapped without a deploy if the exact API name
+    # differs (e.g. gpt-image-1 vs gpt-image-2).
+    openai_image_model: str = Field(default="gpt-image-2", alias="OPENAI_IMAGE_MODEL")
+    # gpt-image quality: low | medium | high | auto. Ignored by dall-e-3.
+    openai_image_quality: str = Field(default="medium", alias="OPENAI_IMAGE_QUALITY")
+    # Image generation is much slower than a text completion, so it gets its own
+    # (larger) timeout.
+    image_http_timeout_seconds: float = Field(
+        default=180.0, alias="IMAGE_HTTP_TIMEOUT_SECONDS"
+    )
 
     # Inbound email parsing — Postmark/Sendgrid/Mailgun-style webhooks.
     # When `inbound_email_domain` is set, outreach emails go out with a
