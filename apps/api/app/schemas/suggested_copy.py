@@ -17,6 +17,9 @@ class SuggestedCopyPublic(BaseModel):
     section: str
     title: str
     body: str
+    # Organic social only; null for keyword plans, ad copy, emails, etc.
+    platform: str | None = None
+    hashtags: list[str] | None = None
     source: str
     model_used: str | None
     created_at: datetime

@@ -30,6 +30,19 @@ const TYPE_LABEL: Record<SuggestedCopyType, string> = {
   social_post: "Social",
   blog_outline: "Blog outline",
   meta_tags: "Meta tags",
+  short_video_script: "Reel / Short",
+};
+
+const PLATFORM_LABEL: Record<string, string> = {
+  linkedin: "LinkedIn",
+  facebook: "Facebook",
+  x: "X (Twitter)",
+  instagram: "Instagram",
+  instagram_reels: "Instagram Reels",
+  pinterest: "Pinterest",
+  threads: "Threads",
+  tiktok: "TikTok",
+  youtube_shorts: "YouTube Shorts",
 };
 
 function slugify(text: string): string {
@@ -217,6 +230,11 @@ function SuggestedCopyRow({
             <span className="pill bg-grape-100 text-grape-700">
               {TYPE_LABEL[copy.copy_type]}
             </span>
+            {copy.platform ? (
+              <span className="pill bg-grape-50 text-grape-700">
+                {PLATFORM_LABEL[copy.platform] ?? copy.platform}
+              </span>
+            ) : null}
             <span className="text-xs text-slate-400">{copy.section}</span>
             {copy.source === "llm" ? (
               <span className="pill pill-success text-xs">AI</span>
@@ -238,6 +256,15 @@ function SuggestedCopyRow({
           <pre className="whitespace-pre-wrap break-words font-sans text-sm text-slate-700">
             {copy.body}
           </pre>
+          {copy.hashtags && copy.hashtags.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {copy.hashtags.map((tag) => (
+                <span key={tag} className="pill bg-grape-50 text-grape-700">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
           <div className="mt-2 flex justify-end">
             <Button
               variant="ghost"

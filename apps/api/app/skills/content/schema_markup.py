@@ -10,6 +10,7 @@ types per content type:
   social_post   → Article
   ad_copy       → no schema (not a published page)
   email         → no schema
+  short_video_script → no schema (a production script, not a page)
 """
 
 from __future__ import annotations
@@ -33,7 +34,11 @@ def build_jsonld(
     """Return a JSON-LD-compatible dict, or None when the type doesn't take a
     page-level schema (e.g. ad copy, email)."""
 
-    if type in (ContentDraftType.AD_COPY, ContentDraftType.EMAIL):
+    if type in (
+        ContentDraftType.AD_COPY,
+        ContentDraftType.EMAIL,
+        ContentDraftType.SHORT_VIDEO_SCRIPT,
+    ):
         return None
 
     description = _summary(body, limit=200)

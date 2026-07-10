@@ -19,7 +19,7 @@ def _complete_onboarding(client: TestClient, workspace_id: str, **overrides) -> 
         "industry": "B2B SaaS",
         "target_audience": "Series A founders",
         "offer_description": (
-            "AdVanta is the AI growth command center that turns chaotic ad spend "
+            "AdGenieHQ is the AI growth command center that turns chaotic ad spend "
             "into measurable pipeline by deploying specialized agents across paid "
             "media, SEO, and website conversion."
         ),
@@ -240,3 +240,125 @@ def test_suggested_copies_workspace_isolation(client: TestClient) -> None:
         ).status_code
         == 404
     )
+
+
+# ---------------------------------------------------------------------------
+# Organic social (Growth DNA content strategy)
+# ---------------------------------------------------------------------------
+
+
+def test_organic_social_copies_are_platform_native(client: TestClient) -> None:
+    """Each content pillar yields a platform-native artifact, not a generic
+    'post hooks' blob. Platforms come from the Growth DNA's own strategy."""
+
+    from app.social.catalog import get_platform
+
+    workspace_id = _ready_workspace(client)  # onboarding is B2B SaaS
+    client.post(f"/api/v1/workspaces/{workspace_id}/suggested-copies/generate", json={})
+
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/suggested-copies").json()
+    social = [c for c in listed if c["copy_type"] in ("social_post", "short_video_script")]
+    assert social, "no organic social copies generated"
+
+    for copy in social:
+        platform = get_platform(copy["platform"])
+        assert platform is not None, f"unknown platform {copy['platform']!r}"
+        assert copy["hashtags"], f"{copy['platform']} produced no hashtags"
+        assert len(copy["hashtags"]) <= platform.hashtag_range[1]
+        assert copy["section"].startswith("Organic social —")
+        if platform.hard_char_limit:
+            composed = len(copy["body"]) + len(" ".join(copy["hashtags"])) + 1
+            assert composed <= platform.hard_char_limit, f"{copy['platform']} over limit"
+
+    # A B2B strategy recommends LinkedIn + X, so pillars rotate across them.
+    assert {c["platform"] for c in social} == {"linkedin", "x"}
+
+
+def test_ecommerce_growth_dna_yields_short_video_scripts(client: TestClient) -> None:
+    """An ecommerce strategy recommends TikTok/Instagram, so the pillars must
+    produce Reels/Shorts scripts — not just text posts."""
+
+    workspace_id = _signup_and_workspace(client, email="shop@example.com")
+    _complete_onboarding(
+        client,
+        workspace_id,
+        industry="Ecommerce",
+        target_audience="Shoppers who buy skincare online",
+        offer_description="An online store selling skincare and beauty products.",
+    )
+    _generate_growth_dna(client, workspace_id)
+
+    out = client.post(
+        f"/api/v1/workspaces/{workspace_id}/suggested-copies/generate", json={}
+    ).json()["output_payload"]
+    assert "short_video_script" in out["by_type"], out["by_type"]
+
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/suggested-copies").json()
+    scripts = [c for c in listed if c["copy_type"] == "short_video_script"]
+    assert scripts
+    for script in scripts:
+        assert script["platform"] in ("tiktok", "instagram_reels", "youtube_shorts")
+        assert "HOOK" in script["body"]
+        assert "CTA:" in script["body"]
+        assert script["hashtags"]
+
+
+def test_non_social_copies_have_no_platform_or_hashtags(client: TestClient) -> None:
+    workspace_id = _ready_workspace(client)
+    client.post(f"/api/v1/workspaces/{workspace_id}/suggested-copies/generate", json={})
+
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/suggested-copies").json()
+    others = [c for c in listed if c["copy_type"] in ("keywords", "email", "meta_tags")]
+    assert others
+    assert all(c["platform"] is None and c["hashtags"] is None for c in others)
+
+
+def test_growth_dna_platform_names_map_onto_the_catalog() -> None:
+    """Growth DNA names platforms for humans ("X / Twitter"); the catalog keys
+    on slugs. Unmapped names (long-form YouTube) are skipped, not guessed at."""
+
+    from types import SimpleNamespace
+
+    from app.skills.content.copy_studio import _recommended_social_platforms
+
+    dna = SimpleNamespace(
+        marketing_strategy={
+            "platform_strategy": [
+                {"platform": "LinkedIn"},
+                {"platform": "X / Twitter"},
+                {"platform": "YouTube"},  # long-form: no catalog entry
+                {"platform": "TikTok"},
+            ]
+        }
+    )
+    assert [p.slug for p in _recommended_social_platforms(dna)] == [
+        "linkedin",
+        "x",
+        "tiktok",
+    ]
+
+    # Nothing mappable → fall back rather than emit no social content at all.
+    empty = SimpleNamespace(marketing_strategy={"platform_strategy": [{"platform": "YouTube"}]})
+    assert [p.slug for p in _recommended_social_platforms(empty)] == ["linkedin"]
+
+    assert _recommended_social_platforms(SimpleNamespace(marketing_strategy={}))
+
+
+def test_txt_export_includes_platform_and_hashtags(client: TestClient) -> None:
+    """A post exported without its hashtags is an incomplete post."""
+
+    workspace_id = _ready_workspace(client)
+    client.post(f"/api/v1/workspaces/{workspace_id}/suggested-copies/generate", json={})
+
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/suggested-copies").json()
+    social = next(c for c in listed if c["copy_type"] == "social_post")
+
+    resp = client.get(
+        f"/api/v1/workspaces/{workspace_id}/suggested-copies/{social['id']}/download",
+        params={"format": "txt"},
+    )
+    assert resp.status_code == 200, resp.text
+    text = resp.content.decode("utf-8")
+    assert f"Platform: {social['platform']}" in text
+    for tag in social["hashtags"]:
+        assert tag in text

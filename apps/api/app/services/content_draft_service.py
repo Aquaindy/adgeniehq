@@ -22,7 +22,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.agents.runtime import run_agent
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.models.audit_log import AuditActorType
 from app.models.content_draft import (
     ContentDraft,
@@ -40,17 +40,17 @@ from app.services import audit_service, billing_service
 # ---------------------------------------------------------------------------
 
 
-class ContentDraftNotFoundError(AdVantaError):
+class ContentDraftNotFoundError(AdGenieError):
     status_code = 404
     code = "content_draft_not_found"
 
 
-class InvalidDraftStateError(AdVantaError):
+class InvalidDraftStateError(AdGenieError):
     status_code = 409
     code = "invalid_draft_state"
 
 
-class GenerationFailedError(AdVantaError):
+class GenerationFailedError(AdGenieError):
     status_code = 500
     code = "content_generation_failed"
 
@@ -160,6 +160,147 @@ def generate_via_agent(
     db.commit()
     db.refresh(draft)
     return draft
+
+
+def generate_social_pack(
+    db: Session,
+    *,
+    workspace_id: UUID,
+    actor_user_id: UUID,
+    topic: str,
+    platforms: list[str],
+    keywords: list[str] | None = None,
+    audience: str | None = None,
+    target_url: str | None = None,
+    notes: str | None = None,
+    call_to_action: str | None = None,
+    request: Request | None = None,
+) -> list[ContentDraft]:
+    """Run the SocialContent agent once and persist one ContentDraft per
+    platform. Each draft lands in `draft` status like any other — social copy
+    is never auto-published.
+
+    Credits are charged for the whole pack up front, so a workspace can't slip
+    an N-platform fan-out past a budget that only had room for one draft."""
+
+    if not platforms:
+        raise GenerationFailedError("Select at least one platform.")
+
+    billing_service.assert_within_credit_budget(
+        db,
+        workspace_id=workspace_id,
+        cost=billing_service.CREDIT_COST[UsageEventType.CONTENT_DRAFT] * len(platforms),
+        action_label=f"a {len(platforms)}-platform social pack",
+    )
+
+    run = run_agent(
+        db,
+        workspace_id=workspace_id,
+        agent_type="social_content",
+        triggered_by_user_id=actor_user_id,
+        input_payload={
+            "topic": topic,
+            "platforms": platforms,
+            "keywords": keywords or [],
+            "audience": audience,
+            "target_url": target_url,
+            "notes": notes,
+            "call_to_action": call_to_action,
+        },
+    )
+
+    if run.status.value != "succeeded":
+        raise GenerationFailedError(
+            run.error_message or "Social content agent failed without an error message."
+        )
+
+    outputs = (
+        db.query(SkillOutput)
+        .filter(
+            SkillOutput.agent_run_id == run.id,
+            SkillOutput.output_type == "social_content_payload",
+        )
+        .order_by(SkillOutput.created_at.asc())
+        .all()
+    )
+    if not outputs:
+        # Surface the per-platform failures rather than making the operator go
+        # dig through run details for a cause we already have in hand.
+        errors = (run.output_payload or {}).get("errors") or []
+        detail = f" First error: {errors[0]}" if errors else ""
+        raise GenerationFailedError(
+            f"Social content agent produced no drafts (run {run.id}).{detail}"
+        )
+
+    drafts: list[ContentDraft] = []
+    for output in outputs:
+        payload = output.payload or {}
+        platform = payload.get("platform")
+        try:
+            draft_type = ContentDraftType(payload.get("draft_type") or "")
+        except ValueError:
+            # The agent owns this mapping; a bad value means a code bug, not
+            # user error. Skip rather than poison the whole pack.
+            continue
+
+        draft = ContentDraft(
+            workspace_id=workspace_id,
+            agent_run_id=run.id,
+            type=draft_type,
+            platform=platform,
+            status=ContentDraftStatus.DRAFT,
+            title=payload.get("title") or topic,
+            body=payload.get("body") or "",
+            target_url=target_url or payload.get("target_url"),
+            keywords=payload.get("keywords") or keywords or [],
+            hashtags=payload.get("hashtags") or [],
+            seo_metadata=payload.get("seo_metadata") or {},
+            notes=notes,
+            source="agent",
+            model_used=payload.get("model_used"),
+            created_by=actor_user_id,
+        )
+        db.add(draft)
+        db.flush()
+        drafts.append(draft)
+
+        audit_service.log_event(
+            db,
+            workspace_id=workspace_id,
+            actor_type=AuditActorType.USER,
+            actor_id=actor_user_id,
+            action="content_draft.generated",
+            resource_type="content_draft",
+            resource_id=draft.id,
+            metadata={
+                "type": draft_type.value,
+                "platform": platform,
+                "topic": topic,
+                "source": payload.get("source"),
+                "agent_run_id": str(run.id),
+            },
+            request=request,
+        )
+        billing_service.record_usage_event(
+            db,
+            workspace_id=workspace_id,
+            event_type=UsageEventType.CONTENT_DRAFT,
+            metadata={
+                "type": draft_type.value,
+                "platform": platform,
+                "source": payload.get("source"),
+            },
+        )
+
+    if not drafts:
+        raise GenerationFailedError(
+            "Social content agent returned no usable drafts."
+        )
+
+    db.commit()
+    for draft in drafts:
+        db.refresh(draft)
+    return drafts
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +421,7 @@ EDITABLE_FIELDS = {
     "excerpt",
     "image_url",
     "keywords",
+    "hashtags",
     "seo_metadata",
     "notes",
 }
@@ -592,7 +734,7 @@ def refresh_draft(
         try:
             page = fetch_html(source_url)
         except WebsiteFetchError as exc:
-            raise AdVantaError(f"Could not fetch {source_url}: {exc}") from exc
+            raise AdGenieError(f"Could not fetch {source_url}: {exc}") from exc
         from bs4 import BeautifulSoup
 
         soup = BeautifulSoup(page.html, "html.parser")
@@ -606,14 +748,14 @@ def refresh_draft(
         target_url = source_url
         refreshed_from = {"source_url": source_url}
     else:
-        class MissingSource(AdVantaError):
+        class MissingSource(AdGenieError):
             status_code = 400
             code = "missing_source"
 
         raise MissingSource("Provide either source_draft_id or source_url to refresh.")
 
     if not existing_body.strip():
-        class EmptySource(AdVantaError):
+        class EmptySource(AdGenieError):
             status_code = 400
             code = "empty_source"
 

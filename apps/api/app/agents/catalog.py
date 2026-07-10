@@ -12,6 +12,7 @@ from app.agents.onboarding_insight import OnboardingInsightAgent
 from app.agents.orchestrator import MasterOrchestratorAgent
 from app.agents.paid_ads import PaidAdsAgent
 from app.agents.seo_audit import SEOAuditAgent
+from app.agents.social_content import SocialContentAgent
 from app.agents.solo_ads import SoloAdsAgent
 from app.agents.tracking_attribution import TrackingAttributionAgent
 from app.agents.traffic_assets import TrafficAssetAgent
@@ -26,6 +27,7 @@ AGENT_REGISTRY: dict[str, type[BaseAgent]] = {
     SEOAuditAgent.type: SEOAuditAgent,
     LandingPageAuditAgent.type: LandingPageAuditAgent,
     ContentWriterAgent.type: ContentWriterAgent,
+    SocialContentAgent.type: SocialContentAgent,
     MarketIntelligenceAgent.type: MarketIntelligenceAgent,
     IcpPersonaAgent.type: IcpPersonaAgent,
     CreativeStrategyAgent.type: CreativeStrategyAgent,

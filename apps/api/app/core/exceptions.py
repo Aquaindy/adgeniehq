@@ -1,3 +1,6 @@
+import json
+from typing import Any
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,6 +9,33 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.logging import get_logger
 
 log = get_logger(__name__)
+
+
+def _jsonable_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Make Pydantic's error list safe to `json.dumps`.
+
+    A validator that raises `ValueError` leaves the exception *object* in
+    `ctx["error"]`, and `input` can hold any object the caller sent. Either
+    one makes JSONResponse blow up with a TypeError, turning what should be a
+    422 into a 500. Stringify anything that isn't JSON-native; the
+    human-readable text already lives in `msg`."""
+
+    safe: list[dict[str, Any]] = []
+    for error in errors:
+        item = dict(error)
+        ctx = item.get("ctx")
+        if isinstance(ctx, dict):
+            item["ctx"] = {
+                key: value if isinstance(value, str | int | float | bool | None) else str(value)
+                for key, value in ctx.items()
+            }
+        if "input" in item:
+            try:
+                json.dumps(item["input"])
+            except (TypeError, ValueError):
+                item["input"] = str(item["input"])
+        safe.append(item)
+    return safe
 
 
 class AdGenieError(Exception):
@@ -54,7 +84,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error": {
                     "code": "validation_error",
                     "message": "Request validation failed.",
-                    "details": exc.errors(),
+                    "details": _jsonable_errors(exc.errors()),
                 }
             },
         )

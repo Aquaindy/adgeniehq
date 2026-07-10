@@ -16,9 +16,12 @@ class SuggestedCopyType(StrEnum):
     AD_COPY = "ad_copy"            # Headlines + descriptions per platform
     LANDING_PAGE = "landing_page"  # Hero + benefits + CTA copy
     EMAIL = "email"               # Lifecycle / nurture email
-    SOCIAL_POST = "social_post"    # Pillar-driven social hooks
+    SOCIAL_POST = "social_post"    # Pillar-driven organic social post
     BLOG_OUTLINE = "blog_outline"  # SEO/content article outline
     META_TAGS = "meta_tags"        # SEO title tag + meta description
+    # Vertical short-form video (Reels / Shorts / TikTok) for an organic social
+    # pillar. Body is a shot-by-shot script, not copy to paste.
+    SHORT_VIDEO_SCRIPT = "short_video_script"
 
 
 class SuggestedCopy(Base, TimestampMixin):
@@ -77,6 +80,17 @@ class SuggestedCopy(Base, TimestampMixin):
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="deterministic")
     model_used: Mapped[str | None] = mapped_column(String(64))
     metadata_json: Mapped[dict | None] = mapped_column("metadata", JSONB)
+
+    # Organic-social artifacts stash their platform slug + hashtags in
+    # `metadata_json`. Surfaced as read-only attributes so the public schema
+    # can pick them up via `from_attributes` without a column each.
+    @property
+    def platform(self) -> str | None:
+        return (self.metadata_json or {}).get("platform")
+
+    @property
+    def hashtags(self) -> list[str] | None:
+        return (self.metadata_json or {}).get("hashtags")
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<SuggestedCopy {self.copy_type} section={self.section!r}>"

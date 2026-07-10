@@ -13,6 +13,7 @@ import {
   rejectContentDraft,
   updateContentDraft,
 } from "@/lib/content-drafts";
+import { composeForClipboard, readVideoScript } from "@/lib/social-content";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type { ContentDraftPublic, ContentDraftStatus } from "@/types/api";
@@ -51,6 +52,7 @@ export function ContentDraftDetailPage() {
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <DetailHeader draft={draft.data} />
       <BodyCard draft={draft.data} />
+      <SocialCard draft={draft.data} />
       <SeoCard draft={draft.data} />
       <ActionsCard draft={draft.data} />
 
@@ -182,6 +184,133 @@ function BodyCard({ draft }: { draft: ContentDraftPublic }) {
           </Button>
         </div>
       </form>
+    </Card>
+  );
+}
+
+function SocialCard({ draft }: { draft: ContentDraftPublic }) {
+  const [copied, setCopied] = useState(false);
+  // Only social drafts carry a platform. Everything else renders nothing.
+  if (!draft.platform) return null;
+
+  const meta = draft.seo_metadata as {
+    platform_label?: string;
+    character_limit?: number;
+    composed_character_count?: number;
+    aspect_ratio?: string;
+    target_duration_seconds?: [number, number];
+    fallback?: string;
+  } | null;
+
+  const script = readVideoScript(draft);
+  const limit = meta?.character_limit ?? null;
+  const composed = meta?.composed_character_count ?? null;
+  const overLimit = limit != null && composed != null && composed > limit;
+
+  async function copy() {
+    await navigator.clipboard.writeText(composeForClipboard(draft));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        title={`${meta?.platform_label ?? draft.platform} ${script ? "script" : "post"}`}
+        subtitle={
+          script
+            ? `${meta?.aspect_ratio ?? "9:16"} vertical · ${
+                meta?.target_duration_seconds?.[0] ?? 20
+              }-${meta?.target_duration_seconds?.[1] ?? 60}s`
+            : limit != null && composed != null
+              ? `${composed.toLocaleString()} of ${limit.toLocaleString()} characters, including hashtags`
+              : undefined
+        }
+        action={
+          <Button type="button" variant="secondary" onClick={copy}>
+            {copied ? "Copied" : "Copy for posting"}
+          </Button>
+        }
+      />
+
+      {overLimit ? (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Over {meta?.platform_label ?? draft.platform}'s{" "}
+          {limit?.toLocaleString()}-character limit once hashtags are appended.
+          Trim the body before posting.
+        </p>
+      ) : null}
+
+      {meta?.fallback ? (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          {meta.fallback}
+        </p>
+      ) : null}
+
+      {script ? (
+        <ol className="mt-3 flex flex-col gap-2">
+          <li className="rounded-xl bg-grape-50 px-3 py-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-grape-700">
+              Hook · 0-2s
+            </p>
+            <p className="mt-0.5 text-sm text-ink">{script.hook}</p>
+          </li>
+          {script.beats.map((beat, i) => (
+            <li
+              key={i}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Beat {i + 1}
+              </p>
+              <p className="mt-1 text-slate-700">{beat.narration}</p>
+              {beat.on_screen_text ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  <span className="font-medium">On-screen:</span>{" "}
+                  {beat.on_screen_text}
+                </p>
+              ) : null}
+              {beat.visual ? (
+                <p className="mt-0.5 text-xs text-slate-500">
+                  <span className="font-medium">Visual:</span> {beat.visual}
+                </p>
+              ) : null}
+            </li>
+          ))}
+          <li className="rounded-xl border border-slate-200 px-3 py-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              CTA
+            </p>
+            <p className="mt-0.5 text-sm text-slate-700">{script.cta}</p>
+          </li>
+        </ol>
+      ) : null}
+
+      {draft.hashtags && draft.hashtags.length ? (
+        <div className="mt-4">
+          <p className="text-sm text-slate-400">Hashtags</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {draft.hashtags.map((tag) => (
+              <span key={tag} className="pill bg-grape-50 text-grape-700">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {draft.keywords && draft.keywords.length ? (
+        <div className="mt-3">
+          <p className="text-sm text-slate-400">Keywords</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {draft.keywords.map((kw) => (
+              <span key={kw} className="pill bg-slate-50 text-slate-500">
+                {kw}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
 }

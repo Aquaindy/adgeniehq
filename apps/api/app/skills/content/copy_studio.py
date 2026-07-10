@@ -27,11 +27,17 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.llm.client import LlmError, LlmMessage, get_llm_client_for_workspace
 from app.models.growth_dna_profile import GrowthDnaProfile
 from app.models.onboarding_profile import OnboardingProfile
 from app.models.suggested_copy import SuggestedCopyType
+from app.skills.content.social import (
+    SocialContentRequest,
+    generate_deterministic_social,
+    normalize_hashtags,
+)
+from app.social.catalog import SocialPlatform, get_platform
 
 # Map LLM/string copy types onto the enum, tolerant of minor variations.
 _TYPE_ALIASES = {
@@ -49,7 +55,34 @@ _TYPE_ALIASES = {
     "blog": SuggestedCopyType.BLOG_OUTLINE,
     "meta_tags": SuggestedCopyType.META_TAGS,
     "meta": SuggestedCopyType.META_TAGS,
+    "short_video_script": SuggestedCopyType.SHORT_VIDEO_SCRIPT,
+    "video_script": SuggestedCopyType.SHORT_VIDEO_SCRIPT,
+    "reel": SuggestedCopyType.SHORT_VIDEO_SCRIPT,
+    "short": SuggestedCopyType.SHORT_VIDEO_SCRIPT,
 }
+
+# Growth DNA names its recommended platforms for humans ("X / Twitter"); the
+# social catalog keys on slugs. Anything unmapped is simply skipped — "YouTube"
+# means long-form video, which the short-form catalog deliberately doesn't cover.
+_PLATFORM_ALIASES = {
+    "linkedin": "linkedin",
+    "facebook": "facebook",
+    "instagram": "instagram",
+    "instagram reels": "instagram_reels",
+    "pinterest": "pinterest",
+    "threads": "threads",
+    "tiktok": "tiktok",
+    "x": "x",
+    "x / twitter": "x",
+    "twitter": "x",
+    "x (twitter)": "x",
+    "youtube shorts": "youtube_shorts",
+}
+
+# When the Growth DNA recommends no platform our catalog covers (e.g. a
+# YouTube-only long-form plan), fall back to the broadest organic surface
+# rather than emitting nothing.
+_FALLBACK_PLATFORM = "linkedin"
 
 
 @dataclass
@@ -58,6 +91,10 @@ class GeneratedCopy:
     section: str
     title: str
     body: str
+    # Social artifacts only. `platform` is a catalog slug; `hashtags` are
+    # normalized and "#"-prefixed.
+    platform: str | None = None
+    hashtags: list[str] | None = None
 
 
 @dataclass
@@ -95,8 +132,8 @@ def generate_suggested_copies(
             )
             if copies:
                 return CopyBundle(copies=copies, source="llm", model_used=model)
-        except (LlmError, AdVantaError, ValueError):
-            # PlanLimitExceededError (an AdVantaError) lands here too, so a
+        except (LlmError, AdGenieError, ValueError):
+            # PlanLimitExceededError (an AdGenieError) lands here too, so a
             # credit-capped workspace gets the deterministic bundle, not a 402.
             pass
     return CopyBundle(
@@ -142,6 +179,87 @@ def _content_pillars(dna: GrowthDnaProfile) -> list[dict]:
     return [p for p in pillars if isinstance(p, dict)][:5]
 
 
+def _copy_type_for(platform: SocialPlatform) -> SuggestedCopyType:
+    """Video platforms yield a script; text platforms yield a post."""
+
+    return (
+        SuggestedCopyType.SHORT_VIDEO_SCRIPT
+        if platform.is_video
+        else SuggestedCopyType.SOCIAL_POST
+    )
+
+
+def _recommended_social_platforms(dna: GrowthDnaProfile) -> list[SocialPlatform]:
+    """Resolve the Growth DNA's `platform_strategy` onto catalog platforms.
+
+    Order is preserved so the highest-priority platform gets the first pillar."""
+
+    ms = dna.marketing_strategy or {}
+    resolved: list[SocialPlatform] = []
+    for entry in ms.get("platform_strategy") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("platform") or "").strip().lower()
+        slug = _PLATFORM_ALIASES.get(name)
+        platform = get_platform(slug) if slug else None
+        if platform is not None and platform not in resolved:
+            resolved.append(platform)
+    if not resolved:
+        fallback = get_platform(_FALLBACK_PLATFORM)
+        if fallback is not None:
+            resolved.append(fallback)
+    return resolved
+
+
+def _pillar_topic(pillar: dict, product_name: str) -> str:
+    """The strongest available hook becomes the topic; the pillar name is the
+    fallback. Hooks are already business-specific, so they generate better."""
+
+    hooks = [h for h in (pillar.get("example_hooks") or []) if _clean(h)]
+    if hooks:
+        return _clean(hooks[0])
+    name = _clean(pillar.get("name"), fallback="Content")
+    return f"{name} — {product_name}"
+
+
+def _social_organic(
+    p: OnboardingProfile,
+    product_name: str,
+    pillar: dict,
+    platform: SocialPlatform,
+) -> GeneratedCopy:
+    """One platform-native organic artifact for a content pillar.
+
+    Reuses the social skill's deterministic builder so the result honors the
+    platform's character ceiling, hashtag conventions, and — for TikTok/Reels/
+    Shorts — the hook/beats/CTA script shape."""
+
+    name = _clean(pillar.get("name"), fallback="Content")
+    keywords = [h for h in (pillar.get("example_hooks") or []) if _clean(h)][:2]
+
+    payload = generate_deterministic_social(
+        request=SocialContentRequest(
+            platform=platform,
+            topic=_pillar_topic(pillar, product_name),
+            keywords=[_clean(k) for k in keywords],
+            audience=_clean(p.target_audience) or None,
+            target_url=_clean(p.website_url) or None,
+            notes=_clean(pillar.get("description")) or None,
+        ),
+        profile=p,
+    )
+
+    kind = "Short video" if platform.is_video else "Post"
+    return GeneratedCopy(
+        copy_type=_copy_type_for(platform),
+        section=f"Organic social — {platform.label}: {name}",
+        title=f"{kind} — {platform.label} · {name}",
+        body=payload.body,
+        platform=platform.slug,
+        hashtags=payload.hashtags,
+    )
+
+
 def _email_flows(dna: GrowthDnaProfile) -> list[dict]:
     ms = dna.marketing_strategy or {}
     flows = (ms.get("email_strategy") or {}).get("flows") or []
@@ -153,22 +271,34 @@ def _email_flows(dna: GrowthDnaProfile) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = (
-    "You are AdVanta's Growth Content Studio — a senior performance copywriter. "
+    "You are AdGenieHQ's Growth Content Studio — a senior performance copywriter. "
     "Given a business profile and its marketing strategy, produce a bundle of "
     "ready-to-use copy artifacts, one or more per requested section. Ground every "
     "line in the business's ACTUAL offer, audience, and outcomes. Do NOT invent "
     "metrics, customer names, testimonials, or claims you can't support — leave a "
     "clearly-marked [placeholder] where a real proof point belongs. Match the brand "
     "voice. Return STRICT JSON only (no prose, no code fences) of the form:\n"
-    '{"copies": [{"copy_type": str, "section": str, "title": str, "body": str}, ...]}\n'
+    '{"copies": [{"copy_type": str, "section": str, "title": str, "body": str, '
+    '"platform": str|null, "hashtags": [str]|null}, ...]}\n'
     "copy_type MUST be one of: keywords, ad_copy, landing_page, email, social_post, "
-    "meta_tags. `body` is plain text and may use simple markdown (## headings, - bullets). "
+    "short_video_script, meta_tags. `body` is plain text and may use simple markdown "
+    "(## headings, - bullets). "
     "Produce: ONE keywords plan (grouped: brand, problem, solution/category, competitor, "
     "long-tail); ONE ad_copy set per recommended platform (3 headlines + 2 descriptions + "
     "1 CTA each); ONE landing_page (hero headline, subhead, 3 benefit bullets, CTA); ONE "
-    "email per email flow (subject line + body); ONE social_post set per content pillar "
-    "(2-3 hooks + caption direction); ONE meta_tags (title tag <=60 chars + meta "
-    "description <=155 chars). Be concrete and concise; do not pad."
+    "email per email flow (subject line + body); ONE organic social artifact per content "
+    "pillar; ONE meta_tags (title tag <=60 chars + meta description <=155 chars).\n"
+    "ORGANIC SOCIAL rules — one artifact per content pillar, assigned to a platform from "
+    "`organic_social_platforms` (rotate through them, do not reuse one platform for every "
+    "pillar):\n"
+    "- Set `platform` to that entry's `slug` and `hashtags` to a list WITHOUT the leading #.\n"
+    "- For a text platform (`format` = post): copy_type is social_post and `body` is the post "
+    "exactly as it should be pasted, within the entry's `hard_char_limit` INCLUDING the "
+    "hashtags, honoring its `hashtag_range`.\n"
+    "- For a video platform (`format` = video_script): copy_type is short_video_script and "
+    "`body` is a shot-by-shot script — a hook in the first 2 seconds, 3-5 beats each with "
+    "narration plus on-screen text, then a CTA — sized to the entry's duration.\n"
+    "Be concrete and concise; do not pad."
 )
 
 
@@ -206,6 +336,20 @@ def _bundle_via_llm(
             {"name": f.get("name"), "trigger": f.get("trigger"), "goal": f.get("goal")}
             for f in _email_flows(dna)
         ],
+        # Authoring constraints travel with the platform list so the model
+        # writes within each network's real limits instead of guessing.
+        "organic_social_platforms": [
+            {
+                "slug": sp.slug,
+                "label": sp.label,
+                "format": sp.format.value,
+                "hard_char_limit": sp.hard_char_limit,
+                "hashtag_range": list(sp.hashtag_range),
+                "duration_seconds": list(sp.duration_seconds) if sp.duration_seconds else None,
+                "guidance": sp.guidance,
+            }
+            for sp in _recommended_social_platforms(dna)
+        ],
         "business_model": (ms.get("overview") or {}).get("model"),
     }
     user = LlmMessage(
@@ -229,6 +373,10 @@ def _bundle_via_llm(
     if not isinstance(raw, list):
         raise LlmError("Copy studio LLM did not return a 'copies' array.")
 
+    social_types = {
+        SuggestedCopyType.SOCIAL_POST,
+        SuggestedCopyType.SHORT_VIDEO_SCRIPT,
+    }
     copies: list[GeneratedCopy] = []
     for item in raw:
         if not isinstance(item, dict):
@@ -238,12 +386,30 @@ def _bundle_via_llm(
         body = str(item.get("body") or "").strip()
         if ctype is None or not title or not body:
             continue
+
+        platform: SocialPlatform | None = None
+        hashtags: list[str] | None = None
+        if ctype in social_types:
+            raw_slug = str(item.get("platform") or "").strip().lower()
+            platform = get_platform(_PLATFORM_ALIASES.get(raw_slug, raw_slug))
+            if platform is None:
+                # The model named a platform we don't model. Keep the copy but
+                # don't mislabel it — an unattributed social post is still useful.
+                hashtags = None
+            else:
+                hashtags = normalize_hashtags(item.get("hashtags"), platform=platform)
+                # Trust the model's format claim only where it agrees with the
+                # catalog; a "post" for TikTok is a script by definition.
+                ctype = _copy_type_for(platform)
+
         copies.append(
             GeneratedCopy(
                 copy_type=ctype,
                 section=_clean(item.get("section"), fallback=ctype.value)[:255],
                 title=title[:512],
                 body=body,
+                platform=platform.slug if platform else None,
+                hashtags=hashtags,
             )
         )
     if not copies:
@@ -288,8 +454,14 @@ def _bundle_deterministic(
     copies.append(_landing_page(profile, dna, product_name))
     for flow in _email_flows(dna):
         copies.append(_email(profile, product_name, flow))
-    for pillar in _content_pillars(dna):
-        copies.append(_social(profile, product_name, pillar))
+    # Organic social: one platform-native artifact per pillar, rotating through
+    # the platforms the Growth DNA actually recommends. Rotating (rather than
+    # pillar x platform) keeps the artifact count flat as platforms are added.
+    platforms = _recommended_social_platforms(dna)
+    for index, pillar in enumerate(_content_pillars(dna)):
+        copies.append(
+            _social_organic(profile, product_name, pillar, platforms[index % len(platforms)])
+        )
     copies.append(_meta_tags(profile, product_name))
     return copies
 
@@ -431,32 +603,6 @@ def _email(p: OnboardingProfile, product_name: str, flow: dict) -> GeneratedCopy
         copy_type=SuggestedCopyType.EMAIL,
         section=f"Email: {name}",
         title=f"{name} email — {product_name}",
-        body=body,
-    )
-
-
-def _social(p: OnboardingProfile, product_name: str, pillar: dict) -> GeneratedCopy:
-    name = _clean(pillar.get("name"), fallback="Content")
-    desc = _clean(pillar.get("description"))
-    hooks = [h for h in (pillar.get("example_hooks") or []) if _clean(h)]
-    audience = _clean(p.target_audience, fallback="your audience")
-    if not hooks:
-        hooks = [
-            f"The {name.lower()} mistake most {audience.lower()[:30]} make (and the fix).",
-            f"3 things we learned about {name.lower()} building {product_name}.",
-        ]
-    body = (
-        f"Content pillar: {name}." + (f" {desc}" if desc else "")
-        + "\n\n## Post hooks\n"
-        + "\n".join(f"- {h}" for h in hooks[:3])
-        + "\n\n## Caption direction\n"
-        f"Open with the hook, give one concrete takeaway for {audience}, "
-        f"close with a soft CTA to {product_name}."
-    )
-    return GeneratedCopy(
-        copy_type=SuggestedCopyType.SOCIAL_POST,
-        section=f"Content pillar: {name}",
-        title=f"Social posts — {name}",
         body=body,
     )
 

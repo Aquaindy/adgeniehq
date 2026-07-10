@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/seo", label: "SEO & GEO" },
       { to: "/content", label: "Content" },
+      { to: "/social", label: "Social studio" },
       { to: "/blog/posts", label: "Blog" },
       { to: "/outreach", label: "Outreach" },
     ],

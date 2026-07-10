@@ -55,6 +55,7 @@ const SoloAdsPage = lazyPage(() => import("@/features/traffic/SoloAdsPage"), "So
 const OmnisendJourneysPage = lazyPage(() => import("@/features/traffic/OmnisendJourneysPage"), "OmnisendJourneysPage");
 const ContentDraftDetailPage = lazyPage(() => import("@/features/content/ContentDraftDetailPage"), "ContentDraftDetailPage");
 const ContentDraftsPage = lazyPage(() => import("@/features/content/ContentDraftsPage"), "ContentDraftsPage");
+const SocialStudioPage = lazyPage(() => import("@/features/social/SocialStudioPage"), "SocialStudioPage");
 const BlogEditorPage = lazyPage(() => import("@/features/blog/BlogEditorPage"), "BlogEditorPage");
 const BlogPostsPage = lazyPage(() => import("@/features/blog/BlogPostsPage"), "BlogPostsPage");
 const AbTestDetailPage = lazyPage(() => import("@/features/ab-tests/AbTestDetailPage"), "AbTestDetailPage");
@@ -175,6 +176,7 @@ export function App() {
                 <Route path="autoresponders" element={<AutorespondersPage />} />
                 <Route path="content" element={<ContentDraftsPage />} />
                 <Route path="content/:draftId" element={<ContentDraftDetailPage />} />
+                <Route path="social" element={<SocialStudioPage />} />
                 <Route path="blog/posts" element={<BlogPostsPage />} />
                 <Route path="blog/posts/:draftId" element={<BlogEditorPage />} />
                 <Route path="outreach" element={<OutreachPage />} />

@@ -35,7 +35,8 @@ export type SuggestedCopyType =
   | "email"
   | "social_post"
   | "blog_outline"
-  | "meta_tags";
+  | "meta_tags"
+  | "short_video_script";
 
 export interface SuggestedCopy {
   id: string;
@@ -46,6 +47,9 @@ export interface SuggestedCopy {
   section: string;
   title: string;
   body: string;
+  /** Organic social only: catalog slug (e.g. "linkedin", "tiktok"). */
+  platform: string | null;
+  hashtags: string[] | null;
   source: string;
   model_used: string | null;
   created_at: string;
@@ -1012,7 +1016,8 @@ export type ContentDraftType =
   | "ad_copy"
   | "meta_description"
   | "email"
-  | "social_post";
+  | "social_post"
+  | "short_video_script";
 
 export type ContentDraftStatus =
   | "draft"
@@ -1033,7 +1038,10 @@ export type ContentDraftPublic = {
   slug: string | null;
   excerpt: string | null;
   image_url: string | null;
+  /** Social platform slug (see /social/platforms); null for non-social drafts. */
+  platform: string | null;
   keywords: string[] | null;
+  hashtags: string[] | null;
   seo_metadata: Record<string, unknown> | null;
   notes: string | null;
   source: string;
@@ -1053,6 +1061,56 @@ export type GenerateContentDraftRequest = {
   target_url?: string | null;
   audience?: string | null;
   notes?: string | null;
+};
+
+// ---- Social content ----
+
+export type SocialFormat = "post" | "video_script";
+
+export type SocialPlatformPublic = {
+  slug: string;
+  label: string;
+  format: SocialFormat;
+  draft_type: ContentDraftType;
+  body_length_min: number;
+  body_length_max: number;
+  hard_char_limit: number | null;
+  hashtag_min: number;
+  hashtag_max: number;
+  aspect_ratio: string | null;
+  duration_min_seconds: number | null;
+  duration_max_seconds: number | null;
+  guidance: string;
+};
+
+export type GenerateSocialPackRequest = {
+  topic: string;
+  platforms: string[];
+  keywords?: string[];
+  audience?: string | null;
+  target_url?: string | null;
+  notes?: string | null;
+  call_to_action?: string | null;
+};
+
+export type SocialPackResponse = {
+  topic: string;
+  drafts: ContentDraftPublic[];
+};
+
+/** Shape of `seo_metadata.script` on a `short_video_script` draft. */
+export type VideoScriptBeat = {
+  narration: string;
+  on_screen_text?: string;
+  visual?: string;
+};
+
+export type VideoScript = {
+  hook: string;
+  beats: VideoScriptBeat[];
+  cta: string;
+  aspect_ratio: string | null;
+  target_duration_seconds: [number, number];
 };
 
 // ---- Public blog ----

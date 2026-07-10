@@ -87,13 +87,19 @@ def safe_filename(*parts: str) -> str:
 
 
 def _txt_block(copy: SuggestedCopy) -> str:
+    platform_line = f"Platform: {copy.platform}\n" if copy.platform else ""
+    # Hashtags are stored beside the body, so an export that omitted them would
+    # hand the operator an incomplete post.
+    hashtag_line = f"\nHashtags: {' '.join(copy.hashtags)}\n" if copy.hashtags else ""
     return (
         f"{copy.title}\n"
         f"{'=' * len(copy.title)}\n"
         f"Product / Service: {copy.product_name}\n"
         f"Section: {copy.section}\n"
         f"Type: {copy.copy_type.value}\n"
+        f"{platform_line}"
         f"\n{copy.body.strip()}\n"
+        f"{hashtag_line}"
     )
 
 
@@ -136,11 +142,17 @@ def _write_body_to_doc(doc, body: str) -> None:
 def _add_copy_to_doc(doc, copy: SuggestedCopy) -> None:
     doc.add_heading(copy.title, level=1)
     meta = doc.add_paragraph()
-    meta.add_run(
+    meta_text = (
         f"Product / Service: {copy.product_name}  ·  "
         f"Section: {copy.section}  ·  Type: {copy.copy_type.value}"
-    ).italic = True
+    )
+    if copy.platform:
+        meta_text += f"  ·  Platform: {copy.platform}"
+    meta.add_run(meta_text).italic = True
     _write_body_to_doc(doc, copy.body)
+    if copy.hashtags:
+        doc.add_paragraph("")
+        doc.add_paragraph(" ".join(copy.hashtags))
 
 
 def _new_document():

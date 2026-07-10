@@ -17,6 +17,9 @@ class ContentDraftType(StrEnum):
     META_DESCRIPTION = "meta_description"
     EMAIL = "email"
     SOCIAL_POST = "social_post"
+    # Vertical short-form video (Reels / Shorts / TikTok). Distinct from
+    # SOCIAL_POST because the body is a shot-by-shot script, not copy to paste.
+    SHORT_VIDEO_SCRIPT = "short_video_script"
 
 
 class ContentDraftStatus(StrEnum):
@@ -86,7 +89,15 @@ class ContentDraft(Base, TimestampMixin):
     # ContentWriter agent when image generation is enabled.
     image_url: Mapped[str | None] = mapped_column(String(2048))
 
+    # Social platform slug (see app/social/catalog.py), e.g. "linkedin",
+    # "tiktok". NULL for non-social drafts. A plain string rather than an enum
+    # so a new platform is a catalog edit, not a migration.
+    platform: Mapped[str | None] = mapped_column(String(32), index=True)
+
     keywords: Mapped[list | None] = mapped_column(JSONB)  # ["pricing", "launch"]
+    # Normalized, deduped, "#"-prefixed tags, e.g. ["#b2bmarketing", "#saas"].
+    # Distinct from `keywords`: keywords target search, hashtags target reach.
+    hashtags: Mapped[list | None] = mapped_column(JSONB)
     seo_metadata: Mapped[dict | None] = mapped_column(JSONB)  # {meta_title, meta_description, ...}
     notes: Mapped[str | None] = mapped_column(Text)
 

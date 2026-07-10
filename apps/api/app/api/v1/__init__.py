@@ -30,6 +30,7 @@ from app.api.v1 import (
     recommendations,
     reports,
     seo,
+    social_content,
     solo_ads,
     suggested_copies,
     traffic,
@@ -58,6 +59,9 @@ api_router.include_router(seo.router, prefix="/workspaces", tags=["seo"])
 api_router.include_router(landing_pages.router, prefix="/workspaces", tags=["website"])
 api_router.include_router(reports.router, prefix="/workspaces", tags=["reports"])
 api_router.include_router(content_drafts.router, prefix="/workspaces", tags=["content"])
+api_router.include_router(
+    social_content.router, prefix="/workspaces", tags=["social-content"]
+)
 api_router.include_router(
     suggested_copies.router, prefix="/workspaces", tags=["suggested-copies"]
 )

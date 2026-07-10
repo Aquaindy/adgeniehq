@@ -22,7 +22,14 @@ const TYPE_LABELS: Record<ContentDraftType, string> = {
   meta_description: "Meta description",
   email: "Email",
   social_post: "Social post",
+  short_video_script: "Short video script",
 };
+
+// Platform-native social drafts are authored in the Social studio, which sets
+// the platform and hashtags this generic form has no inputs for.
+const GENERIC_TYPES = (Object.keys(TYPE_LABELS) as ContentDraftType[]).filter(
+  (t) => t !== "short_video_script",
+);
 
 const STATUS_PILL: Record<ContentDraftStatus, string> = {
   draft: "bg-slate-100 text-slate-600",
@@ -49,6 +56,13 @@ export function ContentDraftsPage() {
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Generate, review, edit, approve, and publish copy. Drafts never auto-publish — an Admin must approve.
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          For platform-native posts and Reels/Shorts scripts, use the{" "}
+          <Link to="/social" className="font-medium text-grape hover:underline">
+            Social studio
+          </Link>
+          .
         </p>
       </header>
 
@@ -87,6 +101,9 @@ export function ContentDraftsPage() {
                     <span className="pill bg-slate-50 text-slate-500">
                       {TYPE_LABELS[d.type]}
                     </span>
+                    {d.platform ? (
+                      <span className="pill pill-grape">{d.platform}</span>
+                    ) : null}
                     {d.source === "manual" ? (
                       <span className="pill bg-slate-50 text-slate-500">manual</span>
                     ) : null}
@@ -169,7 +186,7 @@ function GenerateForm() {
             onChange={(e) => setType(e.target.value as ContentDraftType)}
             className="rounded-xl border border-slate-200 bg-surface px-3 py-2 text-ink shadow-sm outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
           >
-            {(Object.keys(TYPE_LABELS) as ContentDraftType[]).map((t) => (
+            {GENERIC_TYPES.map((t) => (
               <option key={t} value={t}>
                 {TYPE_LABELS[t]}
               </option>

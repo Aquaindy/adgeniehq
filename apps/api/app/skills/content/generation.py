@@ -14,7 +14,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import AdVantaError
+from app.core.exceptions import AdGenieError
 from app.llm import (
     LlmClient,
     LlmError,
@@ -43,6 +43,7 @@ TARGET_BODY_LENGTH: dict[ContentDraftType, tuple[int, int]] = {
     ContentDraftType.META_DESCRIPTION: (110, 155),
     ContentDraftType.EMAIL: (180, 380),
     ContentDraftType.SOCIAL_POST: (60, 240),
+    ContentDraftType.SHORT_VIDEO_SCRIPT: (400, 900),
 }
 
 
@@ -100,7 +101,7 @@ def refresh_content_draft(
                 db=db,
                 workspace_id=workspace_id,
             )
-        except (LlmError, LlmNotConfiguredError, AdVantaError):
+        except (LlmError, LlmNotConfiguredError, AdGenieError):
             pass
     return _refresh_deterministic(request=request, profile=profile)
 
@@ -120,7 +121,7 @@ def _refresh_with_llm(
     target_low, target_high = TARGET_BODY_LENGTH[request.type]
 
     system = (
-        f"You are AdVanta's content refresher for {business}. Brand voice: "
+        f"You are AdGenieHQ's content refresher for {business}. Brand voice: "
         f"{voice}. Rewrite the user's existing content per their instructions, "
         "preserving any specific facts unless they're flagged for replacement. "
         "Do not invent metrics, customer names, or claims. Return strict JSON "
@@ -233,8 +234,8 @@ def generate_content_draft(
                 db=db,
                 workspace_id=workspace_id,
             )
-        except (LlmError, LlmNotConfiguredError, AdVantaError):
-            # AdVantaError catches PlanLimitExceededError specifically so a
+        except (LlmError, LlmNotConfiguredError, AdGenieError):
+            # AdGenieError catches PlanLimitExceededError specifically so a
             # capped workspace gets a draft via the deterministic path
             # instead of a 402.
             pass
@@ -256,7 +257,7 @@ def _system_prompt(profile: OnboardingProfile | None) -> str:
     audience = (profile and profile.target_audience) or "the company's primary audience"
     offer = (profile and profile.offer_description) or "the product the user described"
     return (
-        "You are AdVanta's content drafter. Produce a single draft for the requested "
+        "You are AdGenieHQ's content drafter. Produce a single draft for the requested "
         f"content type for {business}. Target audience: {audience}. Offer: {offer}. "
         f"Brand voice: {voice}. Do not invent metrics, customer names, or claims you can't "
         "support. Return strict JSON with keys: title (string), body (string), "
@@ -445,6 +446,17 @@ def _template_for_type(
             f"Worth a 15-minute conversation? {cta}.\n\nThanks,\n{business}"
         )
         meta = f"{topic} — outreach email."
+    elif request.type == ContentDraftType.SHORT_VIDEO_SCRIPT:
+        title = f"Short video: {topic}"
+        body = (
+            f"HOOK (0-2s): {topic}\n"
+            f'ON-SCREEN: "{topic}"\n\n'
+            f"BEAT 1 — Problem\n{audience} keep running into {kw_phrase}.\n\n"
+            f"BEAT 2 — Insight\n{offer_line or 'Here is the approach that actually moves the number.'}\n\n"
+            f"BEAT 3 — Proof\nShow the change, not the claim.\n\n"
+            f"CTA\n{cta}"
+        )
+        meta = f"{topic} — short-form video script."
     else:  # SOCIAL_POST
         title = f"Social: {topic}"
         body = (

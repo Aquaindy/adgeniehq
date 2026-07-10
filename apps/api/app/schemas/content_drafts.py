@@ -20,7 +20,9 @@ class ContentDraftPublic(BaseModel):
     slug: str | None = None
     excerpt: str | None = None
     image_url: str | None = None
+    platform: str | None = None
     keywords: list[str] | None
+    hashtags: list[str] | None = None
     seo_metadata: dict | None
     notes: str | None
     source: str
@@ -63,6 +65,7 @@ class UpdateContentDraftRequest(BaseModel):
     excerpt: str | None = Field(default=None, max_length=2000)
     image_url: str | None = Field(default=None, max_length=2048)
     keywords: list[str] | None = None
+    hashtags: list[str] | None = None
     seo_metadata: dict | None = None
     notes: str | None = Field(default=None, max_length=2000)
 

@@ -62,6 +62,7 @@ def test_list_agents_returns_catalog_with_no_runs(client: TestClient) -> None:
         "seo_audit",
         "landing_page_audit",
         "content_writer",
+        "social_content",
         "market_intelligence",
         "icp_persona",
         "creative_strategy",

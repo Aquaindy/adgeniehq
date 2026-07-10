@@ -2,7 +2,10 @@
 
 Reads a workspace's Growth DNA Profile and, for each section/segment, generates
 ready-to-use copy — a keyword plan, ad copy per recommended platform, landing-
-page copy, lifecycle emails, social hooks per content pillar, and SEO meta tags.
+page copy, lifecycle emails, organic social content per content pillar, and SEO
+meta tags. Organic social is platform-native: each pillar is assigned a platform
+from the Growth DNA's own `platform_strategy`, and produces either a post (within
+that network's character ceiling, with hashtags) or a Reels/Shorts/TikTok script.
 Each artifact is persisted as a `SuggestedCopy` (surfaced on the Creatives page
 under "Suggested Copies" and downloadable as .txt / .docx).
 
@@ -42,8 +45,9 @@ class GrowthContentAgent(BaseAgent):
     description = (
         "Turns each section of your Growth DNA into ready-to-use copy — a keyword "
         "plan, ad copy per recommended platform, landing-page copy, lifecycle "
-        "emails, social hooks per content pillar, and SEO meta tags. Saved under "
-        "Suggested Copies on the Creatives page and downloadable as .txt or .docx."
+        "emails, platform-native organic social posts and Reels/Shorts scripts per "
+        "content pillar, and SEO meta tags. Saved under Suggested Copies on the "
+        "Creatives page and downloadable as .txt or .docx."
     )
 
     def run(self, ctx: AgentContext) -> AgentResult:
@@ -133,7 +137,12 @@ class GrowthContentAgent(BaseAgent):
                 body=c.body,
                 source=bundle.source,
                 model_used=bundle.model_used,
-                metadata_json={"section": c.section},
+                metadata_json={
+                    "section": c.section,
+                    # Only organic-social artifacts carry these.
+                    **({"platform": c.platform} if c.platform else {}),
+                    **({"hashtags": c.hashtags} if c.hashtags else {}),
+                },
             )
             ctx.db.add(row)
             ctx.db.flush()
