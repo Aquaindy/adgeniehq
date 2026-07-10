@@ -154,7 +154,12 @@ def _system_prompt(
             f"{base}\n\n"
             f"Produce a {low}-{high} second vertical ({platform.aspect_ratio}) "
             "short-form video script. Return strict JSON with keys: "
-            "title (string), hook (string — the spoken first line, under 2 "
+            "title (string — an SEO-optimized, search-friendly video title, "
+            "under ~70 characters, that front-loads the main keyword and reads "
+            "like a strong YouTube/TikTok title someone would click. It MUST be "
+            "a real headline only — NEVER include the platform or format name "
+            "(e.g. 'TikTok', 'Reel', 'Short', 'video', 'script') anywhere in "
+            "it), hook (string — the spoken first line, under 2 "
             "seconds), beats (array of objects with keys: narration, "
             "on_screen_text, visual), cta (string), hashtags (array of "
             "strings), keywords (array of strings). Use 3 to 5 beats."
@@ -172,8 +177,12 @@ def _system_prompt(
         f"{base}\n\n"
         f"Write one post of roughly {low}-{high} characters.{limit_note} "
         f"Include {hlow}-{hhigh} hashtags. Return strict JSON with keys: "
-        "title (string — an internal label, not shown to readers), body "
-        "(string — the post exactly as it should be pasted), hashtags "
+        "title (string — a strong, specific headline for this post that "
+        "front-loads the main keyword and captures its angle in under ~70 "
+        "characters. It MUST be a real headline only — NEVER include the "
+        "platform or format name (e.g. 'LinkedIn post', 'X post', 'Facebook "
+        "post', 'Instagram caption', 'Thread', 'Reel') anywhere in it), "
+        "body (string — the post exactly as it should be pasted), hashtags "
         "(array of strings), keywords (array of strings)."
     )
 
@@ -215,6 +224,58 @@ def _user_prompt(request: SocialContentRequest) -> str:
             + "\n\"\"\""
         )
     return "\n".join(parts)
+
+
+# Format nouns a platform label gets paired with when the model bakes a
+# "LinkedIn post" / "Instagram caption" label into a title. Plural forms let
+# "X posts" strip as a trailing label, while _strip_platform_label's anchoring
+# keeps a mid-title "posts" (e.g. "LinkedIn posts that convert") safe.
+_FORMAT_WORDS = (
+    "posts", "post", "captions", "caption", "threads", "thread",
+    "tweets", "tweet", "reels", "reel", "shorts", "short",
+    "scripts", "script", "videos", "video", "stories", "story", "update",
+)
+
+
+def _platform_name_variants(platform: SocialPlatform) -> list[str]:
+    """Names to strip: the label plus any parenthetical alias, e.g.
+    'X (Twitter)' → ['Twitter', 'X (Twitter)', 'X'] (longest first)."""
+
+    raw = (platform.label or "").strip()
+    names = {raw} if raw else set()
+    m = re.match(r"^(.*?)\s*\(([^)]+)\)\s*$", raw)
+    if m:
+        names.add(m.group(1).strip())
+        names.add(m.group(2).strip())
+    return sorted((n for n in names if n), key=len, reverse=True)
+
+
+def _strip_platform_label(title: str, platform: SocialPlatform) -> str:
+    """Remove a stray "<platform> post" / "<platform> caption" label the model
+    sometimes bakes into a title, as a leading (delimited) or trailing chunk.
+
+    Conservative — only fires next to a format word or a delimiter, so real
+    titles ("LinkedIn posts that convert", "Product X") stay intact. Returns
+    "" only if the whole title was a label, so callers keep a fallback."""
+
+    s = (title or "").strip()
+    if not s:
+        return s
+    names = "|".join(re.escape(n) for n in _platform_name_variants(platform))
+    if not names:
+        return s
+    fmt = "|".join(_FORMAT_WORDS)
+    patterns = (
+        rf"^(?:{names})(?:\s+(?:{fmt}))?\s*[:\-–—|]\s*",
+        rf"[\s:\-–—|]+(?:{names})\s+(?:{fmt})\s*$",
+    )
+    for pat in patterns:
+        new = re.sub(pat, "", s, count=1, flags=re.IGNORECASE).strip()
+        if new and new != s:
+            s = new
+    if s and s[0].islower():  # re-capitalize a lead exposed by stripping
+        s = s[0].upper() + s[1:]
+    return s
 
 
 def _generate_with_llm(
@@ -260,7 +321,8 @@ def _generate_with_llm(
         if not body:
             raise LlmError("LLM produced an empty post body.")
 
-    title = (parsed.get("title") or request.topic).strip()
+    raw_title = (parsed.get("title") or request.topic).strip()
+    title = _strip_platform_label(raw_title, request.platform) or raw_title
     hashtags = normalize_hashtags(parsed.get("hashtags"), platform=request.platform)
     keywords = _normalize_keywords(parsed.get("keywords"), fallback=request.keywords)
 
@@ -510,6 +572,21 @@ def _fallback_hashtags(request: SocialContentRequest) -> list[str]:
     return normalize_hashtags(raw, platform=request.platform)
 
 
+def _headline(text: str) -> str:
+    """Best-effort title from a raw topic when no LLM is available.
+
+    A bare lowercase keyword ("attribution") is title-cased; anything that
+    already reads like a headline or sentence (has any uppercase) is kept as the
+    operator wrote it, only ensuring the first letter is capitalized."""
+
+    text = text.strip()
+    if not text:
+        return "Untitled"
+    if text != text.lower():  # already has caps → a real headline/sentence
+        return text[0].upper() + text[1:]
+    return " ".join(w[:1].upper() + w[1:] for w in text.split())
+
+
 def _source_lead(source_content: str, *, max_chars: int) -> str:
     """The first substantive paragraph of the source, for the deterministic
     path. Without an LLM we don't rewrite — we honestly surface a lead excerpt
@@ -565,6 +642,11 @@ def _generate_deterministic(
 
     hashtags = _fallback_hashtags(request)
     keywords = _normalize_keywords(request.keywords, fallback=[topic])
+    # A real headline for the draft title (no "Platform:" label — the platform
+    # is surfaced separately). The LLM path produces a fully optimized title;
+    # this is the honest best-effort when no LLM is configured.
+    headline = _headline(topic)
+    headline = _strip_platform_label(headline, request.platform) or headline
 
     # When repurposing a link, ground the skeleton in a real excerpt from the
     # page rather than the generic onboarding template.
@@ -602,10 +684,10 @@ def _generate_deterministic(
             "target_duration_seconds": [low, high],
         }
         body = _render_script(script, platform=p)
-        title = f"{p.label}: {topic}"
+        title = headline
     else:
         script = None
-        title = f"{p.label}: {topic}"
+        title = headline
         middle = lead if lead else f"For {audience}: {offer or kw_phrase}."
         body = _enforce_char_limit(
             f"{topic}\n\n{middle}\n\n{cta}",
