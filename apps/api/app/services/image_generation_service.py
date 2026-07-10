@@ -91,11 +91,39 @@ def _image_size_for(draft: ContentDraft) -> str:
     return _SIZE_LANDSCAPE
 
 
+def _overlay_headline(draft: ContentDraft) -> str:
+    """A short, punchy headline to render ON a social image.
+
+    Image models render *short* text far more reliably than long text, so we
+    distill the draft's title down to a few words. Prefers an LLM-supplied
+    `overlay_headline` (if a generation step ever provides one) over the
+    derived title. Returns "" when there's nothing usable."""
+
+    raw = str(
+        (draft.seo_metadata or {}).get("overlay_headline") or draft.title or ""
+    ).strip()
+    if not raw:
+        return ""
+    # Keep the punchy lead clause — drop any subtitle after a separator.
+    for sep in ("—", " – ", " - ", ": ", " | ", " • "):
+        if sep in raw:
+            raw = raw.split(sep, 1)[0].strip()
+            break
+    words = raw.split()
+    if len(words) > 6:
+        raw = " ".join(words[:6])
+    if len(raw) > 42:  # backstop for very long/space-less strings
+        raw = raw[:42].rsplit(" ", 1)[0].strip() or raw[:42]
+    return raw
+
+
 def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
     """Compose an image prompt from the draft plus workspace brand context.
 
-    We ask for a clean, on-brand marketing visual with NO text — models render
-    text unreliably, and a garbled headline ruins the asset."""
+    For a social post we render a SHORT headline on the image as designed
+    typography with supporting graphics (gpt-image renders short text reliably).
+    Other surfaces (blog hero, landing page) stay text-free — a full headline
+    there reads as a garbled caption."""
 
     from app.models.onboarding_profile import OnboardingProfile
 
@@ -122,11 +150,31 @@ def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
     context_bits = [b for b in (business, industry) if b]
     context = f" for {', '.join(context_bits)}" if context_bits else ""
 
+    headline = _overlay_headline(draft) if platform is not None else ""
+
+    if headline:
+        return (
+            f"Design a scroll-stopping {surface} post graphic{context}. "
+            f"Prominently feature this exact headline as the focal point, in "
+            f"bold, correctly spelled, highly legible typography: "
+            f"“{headline}”. "
+            f"Theme: {subject}. "
+            "Support the headline with tasteful graphics — modern iconography, "
+            "geometric shapes, or a clean illustration — using a vibrant, "
+            "high-contrast color palette with real depth, dimension, and "
+            "lighting (avoid flat, washed-out looks). "
+            "Spell the headline EXACTLY as written and keep it the only text: "
+            "do NOT add other words, paragraphs, logos, watermarks, or UI. "
+            "Balanced, professional composition."
+        )
+
+    # Non-social surfaces: clean, text-free marketing visual.
     return (
-        f"A polished, editorial marketing image for a {surface} post{context}. "
+        f"A polished, editorial marketing image{context}. "
         f"Theme: {subject}. "
         "Modern, clean, high-quality photography or tasteful illustration with "
-        "strong focal composition and brand-friendly lighting. "
+        "strong focal composition, vibrant color, depth, and brand-friendly "
+        "lighting. "
         "Do NOT include any text, words, letters, logos, watermarks, or UI. "
         "No collage, no borders. Leave calm negative space so a caption could "
         "sit alongside it."
@@ -186,6 +234,9 @@ def generate_for_draft(
     meta = dict(draft.seo_metadata or {})
     meta["image_model"] = result.model
     meta["image_size"] = size
+    headline = _overlay_headline(draft) if draft.platform else ""
+    if headline:
+        meta["image_headline"] = headline
     draft.seo_metadata = meta
 
     audit_service.log_event(
