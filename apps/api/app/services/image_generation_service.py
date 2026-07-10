@@ -118,15 +118,17 @@ def _strip_platform_prefix(text: str, platform) -> str:
 
 
 def _overlay_headline(draft: ContentDraft) -> str:
-    """A short, punchy headline to render ON a social image.
+    """The headline text to render ON a social image.
 
-    Image models render *short* text far more reliably than long text, so we
-    distill the draft's title down to a few words. Prefers an LLM-supplied
-    `overlay_headline` (if a generation step ever provides one) over the
-    derived title. Returns "" when there's nothing usable."""
+    Uses the draft's own TITLE (minus any platform label) so the image matches
+    the content title the operator sees on the card — and differs per platform
+    the way the titles do, instead of collapsing to one shared product hook.
+    Capped at SEO-title length; the prompt's wrap/fit instruction handles
+    sizing rather than aggressive truncation. Falls back to a stored
+    `overlay_headline` only when there's no title."""
 
     raw = str(
-        (draft.seo_metadata or {}).get("overlay_headline") or draft.title or ""
+        draft.title or (draft.seo_metadata or {}).get("overlay_headline") or ""
     ).strip()
     if not raw:
         return ""
@@ -135,16 +137,8 @@ def _overlay_headline(draft: ContentDraft) -> str:
     )
     if not raw:
         return ""
-    # Keep the punchy lead clause — drop any subtitle after a separator.
-    for sep in ("—", " – ", " - ", ": ", " | ", " • "):
-        if sep in raw:
-            raw = raw.split(sep, 1)[0].strip()
-            break
-    words = raw.split()
-    if len(words) > 6:
-        raw = " ".join(words[:6])
-    if len(raw) > 42:  # backstop for very long/space-less strings
-        raw = raw[:42].rsplit(" ", 1)[0].strip() or raw[:42]
+    if len(raw) > 70:  # backstop; wrap/fit in the prompt does the real work
+        raw = raw[:70].rsplit(" ", 1)[0].strip() or raw[:70]
     return raw
 
 
