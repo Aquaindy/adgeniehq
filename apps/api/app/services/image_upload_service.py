@@ -36,12 +36,13 @@ _ALLOWED_TYPES: Final = {
     "image/gif": "gif",
 }
 
-# Directory paths: physical disk + the URL prefix the static mount serves on.
+# Physical root for the LOCAL backend + the static mount. The R2 backend
+# ignores this and serves from its public URL instead.
 _UPLOADS_ROOT: Final = (
     Path(__file__).resolve().parent.parent.parent / "uploads"
 )
+# Key prefix, shared by the local file path and the R2 object key.
 _BLOG_IMAGES_SUBDIR: Final = "blog-images"
-_PUBLIC_URL_PREFIX: Final = "/uploads/blog-images"
 
 
 class ImageTooLargeError(AdGenieError):
@@ -119,17 +120,19 @@ def save_image_bytes(
 
 
 def _write_bytes(*, workspace_id: UUID, data: bytes, content_type: str) -> dict:
-    workspace_dir = _UPLOADS_ROOT / _BLOG_IMAGES_SUBDIR / str(workspace_id)
-    workspace_dir.mkdir(parents=True, exist_ok=True)
+    # Local import avoids a module-load cycle: object_storage's local backend
+    # reads `uploads_root()` from this module.
+    from app.services.object_storage import put_object
 
     ext = _ALLOWED_TYPES[content_type]
     # 16 hex chars of randomness; unguessable, easy to debug.
     filename = f"{secrets.token_hex(8)}.{ext}"
-    target = workspace_dir / filename
-    target.write_bytes(data)
+    key = f"{_BLOG_IMAGES_SUBDIR}/{workspace_id}/{filename}"
+
+    url = put_object(key=key, data=data, content_type=content_type)
 
     return {
-        "url": f"{_PUBLIC_URL_PREFIX}/{workspace_id}/{filename}",
+        "url": url,
         "bytes": len(data),
         "content_type": content_type,
         "filename": filename,

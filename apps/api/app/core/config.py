@@ -111,6 +111,39 @@ class Settings(BaseSettings):
         default=180.0, alias="IMAGE_HTTP_TIMEOUT_SECONDS"
     )
 
+    # Object storage (Cloudflare R2, S3-compatible) for uploaded + AI-generated
+    # images. When all of {account id (or endpoint), access key, secret,
+    # bucket, public base URL} are set, images are written to R2 and served
+    # from a durable public URL; otherwise they fall back to the local
+    # `uploads/` dir (fine for dev, ephemeral on hosts like Render).
+    r2_account_id: str = Field(default="", alias="R2_ACCOUNT_ID")
+    r2_access_key_id: str = Field(default="", alias="R2_ACCESS_KEY_ID")
+    r2_secret_access_key: str = Field(default="", alias="R2_SECRET_ACCESS_KEY")
+    r2_bucket: str = Field(default="", alias="R2_BUCKET")
+    # Public base URL for the bucket — an r2.dev subdomain or a custom domain,
+    # e.g. https://pub-xxxx.r2.dev or https://cdn.adgeniehq.com. No trailing /.
+    r2_public_base_url: str = Field(default="", alias="R2_PUBLIC_BASE_URL")
+    # Override the S3 API endpoint if needed; defaults to the account's R2 host.
+    r2_endpoint_url: str = Field(default="", alias="R2_ENDPOINT_URL")
+
+    @property
+    def r2_endpoint(self) -> str:
+        if self.r2_endpoint_url:
+            return self.r2_endpoint_url.rstrip("/")
+        if self.r2_account_id:
+            return f"https://{self.r2_account_id}.r2.cloudflarestorage.com"
+        return ""
+
+    @property
+    def r2_enabled(self) -> bool:
+        return bool(
+            self.r2_endpoint
+            and self.r2_access_key_id
+            and self.r2_secret_access_key
+            and self.r2_bucket
+            and self.r2_public_base_url
+        )
+
     # Inbound email parsing — Postmark/Sendgrid/Mailgun-style webhooks.
     # When `inbound_email_domain` is set, outreach emails go out with a
     # Reply-To of `reply+<token>@<domain>`. Set up a parse rule in your inbound
