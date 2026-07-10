@@ -136,7 +136,6 @@ def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
     industry = (profile.industry if profile and profile.industry else "").strip()
 
     platform = get_platform(draft.platform) if draft.platform else None
-    surface = platform.label if platform else "social media"
 
     # A short subject line — the draft title, else the first line of the body.
     subject = (draft.title or "").strip()
@@ -154,17 +153,18 @@ def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
 
     if headline:
         return (
-            f"Design a scroll-stopping {surface} post graphic{context}. "
-            f"Prominently feature this exact headline as the focal point, in "
-            f"bold, correctly spelled, highly legible typography: "
-            f"“{headline}”. "
-            f"Theme: {subject}. "
+            f"Design a scroll-stopping social media post graphic{context}. "
+            f"The ONLY text anywhere in the image is this exact headline, "
+            f"rendered as the bold, correctly spelled, highly legible focal "
+            f"point: “{headline}”. "
+            f"Use this only as thematic direction for the imagery, never as "
+            f"rendered text: {subject}. "
             "Support the headline with tasteful graphics — modern iconography, "
             "geometric shapes, or a clean illustration — using a vibrant, "
             "high-contrast color palette with real depth, dimension, and "
             "lighting (avoid flat, washed-out looks). "
-            "Spell the headline EXACTLY as written and keep it the only text: "
-            "do NOT add other words, paragraphs, logos, watermarks, or UI. "
+            "Render NO other words — no platform name, labels, hashtags, "
+            "paragraphs, logos, watermarks, or UI. Only the headline above. "
             "Balanced, professional composition."
         )
 
