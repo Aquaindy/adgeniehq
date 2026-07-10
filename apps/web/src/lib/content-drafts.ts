@@ -1,11 +1,60 @@
 import { apiFetch } from "@/lib/api-client";
 import { API_BASE_URL } from "@/lib/constants";
+import { useAuthStore } from "@/stores/auth-store";
 import type {
   ContentDraftPublic,
   ContentDraftStatus,
   ContentDraftType,
   GenerateContentDraftRequest,
 } from "@/types/api";
+
+export type ExportFormat = "txt" | "docx";
+
+async function fetchBlob(path: string): Promise<Blob> {
+  const token = useAuthStore.getState().accessToken;
+  const url = new URL(path, API_BASE_URL.replace(/\/$/, "") + "/");
+  const response = await fetch(url.toString(), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: "include",
+  });
+  if (!response.ok) throw new Error(`Download failed (${response.status}).`);
+  return response.blob();
+}
+
+/** Trigger a browser download for a blob fetched from the API. */
+export function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function fetchContentDraftBlob(
+  workspaceId: string,
+  draftId: string,
+  format: ExportFormat,
+): Promise<Blob> {
+  return fetchBlob(
+    `workspaces/${workspaceId}/content-drafts/${draftId}/download?format=${format}`,
+  );
+}
+
+/** Download several drafts (e.g. a social pack) as one .txt or .docx. */
+export function fetchContentDraftsBundleBlob(
+  workspaceId: string,
+  format: ExportFormat,
+  ids: string[],
+): Promise<Blob> {
+  const qs = new URLSearchParams({ format });
+  if (ids.length) qs.set("ids", ids.join(","));
+  return fetchBlob(
+    `workspaces/${workspaceId}/content-drafts/download?${qs.toString()}`,
+  );
+}
 
 /** Uploaded/generated images are served from the API HOST at `/uploads/...`
  * (outside `/api/v1`), while the SPA can live on a different origin. Resolve a

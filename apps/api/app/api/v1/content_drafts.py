@@ -1,9 +1,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import AdGenieError
 from app.db.session import get_db
 from app.models.content_draft import ContentDraftStatus, ContentDraftType
 from app.models.workspace_member import WorkspaceMember
@@ -21,6 +23,38 @@ from app.security.permissions import Role, require_role_at_least
 from app.services import content_draft_service, image_upload_service
 
 router = APIRouter()
+
+
+class _UnsupportedFormatError(AdGenieError):
+    status_code = 400
+    code = "unsupported_format"
+
+
+class _NothingToExportError(AdGenieError):
+    status_code = 404
+    code = "nothing_to_export"
+
+
+def _export_response(body: bytes, media_type: str, filename: str) -> Response:
+    return Response(
+        content=body,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _parse_ids(ids: str | None) -> list[UUID]:
+    if not ids:
+        return []
+    out: list[UUID] = []
+    for chunk in ids.split(","):
+        chunk = chunk.strip()
+        if chunk:
+            try:
+                out.append(UUID(chunk))
+            except ValueError as exc:
+                raise _UnsupportedFormatError(f"Invalid draft id: {chunk}") from exc
+    return out
 
 
 @router.get(
@@ -124,6 +158,49 @@ def create_manual(
     return ContentDraftPublic.model_validate(draft)
 
 
+# NOTE: declared BEFORE `/{draft_id}` so the literal "download" segment isn't
+# parsed as a draft-id UUID.
+@router.get("/{workspace_id}/content-drafts/download")
+def download_drafts_bundle(
+    workspace_id: UUID,
+    fmt: str = Query(default="docx", alias="format"),
+    ids: str | None = Query(
+        default=None, description="Comma-separated draft ids; omit for all (filtered)."
+    ),
+    type: ContentDraftType | None = Query(default=None),
+    status: ContentDraftStatus | None = Query(default=None),
+    platform: str | None = Query(default=None),
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Download several drafts as one .txt or .docx. Pass `ids` for a specific
+    set (e.g. a freshly generated social pack), or filters for a slice."""
+
+    from app.services import content_draft_export_service as export
+
+    parsed_ids = _parse_ids(ids)
+    if parsed_ids:
+        drafts = export.get_drafts_by_ids(db, workspace_id=workspace_id, ids=parsed_ids)
+    else:
+        drafts = content_draft_service.list_drafts(
+            db, workspace_id=workspace_id, type=type, status=status
+        )
+        if platform:
+            drafts = [d for d in drafts if d.platform == platform]
+    if not drafts:
+        raise _NothingToExportError("No drafts matched — nothing to download.")
+
+    base = export.safe_filename("social_content", platform or "")
+    fmt_lower = fmt.lower()
+    if fmt_lower == "txt":
+        body = export.render_bundle_txt(drafts, title="Social content")
+        return _export_response(body, "text/plain; charset=utf-8", f"{base}.txt")
+    if fmt_lower == "docx":
+        body = export.render_bundle_docx(drafts, title="Social content")
+        return _export_response(body, export.DOCX_MEDIA_TYPE, f"{base}.docx")
+    raise _UnsupportedFormatError("Use ?format=txt or ?format=docx.")
+
+
 @router.get(
     "/{workspace_id}/content-drafts/{draft_id}",
     response_model=ContentDraftPublic,
@@ -138,6 +215,34 @@ def get_one(
         db, workspace_id=workspace_id, draft_id=draft_id
     )
     return ContentDraftPublic.model_validate(draft)
+
+
+@router.get("/{workspace_id}/content-drafts/{draft_id}/download")
+def download_draft(
+    workspace_id: UUID,
+    draft_id: UUID,
+    fmt: str = Query(default="docx", alias="format"),
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Download one draft as .txt or .docx (the .docx embeds its image)."""
+
+    from app.services import content_draft_export_service as export
+
+    draft = content_draft_service.get_draft(
+        db, workspace_id=workspace_id, draft_id=draft_id
+    )
+    base = export.safe_filename(draft.platform or "content", str(draft.title)[:40])
+    fmt_lower = fmt.lower()
+    if fmt_lower == "txt":
+        return _export_response(
+            export.render_txt(draft), "text/plain; charset=utf-8", f"{base}.txt"
+        )
+    if fmt_lower == "docx":
+        return _export_response(
+            export.render_docx(draft), export.DOCX_MEDIA_TYPE, f"{base}.docx"
+        )
+    raise _UnsupportedFormatError("Use ?format=txt or ?format=docx.")
 
 
 @router.patch(

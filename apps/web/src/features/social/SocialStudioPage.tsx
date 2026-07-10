@@ -8,8 +8,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { UsageMeter } from "@/components/UsageMeter";
 import { ApiError } from "@/lib/api-client";
 import {
+  type ExportFormat,
+  fetchContentDraftBlob,
+  fetchContentDraftsBundleBlob,
   generateContentDraftImage,
   resolveUploadUrl,
+  saveBlob,
 } from "@/lib/content-drafts";
 import {
   composeForClipboard,
@@ -145,7 +149,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
         />
         <form className="mt-4 flex flex-col gap-4" onSubmit={onSubmit}>
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-slate-text">Topic or keyword</span>
+            <span className="font-semibold text-slate-text">Topic or keyword</span>
             <input
               type="text"
               value={topic}
@@ -156,7 +160,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
           </label>
 
           <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-medium text-slate-text">
+            <span className="font-semibold text-slate-text">
               …or repurpose a web link
             </span>
             <input
@@ -174,7 +178,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-slate-text">
+              <span className="font-semibold text-slate-text">
                 Audience (optional)
               </span>
               <input
@@ -186,7 +190,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-slate-text">
+              <span className="font-semibold text-slate-text">
                 Link to promote (optional)
               </span>
               <input
@@ -198,7 +202,7 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
               />
             </label>
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-slate-text">
+              <span className="font-semibold text-slate-text">
                 Call to action (optional)
               </span>
               <input
@@ -334,9 +338,24 @@ function PackResults({
   );
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null);
 
   // How many drafts still lack an image — drives the "generate all" affordance.
   const missing = pack.drafts.filter((d) => !d.image_url);
+
+  async function downloadAll(format: ExportFormat) {
+    setDownloading(format);
+    setBulkError(null);
+    try {
+      const ids = pack.drafts.map((d) => d.id);
+      const blob = await fetchContentDraftsBundleBlob(workspaceId, format, ids);
+      saveBlob(blob, `social-content.${format}`);
+    } catch {
+      setBulkError("Could not download the pack.");
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   async function generateAll() {
     setBulkBusy(true);
@@ -364,13 +383,31 @@ function PackResults({
           {pack.drafts.length} draft{pack.drafts.length === 1 ? "" : "s"} for “
           {pack.topic}”
         </h2>
-        {missing.length > 0 ? (
-          <Button type="button" variant="secondary" onClick={generateAll} disabled={bulkBusy}>
-            {bulkBusy
-              ? "Generating images…"
-              : `Generate images for ${missing.length} draft${missing.length === 1 ? "" : "s"}`}
+        <div className="flex flex-wrap items-center gap-2">
+          {missing.length > 0 ? (
+            <Button type="button" variant="secondary" onClick={generateAll} disabled={bulkBusy}>
+              {bulkBusy
+                ? "Generating images…"
+                : `Generate images for ${missing.length} draft${missing.length === 1 ? "" : "s"}`}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => downloadAll("docx")}
+            disabled={downloading !== null}
+          >
+            {downloading === "docx" ? "Preparing…" : "Download all (.docx)"}
           </Button>
-        ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => downloadAll("txt")}
+            disabled={downloading !== null}
+          >
+            {downloading === "txt" ? "Preparing…" : ".txt"}
+          </Button>
+        </div>
       </div>
       {bulkError ? (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{bulkError}</p>
@@ -400,12 +437,24 @@ function DraftCard({
   onUpdated: (draft: ContentDraftPublic) => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null);
   const script = readVideoScript(draft);
 
   const imageMut = useMutation({
     mutationFn: () => generateContentDraftImage(workspaceId, draft.id),
     onSuccess: (updated) => onUpdated(updated),
   });
+
+  async function download(format: ExportFormat) {
+    setDownloading(format);
+    try {
+      const blob = await fetchContentDraftBlob(workspaceId, draft.id, format);
+      const name = `${draft.platform ?? "post"}.${format}`;
+      saveBlob(blob, name);
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   // The platform counts body + hashtags together, so surface the composed
   // number rather than the body length alone.
@@ -465,6 +514,22 @@ function DraftCard({
           <Button type="button" variant="secondary" onClick={copy}>
             {copied ? "Copied" : "Copy"}
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => download("docx")}
+            disabled={downloading !== null}
+          >
+            {downloading === "docx" ? "…" : ".docx"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => download("txt")}
+            disabled={downloading !== null}
+          >
+            {downloading === "txt" ? "…" : ".txt"}
+          </Button>
           <Link
             to={`/content/${draft.id}`}
             className="text-sm font-medium text-grape hover:underline"
@@ -473,6 +538,10 @@ function DraftCard({
           </Link>
         </div>
       </div>
+
+      <h3 className="mt-3 text-base font-semibold leading-snug text-ink">
+        {draft.title}
+      </h3>
 
       {imageMut.error ? (
         <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
