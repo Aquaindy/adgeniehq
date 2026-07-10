@@ -12,6 +12,7 @@ rather than a placeholder image (production rule: never fabricate assets).
 
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -92,6 +93,30 @@ def _image_size_for(draft: ContentDraft) -> str:
     return _SIZE_LANDSCAPE
 
 
+def _strip_platform_prefix(text: str, platform) -> str:
+    """Drop a leading platform label used as a caption prefix — e.g.
+    "LinkedIn post:", "X post -", "Instagram Reels script —".
+
+    Belt-and-suspenders: the live prompt no longer names the platform, but this
+    ensures such a label can never reach the model as text even if a title
+    carries it (or a stray one slips through). Requires the label to be followed
+    by "post"/"script" or a separator, so real titles like "LinkedIn posts that
+    convert" are left untouched."""
+
+    s = (text or "").strip()
+    if not s or platform is None:
+        return s
+    label = re.escape(platform.label)
+    for pattern in (
+        rf"^{label}\s+(?:post|script)\b[\s:–—-]*",
+        rf"^{label}\s*[:–—-]\s*",
+    ):
+        stripped = re.sub(pattern, "", s, count=1, flags=re.IGNORECASE).strip()
+        if stripped and stripped != s:
+            return stripped
+    return s
+
+
 def _overlay_headline(draft: ContentDraft) -> str:
     """A short, punchy headline to render ON a social image.
 
@@ -103,6 +128,11 @@ def _overlay_headline(draft: ContentDraft) -> str:
     raw = str(
         (draft.seo_metadata or {}).get("overlay_headline") or draft.title or ""
     ).strip()
+    if not raw:
+        return ""
+    raw = _strip_platform_prefix(
+        raw, get_platform(draft.platform) if draft.platform else None
+    )
     if not raw:
         return ""
     # Keep the punchy lead clause — drop any subtitle after a separator.
@@ -162,7 +192,7 @@ def _build_prompt(
             (ln.strip() for ln in (draft.body or "").splitlines() if ln.strip()),
             "the topic",
         )
-    subject = subject[:200]
+    subject = _strip_platform_prefix(subject, platform)[:200]
 
     context_bits = [b for b in (business, industry) if b]
     context = f" for {', '.join(context_bits)}" if context_bits else ""
