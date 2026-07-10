@@ -75,7 +75,6 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
 
   const [topic, setTopic] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
-  const [keywordsRaw, setKeywordsRaw] = useState("");
   const [audience, setAudience] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
   const [cta, setCta] = useState("");
@@ -98,10 +97,6 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
         topic: topic.trim() || null,
         source_url: sourceUrl.trim() || null,
         platforms: selected,
-        keywords: keywordsRaw
-          .split(",")
-          .map((k) => k.trim())
-          .filter(Boolean),
         audience: audience || null,
         target_url: targetUrl || null,
         call_to_action: cta || null,
@@ -174,18 +169,6 @@ function GenerateForm({ platforms }: { platforms: SocialPlatformPublic[] }) {
           </label>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-slate-text">
-                Keywords (comma-separated)
-              </span>
-              <input
-                type="text"
-                value={keywordsRaw}
-                onChange={(e) => setKeywordsRaw(e.target.value)}
-                placeholder="attribution, b2b, marketing"
-                className="rounded-xl border border-slate-200 bg-surface px-3 py-2 text-ink shadow-sm outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
-              />
-            </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-slate-text">
                 Audience (optional)
