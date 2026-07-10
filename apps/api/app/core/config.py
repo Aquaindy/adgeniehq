@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3].parent
@@ -111,38 +111,62 @@ class Settings(BaseSettings):
         default=180.0, alias="IMAGE_HTTP_TIMEOUT_SECONDS"
     )
 
-    # Object storage (Cloudflare R2, S3-compatible) for uploaded + AI-generated
-    # images. When all of {account id (or endpoint), access key, secret,
-    # bucket, public base URL} are set, images are written to R2 and served
-    # from a durable public URL; otherwise they fall back to the local
-    # `uploads/` dir (fine for dev, ephemeral on hosts like Render).
-    r2_account_id: str = Field(default="", alias="R2_ACCOUNT_ID")
-    r2_access_key_id: str = Field(default="", alias="R2_ACCESS_KEY_ID")
-    r2_secret_access_key: str = Field(default="", alias="R2_SECRET_ACCESS_KEY")
-    r2_bucket: str = Field(default="", alias="R2_BUCKET")
-    # Public base URL for the bucket — an r2.dev subdomain or a custom domain,
-    # e.g. https://pub-xxxx.r2.dev or https://cdn.adgeniehq.com. No trailing /.
-    r2_public_base_url: str = Field(default="", alias="R2_PUBLIC_BASE_URL")
-    # Override the S3 API endpoint if needed; defaults to the account's R2 host.
-    r2_endpoint_url: str = Field(default="", alias="R2_ENDPOINT_URL")
+    # Object storage (any S3-compatible provider — Cloudflare R2, DO Spaces,
+    # Wasabi, AWS S3) for uploaded + AI-generated images. Canonical names are
+    # `S3_*` (the project-wide convention); the older `R2_*` names are accepted
+    # as fallbacks. When access key + secret + bucket + endpoint are all set,
+    # images are written to the bucket and served from a durable URL; otherwise
+    # they fall back to the local `uploads/` dir (ephemeral on Render).
+    s3_access_key_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_ACCESS_KEY_ID", "R2_ACCESS_KEY_ID"),
+    )
+    s3_secret_access_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_SECRET_ACCESS_KEY", "R2_SECRET_ACCESS_KEY"),
+    )
+    s3_bucket: str = Field(
+        default="", validation_alias=AliasChoices("S3_BUCKET", "R2_BUCKET")
+    )
+    # Full S3 API endpoint, e.g. https://<acct>.r2.cloudflarestorage.com.
+    s3_endpoint_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_ENDPOINT_URL", "R2_ENDPOINT_URL"),
+    )
+    # Key namespace so several apps can share one bucket, e.g. "adgeniehq".
+    s3_prefix: str = Field(
+        default="", validation_alias=AliasChoices("S3_PREFIX", "R2_PREFIX")
+    )
+    # Optional. Base URL objects are publicly served from — an r2.dev subdomain
+    # or a custom/CDN domain (e.g. https://cdn.adgeniehq.com). When blank the
+    # public URL is derived as {endpoint}/{bucket}, which works for providers
+    # that serve public reads from the S3 endpoint. Cloudflare R2's S3 endpoint
+    # is NOT public, so R2 must set this to the r2.dev / custom domain.
+    s3_public_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("S3_PUBLIC_URL", "R2_PUBLIC_BASE_URL"),
+    )
 
     @property
-    def r2_endpoint(self) -> str:
-        if self.r2_endpoint_url:
-            return self.r2_endpoint_url.rstrip("/")
-        if self.r2_account_id:
-            return f"https://{self.r2_account_id}.r2.cloudflarestorage.com"
-        return ""
+    def s3_endpoint(self) -> str:
+        return self.s3_endpoint_url.rstrip("/")
 
     @property
-    def r2_enabled(self) -> bool:
+    def s3_enabled(self) -> bool:
         return bool(
-            self.r2_endpoint
-            and self.r2_access_key_id
-            and self.r2_secret_access_key
-            and self.r2_bucket
-            and self.r2_public_base_url
+            self.s3_endpoint
+            and self.s3_access_key_id
+            and self.s3_secret_access_key
+            and self.s3_bucket
         )
+
+    @property
+    def s3_public_base(self) -> str:
+        """Base URL a stored object's key is appended to. Explicit public URL
+        wins; otherwise fall back to path-style `{endpoint}/{bucket}`."""
+        if self.s3_public_url:
+            return self.s3_public_url.rstrip("/")
+        return f"{self.s3_endpoint}/{self.s3_bucket}"
 
     # Inbound email parsing — Postmark/Sendgrid/Mailgun-style webhooks.
     # When `inbound_email_domain` is set, outreach emails go out with a

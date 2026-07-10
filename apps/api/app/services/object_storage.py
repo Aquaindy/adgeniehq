@@ -2,16 +2,17 @@
 
 Two backends behind one `put_object(key, data, content_type) -> public_url`:
 
-  * `R2Backend` — Cloudflare R2 (S3-compatible via boto3). Durable; used
-    whenever R2 is fully configured (see `settings.r2_enabled`).
+  * `S3Backend` — any S3-compatible provider (Cloudflare R2, DO Spaces, Wasabi,
+    AWS S3) via boto3. Durable; used whenever S3 is configured (see
+    `settings.s3_enabled`). Objects are stored under an optional `S3_PREFIX`
+    namespace so several apps can share one bucket.
   * `LocalDiskBackend` — writes under `uploads/` and returns a `/uploads/...`
     relative URL served by the FastAPI static mount. Fine for local dev;
     EPHEMERAL on hosts like Render (files vanish on redeploy).
 
-The active backend is chosen once from config and cached. `key` is the full
-object path (e.g. `blog-images/<workspace>/<file>.png`); the same key is used
-for both the R2 object and the local file, so switching backends doesn't move
-existing references — new writes just land in the new place.
+The active backend is chosen once from config and cached. `key` is the object
+path within the app (e.g. `blog-images/<workspace>/<file>.png`); the S3 backend
+prepends `S3_PREFIX`, the local backend uses it verbatim.
 """
 
 from __future__ import annotations
@@ -54,8 +55,8 @@ class LocalDiskBackend:
         return f"{self._url_prefix}/{key}"
 
 
-class R2Backend:
-    """Uploads to Cloudflare R2 (S3 API) and returns a public URL.
+class S3Backend:
+    """Uploads to an S3-compatible bucket and returns a public URL.
 
     The boto3 client is built lazily and reused (it holds a connection pool)."""
 
@@ -67,14 +68,21 @@ class R2Backend:
         secret_access_key: str,
         bucket: str,
         public_base_url: str,
+        prefix: str = "",
     ) -> None:
         self._endpoint = endpoint
         self._access_key_id = access_key_id
         self._secret_access_key = secret_access_key
         self._bucket = bucket
         self._public_base_url = public_base_url.rstrip("/")
+        # Normalize: no leading/trailing slashes, so joining is unambiguous.
+        self._prefix = prefix.strip("/")
         self._client = None
         self._client_lock = threading.Lock()
+
+    def _full_key(self, key: str) -> str:
+        key = key.lstrip("/")
+        return f"{self._prefix}/{key}" if self._prefix else key
 
     def _get_client(self):
         if self._client is None:
@@ -103,18 +111,19 @@ class R2Backend:
 
     def put(self, *, key: str, data: bytes, content_type: str) -> str:
         client = self._get_client()
+        full_key = self._full_key(key)
         try:
             client.put_object(
                 Bucket=self._bucket,
-                Key=key,
+                Key=full_key,
                 Body=data,
                 ContentType=content_type,
                 CacheControl=_CACHE_CONTROL,
             )
         except Exception as exc:  # noqa: BLE001 — boto/botocore raise many types
-            log.error("object_storage.r2_put_failed", key=key, error=str(exc))
-            raise ObjectStorageError(f"Failed to upload image to R2: {exc}") from exc
-        return f"{self._public_base_url}/{key}"
+            log.error("object_storage.s3_put_failed", key=full_key, error=str(exc))
+            raise ObjectStorageError(f"Failed to upload image to storage: {exc}") from exc
+        return f"{self._public_base_url}/{full_key}"
 
 
 # ---------------------------------------------------------------------------
@@ -129,13 +138,14 @@ def build_backend() -> StorageBackend:
     """Construct the backend from current settings. Exposed (uncached) for
     tests; app code should call `get_backend()`."""
 
-    if settings.r2_enabled:
-        return R2Backend(
-            endpoint=settings.r2_endpoint,
-            access_key_id=settings.r2_access_key_id,
-            secret_access_key=settings.r2_secret_access_key,
-            bucket=settings.r2_bucket,
-            public_base_url=settings.r2_public_base_url,
+    if settings.s3_enabled:
+        return S3Backend(
+            endpoint=settings.s3_endpoint,
+            access_key_id=settings.s3_access_key_id,
+            secret_access_key=settings.s3_secret_access_key,
+            bucket=settings.s3_bucket,
+            public_base_url=settings.s3_public_base,
+            prefix=settings.s3_prefix,
         )
     from app.services.image_upload_service import uploads_root
 
