@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { UsageMeter } from "@/components/UsageMeter";
 import { ApiError } from "@/lib/api-client";
 import {
+  type ContentImageStyle,
   type ExportFormat,
   fetchContentDraftBlob,
   fetchContentDraftsBundleBlob,
@@ -438,10 +439,12 @@ function DraftCard({
 }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState<ExportFormat | null>(null);
+  const [imageStyle, setImageStyle] = useState<ContentImageStyle>("concept");
   const script = readVideoScript(draft);
 
   const imageMut = useMutation({
-    mutationFn: () => generateContentDraftImage(workspaceId, draft.id),
+    mutationFn: (style: ContentImageStyle) =>
+      generateContentDraftImage(workspaceId, draft.id, style),
     onSuccess: (updated) => onUpdated(updated),
   });
 
@@ -499,10 +502,20 @@ function DraftCard({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
+          <select
+            value={imageStyle}
+            onChange={(e) => setImageStyle(e.target.value as ContentImageStyle)}
+            disabled={imageMut.isPending}
+            aria-label="Image style"
+            className="rounded-lg border border-slate-200 bg-surface px-2 py-1.5 text-xs text-slate-text outline-none focus:border-grape focus:ring-2 focus:ring-grape-200"
+          >
+            <option value="concept">Concept</option>
+            <option value="product">Product cover</option>
+          </select>
           <Button
             type="button"
             variant="secondary"
-            onClick={() => imageMut.mutate()}
+            onClick={() => imageMut.mutate(imageStyle)}
             disabled={imageMut.isPending}
           >
             {imageMut.isPending

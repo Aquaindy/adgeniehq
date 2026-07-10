@@ -173,9 +173,16 @@ export function archiveContentDraft(workspaceId: string, draftId: string) {
   );
 }
 
-export function generateContentDraftImage(workspaceId: string, draftId: string) {
+export type ContentImageStyle = "concept" | "product";
+
+export function generateContentDraftImage(
+  workspaceId: string,
+  draftId: string,
+  style: ContentImageStyle = "concept",
+) {
+  const qs = style === "product" ? "?style=product" : "";
   return apiFetch<ContentDraftPublic>(
-    `/workspaces/${workspaceId}/content-drafts/${draftId}/image`,
+    `/workspaces/${workspaceId}/content-drafts/${draftId}/image${qs}`,
     { method: "POST" },
   );
 }

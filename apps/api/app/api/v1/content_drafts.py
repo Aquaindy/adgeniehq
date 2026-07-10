@@ -347,6 +347,10 @@ def generate_image(
     workspace_id: UUID,
     draft_id: UUID,
     request: Request,
+    style: str = Query(
+        default="concept",
+        description="'concept' (headline + graphics) or 'product' (product-box promo).",
+    ),
     member: WorkspaceMember = Depends(get_current_member),
     db: Session = Depends(get_db),
 ) -> ContentDraftPublic:
@@ -361,6 +365,7 @@ def generate_image(
         draft_id=draft_id,
         actor_user_id=member.user_id,
         actor_role=member.role,
+        style=style,
         request=request,
     )
     return ContentDraftPublic.model_validate(draft)

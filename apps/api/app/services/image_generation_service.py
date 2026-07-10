@@ -12,6 +12,7 @@ rather than a placeholder image (production rule: never fabricate assets).
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
 from uuid import UUID
 
 from fastapi import Request
@@ -117,11 +118,28 @@ def _overlay_headline(draft: ContentDraft) -> str:
     return raw
 
 
-def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
+def _promo_cta(draft: ContentDraft, profile) -> str:
+    """CTA text for a product-cover image: the promoted link's domain, else the
+    workspace website, else a short default. Kept short so it renders cleanly."""
+
+    url = (draft.target_url or (getattr(profile, "website_url", None) or "") or "").strip()
+    if url:
+        netloc = urlparse(url if "://" in url else f"https://{url}").netloc
+        domain = (netloc or url).replace("www.", "").strip("/")
+        if domain:
+            return f"Visit {domain}"
+    return "Get instant access"
+
+
+def _build_prompt(
+    db: Session, workspace_id: UUID, draft: ContentDraft, *, style: str = "concept"
+) -> str:
     """Compose an image prompt from the draft plus workspace brand context.
 
     For a social post we render a SHORT headline on the image as designed
     typography with supporting graphics (gpt-image renders short text reliably).
+    `style="product"` instead composes a digital-product promo: the post title,
+    a 3D ebook/product-box mockup, topical icon accents, and a CTA bar.
     Other surfaces (blog hero, landing page) stay text-free — a full headline
     there reads as a garbled caption."""
 
@@ -150,6 +168,32 @@ def _build_prompt(db: Session, workspace_id: UUID, draft: ContentDraft) -> str:
     context = f" for {', '.join(context_bits)}" if context_bits else ""
 
     headline = _overlay_headline(draft) if platform is not None else ""
+
+    if platform is not None and style == "product" and headline:
+        cta = _promo_cta(draft, profile)
+        box = (
+            f"a photorealistic 3D ebook / software product-box mockup labelled "
+            f"“{business}”"
+            if business
+            else "a photorealistic 3D ebook / software product-box mockup"
+        )
+        return (
+            f"Design a premium, scroll-stopping social media promo graphic{context}. "
+            f"Prominently render this post title as the bold, correctly spelled "
+            f"focal headline: “{headline}”. "
+            f"Feature {box} as a hero element with soft reflections and depth. "
+            f"Add a clear call-to-action button/bar with the text: “{cta}”. "
+            f"Include a few tasteful, topical icon / emoji-style graphics and "
+            f"accents that reinforce the theme. "
+            f"Use this only as thematic direction, never as extra rendered text: "
+            f"{subject}. "
+            "Vibrant, high-contrast brand colors with real depth, dimension, "
+            "studio lighting and a modern tech aesthetic; balanced, layered, "
+            "premium composition. "
+            "Spell only the title, the product name, and the CTA EXACTLY as "
+            "written; render NO other words, paragraphs, platform names, "
+            "hashtags, watermarks, or UI."
+        )
 
     if headline:
         return (
@@ -188,14 +232,19 @@ def generate_for_draft(
     draft_id: UUID,
     actor_user_id: UUID,
     actor_role: Role,
+    style: str = "concept",
     request: Request | None = None,
 ) -> ContentDraft:
     """Generate + persist one image for a draft, returning the updated draft.
 
-    Charges image-generation credits, records a usage event, and writes an
-    audit log. Spending money on an image is a Marketer+ action."""
+    `style` is "concept" (headline + graphics) or "product" (a digital-product
+    promo: title + 3D product-box mockup + CTA). Charges image-generation
+    credits, records a usage event, and writes an audit log. Spending money on
+    an image is a Marketer+ action."""
 
     require_role_at_least(actor_role, Role.MARKETER)
+
+    style = "product" if str(style).lower() == "product" else "concept"
 
     draft = content_draft_service.get_draft(
         db, workspace_id=workspace_id, draft_id=draft_id
@@ -209,7 +258,7 @@ def generate_for_draft(
 
     billing_service.assert_within_image_generation_limit(db, workspace_id=workspace_id)
 
-    prompt = _build_prompt(db, workspace_id, draft)
+    prompt = _build_prompt(db, workspace_id, draft, style=style)
     size = _image_size_for(draft)
 
     try:
@@ -234,6 +283,7 @@ def generate_for_draft(
     meta = dict(draft.seo_metadata or {})
     meta["image_model"] = result.model
     meta["image_size"] = size
+    meta["image_style"] = style
     headline = _overlay_headline(draft) if draft.platform else ""
     if headline:
         meta["image_headline"] = headline
