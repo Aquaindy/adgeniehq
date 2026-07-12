@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -131,6 +131,10 @@ export function OnboardingWizardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
+  const [searchParams] = useSearchParams();
+  // `?new=1` starts a blank wizard for a NEW product. The previous product's
+  // answers stay recoverable — each generated Growth DNA freezes its own copy.
+  const isNewProduct = searchParams.get("new") === "1";
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -139,11 +143,12 @@ export function OnboardingWizardPage() {
   const onboarding = useQuery({
     queryKey: ["onboarding", workspaceId],
     queryFn: () => getOnboarding(workspaceId!),
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !isNewProduct,
   });
 
   // Hydrate form state from server
   useEffect(() => {
+    if (isNewProduct) return;
     const data = onboarding.data;
     if (!data) return;
     setForm({
@@ -172,7 +177,7 @@ export function OnboardingWizardPage() {
     if (data.step_completed && data.completed_at == null) {
       setStep(Math.min(data.step_completed, STEPS.length - 1));
     }
-  }, [onboarding.data]);
+  }, [onboarding.data, isNewProduct]);
 
   const update = useMutation({
     mutationFn: (payload: OnboardingUpdate) => updateOnboarding(workspaceId!, payload),
@@ -192,41 +197,53 @@ export function OnboardingWizardPage() {
   }
 
   function buildPayloadForStep(currentStep: number): OnboardingUpdate {
+    // In new-product mode, empty fields must CLEAR the previous product's
+    // values (explicit null) instead of being omitted and silently kept.
+    const empty = isNewProduct ? null : undefined;
+    const orClear = (v: string) => v.trim() || empty;
+
     const payload: OnboardingUpdate = { step_completed: currentStep + 1 };
     if (currentStep === 0) {
-      payload.business_name = form.business_name.trim() || undefined;
-      payload.website_url = form.website_url.trim() || undefined;
-      payload.industry = form.industry.trim() || undefined;
+      payload.business_name = orClear(form.business_name);
+      payload.website_url = orClear(form.website_url);
+      payload.industry = orClear(form.industry);
     }
     if (currentStep === 1) {
-      payload.target_audience = form.target_audience.trim() || undefined;
-      payload.offer_description = form.offer_description.trim() || undefined;
-      payload.pain_points = form.pain_points.trim() || undefined;
+      payload.target_audience = orClear(form.target_audience);
+      payload.offer_description = orClear(form.offer_description);
+      payload.pain_points = orClear(form.pain_points);
     }
     if (currentStep === 2) {
-      payload.primary_conversion_goal = form.primary_conversion_goal.trim() || undefined;
+      payload.primary_conversion_goal = orClear(form.primary_conversion_goal);
       const minRaw = form.monthly_ad_budget_min_usd.trim();
       const maxRaw = form.monthly_ad_budget_max_usd.trim();
       if (minRaw !== "") {
         payload.monthly_ad_budget_min_usd = Math.max(0, Math.floor(Number(minRaw)));
+      } else if (isNewProduct) {
+        payload.monthly_ad_budget_min_usd = null;
       }
       if (maxRaw !== "") {
         payload.monthly_ad_budget_max_usd = Math.max(0, Math.floor(Number(maxRaw)));
+      } else if (isNewProduct) {
+        payload.monthly_ad_budget_max_usd = null;
       }
-      payload.geographic_target = form.geographic_target.trim() || undefined;
+      payload.geographic_target = orClear(form.geographic_target);
     }
     if (currentStep === 3) {
       payload.current_ad_platforms = form.current_ad_platforms;
-      payload.landing_page_urls =
-        form.landing_page_urls
-          .split("\n")
-          .map((v) => v.trim())
-          .filter(Boolean) || undefined;
-      if (form.analytics_status) payload.analytics_status = form.analytics_status;
+      payload.landing_page_urls = form.landing_page_urls
+        .split("\n")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      if (form.analytics_status) {
+        payload.analytics_status = form.analytics_status;
+      } else if (isNewProduct) {
+        payload.analytics_status = null;
+      }
       payload.competitors = form.competitors.filter((c) => c.name.trim().length > 0);
     }
     if (currentStep === 4) {
-      payload.brand_voice = form.brand_voice.trim() || undefined;
+      payload.brand_voice = orClear(form.brand_voice);
       payload.mark_completed = true;
     }
     return payload;
@@ -270,13 +287,16 @@ export function OnboardingWizardPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <header>
-        <p className="text-xs uppercase tracking-wider text-grape-700">Onboarding</p>
+        <p className="text-xs uppercase tracking-wider text-grape-700">
+          {isNewProduct ? "New product" : "Onboarding"}
+        </p>
         <h1 className="mt-1 text-2xl font-semibold text-ink sm:text-3xl">
-          Tell us about your business
+          {isNewProduct ? "Tell us about this product" : "Tell us about your business"}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          AdGenieHQ uses these answers to generate your Growth DNA Profile — readiness scores,
-          recommended first campaigns, and a 30-day plan. You can refine answers later.
+          {isNewProduct
+            ? "Starting fresh for a new product — your previous product's profile stays saved on the Growth DNA page. These answers generate this product's own Growth DNA Profile."
+            : "AdGenieHQ uses these answers to generate your Growth DNA Profile — readiness scores, recommended first campaigns, and a 30-day plan. You can refine answers later."}
         </p>
       </header>
 

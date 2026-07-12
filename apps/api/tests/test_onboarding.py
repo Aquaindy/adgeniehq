@@ -337,7 +337,8 @@ def test_growth_dna_history_rename_and_delete(client: TestClient) -> None:
     assert history.status_code == 200
     rows = history.json()
     assert {r["id"] for r in rows} == {first["id"], second["id"]}
-    assert all(r["label"] is None for r in rows)
+    # Profiles are born named after their product's business name.
+    assert all(r["label"] == "Acme Marketing" for r in rows)
 
     # A specific saved profile can still be fetched by id.
     fetched = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/{first['id']}")
@@ -370,6 +371,61 @@ def test_growth_dna_history_rename_and_delete(client: TestClient) -> None:
     assert gone.status_code == 404
     latest = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna").json()
     assert latest["id"] == first["id"]
+
+
+def test_growth_dna_snapshot_and_reuse_answers(client: TestClient) -> None:
+    _, workspace_id = _signup_and_workspace(client)
+    _fill_minimum_onboarding(client, workspace_id)
+
+    with _force_no_llm():
+        first = client.post(f"/api/v1/workspaces/{workspace_id}/growth-dna/generate").json()
+
+    # Born named after its product, with the generating answers frozen in.
+    assert first["label"] == "Acme Marketing"
+    assert first["has_onboarding_snapshot"] is True
+
+    # Switch the (single) onboarding slot to a second product and generate.
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/onboarding",
+        json={
+            "business_name": "Beta Product",
+            "website_url": "https://beta.example",
+            "target_audience": "Solo founders.",
+            "offer_description": "A different product entirely.",
+            "primary_conversion_goal": "Trial signups",
+        },
+    )
+    with _force_no_llm():
+        second = client.post(f"/api/v1/workspaces/{workspace_id}/growth-dna/generate").json()
+    assert second["label"] == "Beta Product"
+
+    # Both products keep their own profiles in history.
+    rows = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/history").json()
+    assert {r["label"] for r in rows} == {"Acme Marketing", "Beta Product"}
+    assert all(r["has_onboarding_snapshot"] for r in rows)
+
+    # Restoring product A's answers makes it the active onboarding again.
+    restored = client.post(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/{first['id']}/use-onboarding"
+    )
+    assert restored.status_code == 200
+    assert restored.json()["business_name"] == "Acme Marketing"
+    onboarding = client.get(f"/api/v1/workspaces/{workspace_id}/onboarding").json()
+    assert onboarding["business_name"] == "Acme Marketing"
+    assert onboarding["offer_description"] == "AI growth command center for performance teams."
+
+    # Product B's frozen copy is untouched by the restore.
+    second_again = client.get(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/{second['id']}"
+    ).json()
+    assert second_again["label"] == "Beta Product"
+
+    # Unknown profile id → 404.
+    missing = client.post(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/"
+        "00000000-0000-0000-0000-000000000000/use-onboarding"
+    )
+    assert missing.status_code == 404
 
 
 def test_growth_dna_history_is_workspace_isolated(client: TestClient) -> None:

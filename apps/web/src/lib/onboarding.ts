@@ -51,3 +51,12 @@ export function deleteGrowthDna(workspaceId: string, dnaId: string) {
     method: "DELETE",
   });
 }
+
+/** Restore this profile's frozen onboarding answers as the workspace's active
+ * onboarding, so the wizard opens pre-filled with that product. */
+export function useGrowthDnaOnboarding(workspaceId: string, dnaId: string) {
+  return apiFetch<OnboardingProfile>(
+    `/workspaces/${workspaceId}/growth-dna/${dnaId}/use-onboarding`,
+    { method: "POST" },
+  );
+}

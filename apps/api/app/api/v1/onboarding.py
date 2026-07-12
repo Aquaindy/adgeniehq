@@ -22,6 +22,7 @@ from app.services.growth_dna_service import (
     get_by_id,
     get_latest_for_workspace,
     list_for_workspace,
+    restore_onboarding_from_profile,
     set_label,
 )
 from app.services.onboarding_service import (
@@ -150,3 +151,22 @@ def delete_growth_dna(
     if not deleted:
         raise GrowthDnaNotFoundError("Growth DNA Profile not found in this workspace.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{workspace_id}/growth-dna/{dna_id}/use-onboarding",
+    response_model=OnboardingProfilePublic,
+)
+def use_growth_dna_onboarding(
+    workspace_id: UUID,
+    dna_id: UUID,
+    _member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
+    db: Session = Depends(get_db),
+) -> OnboardingProfilePublic:
+    """Load this profile's frozen onboarding answers back into the workspace's
+    onboarding profile, so the wizard opens pre-filled with that product."""
+    dna = get_by_id(db, workspace_id=workspace_id, dna_id=dna_id)
+    if dna is None:
+        raise GrowthDnaNotFoundError("Growth DNA Profile not found in this workspace.")
+    profile = restore_onboarding_from_profile(db, dna=dna)
+    return OnboardingProfilePublic.model_validate(profile)

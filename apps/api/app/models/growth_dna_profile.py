@@ -31,6 +31,11 @@ class GrowthDnaProfile(Base, TimestampMixin):
     # profiles stay identifiable in the history list.
     label: Mapped[str | None] = mapped_column(String(160), nullable=True)
 
+    # Frozen copy of the onboarding answers this profile was generated from.
+    # Lets one workspace hold DNA for many products: restore a snapshot into
+    # the (single) onboarding profile to edit/regenerate that product later.
+    onboarding_snapshot: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
     business_summary: Mapped[str] = mapped_column(Text, nullable=False)
     icp_summary: Mapped[str] = mapped_column(Text, nullable=False)
     offer_positioning: Mapped[str] = mapped_column(Text, nullable=False)
@@ -55,6 +60,10 @@ class GrowthDnaProfile(Base, TimestampMixin):
     engine_version: Mapped[str] = mapped_column(String(32), nullable=False)
 
     onboarding_profile = relationship("OnboardingProfile", back_populates="growth_dna_profiles")
+
+    @property
+    def has_onboarding_snapshot(self) -> bool:
+        return bool(self.onboarding_snapshot)
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<GrowthDnaProfile workspace={self.workspace_id} engine={self.engine_version}>"

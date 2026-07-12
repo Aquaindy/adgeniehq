@@ -350,6 +350,7 @@ export type GrowthDna = {
   workspace_id: string;
   onboarding_profile_id: string;
   label: string | null;
+  has_onboarding_snapshot: boolean;
   business_summary: string;
   icp_summary: string;
   offer_positioning: string;
@@ -369,6 +370,7 @@ export type GrowthDnaSummary = {
   id: string;
   workspace_id: string;
   label: string | null;
+  has_onboarding_snapshot: boolean;
   business_summary: string;
   funnel_readiness_score: number;
   paid_ads_readiness_score: number;

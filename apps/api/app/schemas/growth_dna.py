@@ -103,6 +103,9 @@ class GrowthDnaPublic(BaseModel):
     onboarding_profile_id: UUID
 
     label: str | None = None
+    # True when the profile carries a frozen copy of the onboarding answers it
+    # was generated from (profiles created before snapshots exist don't).
+    has_onboarding_snapshot: bool = False
     business_summary: str
     icp_summary: str
     offer_positioning: str
@@ -131,6 +134,7 @@ class GrowthDnaSummary(BaseModel):
     id: UUID
     workspace_id: UUID
     label: str | None = None
+    has_onboarding_snapshot: bool = False
     business_summary: str
     funnel_readiness_score: int
     paid_ads_readiness_score: int

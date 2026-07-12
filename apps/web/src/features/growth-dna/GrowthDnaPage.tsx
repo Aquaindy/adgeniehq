@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -18,6 +18,7 @@ import {
   getGrowthDnaById,
   listGrowthDnaHistory,
   renameGrowthDna,
+  useGrowthDnaOnboarding,
 } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
@@ -32,6 +33,7 @@ import type {
 export function GrowthDnaPage() {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // `?profile=<id>` pins the page to a saved (historical) profile.
   const savedId = searchParams.get("profile");
@@ -94,6 +96,25 @@ export function GrowthDnaPage() {
     },
   });
 
+  // Load a product's frozen answers into the onboarding wizard, then open it.
+  const reuse = useMutation({
+    mutationFn: (id: string) => useGrowthDnaOnboarding(workspaceId!, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["onboarding", workspaceId] });
+      navigate("/onboarding");
+    },
+  });
+
+  const onReuse = (id: string) => {
+    if (
+      window.confirm(
+        "Open this product's answers in the onboarding wizard? The wizard's current answers will be replaced (each generated profile keeps its own copy).",
+      )
+    ) {
+      reuse.mutate(id);
+    }
+  };
+
   const active = savedId ? saved : latest;
   const historyItems = history.data ?? [];
 
@@ -146,8 +167,11 @@ export function GrowthDnaPage() {
             ? "Hide saved profiles"
             : `Saved profiles${historyItems.length > 0 ? ` (${historyItems.length})` : ""}`}
         </Button>
+        <Button variant="secondary" onClick={() => navigate("/onboarding?new=1")}>
+          + New product profile
+        </Button>
         {savedId && (
-          <Button variant="secondary" onClick={() => viewSaved(null)}>
+          <Button variant="ghost" onClick={() => viewSaved(null)}>
             ← Back to latest
           </Button>
         )}
@@ -160,6 +184,8 @@ export function GrowthDnaPage() {
           loading={history.isLoading}
           onView={(id) => viewSaved(id)}
           onRename={(id, label) => rename.mutate({ id, label })}
+          onReuse={onReuse}
+          reusePending={reuse.isPending}
           onDelete={(id) => {
             if (window.confirm("Delete this saved Growth DNA profile? This cannot be undone.")) {
               remove.mutate(id);
@@ -169,10 +195,21 @@ export function GrowthDnaPage() {
       )}
 
       {savedId && (
-        <div className="rounded-xl border border-grape-100 bg-grape-soft px-4 py-3 text-sm text-grape-800">
-          You&apos;re viewing a saved profile generated{" "}
-          {new Date(active.data.created_at).toLocaleString()}. The latest profile stays
-          untouched — go back to it to regenerate.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-grape-100 bg-grape-soft px-4 py-3 text-sm text-grape-800">
+          <span>
+            You&apos;re viewing a saved profile generated{" "}
+            {new Date(active.data.created_at).toLocaleString()}.
+          </span>
+          {active.data.has_onboarding_snapshot && (
+            <button
+              type="button"
+              onClick={() => onReuse(active.data!.id)}
+              disabled={reuse.isPending}
+              className="text-sm font-semibold text-grape-800 underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              {reuse.isPending ? "Loading answers…" : "Edit answers & regenerate this product →"}
+            </button>
+          )}
         </div>
       )}
 
@@ -486,6 +523,8 @@ function HistoryPanel({
   loading = false,
   onView,
   onRename,
+  onReuse,
+  reusePending = false,
   onDelete,
 }: {
   items: GrowthDnaSummary[];
@@ -493,92 +532,118 @@ function HistoryPanel({
   loading?: boolean;
   onView: (id: string) => void;
   onRename: (id: string, label: string | null) => void;
+  onReuse: (id: string) => void;
+  reusePending?: boolean;
   onDelete: (id: string) => void;
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
   return (
-    <Card>
-      <CardHeader
-        title="Saved profiles"
-        subtitle="Every generated Growth DNA is kept here automatically. Name the ones you want to find again, and reopen any of them at any time."
-      />
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="text-lg font-semibold text-ink">Saved profiles</h2>
+        <p className="text-sm text-slate-500">
+          Every generated Growth DNA is kept here automatically — one card per generation.
+          Open any product&apos;s profile, or reuse its answers to regenerate it.
+        </p>
+      </div>
       {loading ? (
-        <p className="mt-3 text-sm text-slate-400">Loading saved profiles…</p>
+        <p className="text-sm text-slate-400">Loading saved profiles…</p>
       ) : items.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="text-sm text-slate-500">
           Nothing saved yet — generate a profile and it will appear here.
         </p>
       ) : (
-        <ul className="mt-3 flex flex-col gap-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
             const isActive = item.id === activeId;
             const isAi = item.engine_version.startsWith("ai-");
             return (
-              <li
+              <Card
                 key={item.id}
                 className={cn(
-                  "flex flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
-                  isActive ? "border-grape-100 bg-grape-soft/40" : "border-slate-100",
+                  "flex flex-col gap-2",
+                  isActive && "border-grape-100 bg-grape-soft/40",
                 )}
               >
-                <div className="min-w-0">
-                  {renamingId === item.id ? (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        onRename(item.id, draft.trim() || null);
-                        setRenamingId(null);
-                      }}
-                      className="flex flex-wrap items-center gap-2"
+                {renamingId === item.id ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      onRename(item.id, draft.trim() || null);
+                      setRenamingId(null);
+                    }}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <input
+                      autoFocus
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      maxLength={160}
+                      placeholder="e.g. DemoGenius"
+                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-grape-500 focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="text-xs font-medium text-grape-700 hover:underline"
                     >
-                      <input
-                        autoFocus
-                        value={draft}
-                        onChange={(e) => setDraft(e.target.value)}
-                        maxLength={160}
-                        placeholder="e.g. DemoGenius launch"
-                        className="w-56 rounded-lg border border-slate-200 px-2.5 py-1 text-sm focus:border-grape-500 focus:outline-none"
-                      />
-                      <button
-                        type="submit"
-                        className="text-xs font-medium text-grape-700 hover:underline"
-                      >
-                        Save
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRenamingId(null)}
-                        className="text-xs font-medium text-slate-500 hover:underline"
-                      >
-                        Cancel
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-ink">
-                        {profileDisplayName(item)}
-                      </span>
-                      {isAi && <span className="pill pill-grape">AI-tailored</span>}
-                      {isActive && (
-                        <span className="pill bg-slate-100 text-slate-600">Viewing</span>
-                      )}
-                    </div>
-                  )}
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    {new Date(item.created_at).toLocaleString()} · Funnel{" "}
-                    {item.funnel_readiness_score} · Paid ads {item.paid_ads_readiness_score}
-                  </p>
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRenamingId(null)}
+                      className="text-xs font-medium text-slate-500 hover:underline"
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-start justify-between gap-2">
+                    <h3
+                      className="line-clamp-2 text-sm font-semibold text-ink"
+                      title={profileDisplayName(item)}
+                    >
+                      {profileDisplayName(item)}
+                    </h3>
+                    {isActive && (
+                      <span className="pill shrink-0 bg-slate-100 text-slate-600">Viewing</span>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-xs text-slate-400">
+                  {new Date(item.created_at).toLocaleString()}
+                </p>
+
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="pill bg-slate-100 text-slate-600">
+                    Funnel {item.funnel_readiness_score}
+                  </span>
+                  <span className="pill bg-slate-100 text-slate-600">
+                    Paid ads {item.paid_ads_readiness_score}
+                  </span>
+                  {isAi && <span className="pill pill-grape">AI-tailored</span>}
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+
+                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 pt-2.5">
                   {!isActive && (
                     <button
                       type="button"
                       onClick={() => onView(item.id)}
-                      className="text-xs font-medium text-grape-700 hover:underline"
+                      className="text-xs font-semibold text-grape-700 hover:underline"
                     >
-                      View
+                      Open
+                    </button>
+                  )}
+                  {item.has_onboarding_snapshot && (
+                    <button
+                      type="button"
+                      onClick={() => onReuse(item.id)}
+                      disabled={reusePending}
+                      className="text-xs font-medium text-slate-600 hover:underline disabled:opacity-50"
+                    >
+                      Reuse answers
                     </button>
                   )}
                   <button
@@ -594,17 +659,17 @@ function HistoryPanel({
                   <button
                     type="button"
                     onClick={() => onDelete(item.id)}
-                    className="text-xs font-medium text-danger hover:underline"
+                    className="ml-auto text-xs font-medium text-danger hover:underline"
                   >
                     Delete
                   </button>
                 </div>
-              </li>
+              </Card>
             );
           })}
-        </ul>
+        </div>
       )}
-    </Card>
+    </section>
   );
 }
 

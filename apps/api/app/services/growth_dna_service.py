@@ -1090,6 +1090,31 @@ REQUIRED_FIELDS = (
     "primary_conversion_goal",
 )
 
+# Onboarding answers frozen into each generated profile (everything the wizard
+# edits, minus wizard bookkeeping). Restoring these makes the profile's product
+# the "active" one again.
+SNAPSHOT_FIELDS = (
+    "business_name",
+    "website_url",
+    "industry",
+    "target_audience",
+    "offer_description",
+    "pain_points",
+    "primary_conversion_goal",
+    "monthly_ad_budget_min_usd",
+    "monthly_ad_budget_max_usd",
+    "geographic_target",
+    "current_ad_platforms",
+    "landing_page_urls",
+    "analytics_status",
+    "competitors",
+    "brand_voice",
+)
+
+
+def snapshot_onboarding(profile: OnboardingProfile) -> dict:
+    return {field: getattr(profile, field) for field in SNAPSHOT_FIELDS}
+
 
 def _missing_required(p: OnboardingProfile) -> list[str]:
     return [field for field in REQUIRED_FIELDS if not getattr(p, field)]
@@ -1121,6 +1146,10 @@ def generate_growth_dna(
     dna = GrowthDnaProfile(
         workspace_id=profile.workspace_id,
         onboarding_profile_id=profile.id,
+        # Born named after its product so multi-product histories stay readable;
+        # users can rename at any time.
+        label=(profile.business_name or "").strip()[:160] or None,
+        onboarding_snapshot=snapshot_onboarding(profile),
         business_summary=build_business_summary(profile),
         icp_summary=build_icp_summary(profile),
         offer_positioning=build_offer_positioning(profile),
@@ -1250,3 +1279,40 @@ def delete_profile(db: Session, *, workspace_id, dna_id) -> bool:
     db.delete(dna)
     db.commit()
     return True
+
+
+class NoOnboardingSnapshotError(AdVantaError):
+    status_code = 409
+    code = "no_onboarding_snapshot"
+
+
+def restore_onboarding_from_profile(
+    db: Session, *, dna: GrowthDnaProfile
+) -> OnboardingProfile:
+    """Write the profile's frozen onboarding answers back into the workspace's
+    (single) onboarding profile, making that product the active one for the
+    wizard and future generations. The replaced answers are not lost as long as
+    they were generated from — every generation freezes its own snapshot."""
+    snapshot = dna.onboarding_snapshot
+    if not snapshot:
+        raise NoOnboardingSnapshotError(
+            "This profile predates answer snapshots — its onboarding answers "
+            "were not saved and cannot be restored."
+        )
+
+    profile = (
+        db.query(OnboardingProfile)
+        .filter(OnboardingProfile.workspace_id == dna.workspace_id)
+        .first()
+    )
+    if profile is None:
+        profile = OnboardingProfile(workspace_id=dna.workspace_id, step_completed=0)
+        db.add(profile)
+
+    for field in SNAPSHOT_FIELDS:
+        if field in snapshot:
+            setattr(profile, field, snapshot[field])
+
+    db.commit()
+    db.refresh(profile)
+    return profile
