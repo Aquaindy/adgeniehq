@@ -102,6 +102,7 @@ class GrowthDnaPublic(BaseModel):
     workspace_id: UUID
     onboarding_profile_id: UUID
 
+    label: str | None = None
     business_summary: str
     icp_summary: str
     offer_positioning: str
@@ -120,3 +121,22 @@ class GrowthDnaPublic(BaseModel):
     engine_version: str
 
     created_at: datetime
+
+
+class GrowthDnaSummary(BaseModel):
+    """Lightweight row for the saved-profiles history list."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    workspace_id: UUID
+    label: str | None = None
+    business_summary: str
+    funnel_readiness_score: int
+    paid_ads_readiness_score: int
+    engine_version: str
+    created_at: datetime
+
+
+class GrowthDnaLabelUpdate(BaseModel):
+    label: str | None = Field(default=None, max_length=160)

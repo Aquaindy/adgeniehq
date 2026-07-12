@@ -133,7 +133,7 @@ export function growthDnaToMarkdown(dna: GrowthDna): string {
 
 export function growthDnaFilename(dna: GrowthDna, ext: string): string {
   const base =
-    (dna.business_summary || "growth-dna")
+    (dna.label || dna.business_summary || "growth-dna")
       .slice(0, 48)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")

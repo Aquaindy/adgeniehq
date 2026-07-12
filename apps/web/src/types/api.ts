@@ -349,6 +349,7 @@ export type GrowthDna = {
   id: string;
   workspace_id: string;
   onboarding_profile_id: string;
+  label: string | null;
   business_summary: string;
   icp_summary: string;
   offer_positioning: string;
@@ -360,6 +361,17 @@ export type GrowthDna = {
   recommended_first_campaigns: CampaignSuggestion[];
   thirty_day_growth_plan: GrowthPlanWeek[];
   marketing_strategy: MarketingStrategy;
+  engine_version: string;
+  created_at: string;
+};
+
+export type GrowthDnaSummary = {
+  id: string;
+  workspace_id: string;
+  label: string | null;
+  business_summary: string;
+  funnel_readiness_score: number;
+  paid_ads_readiness_score: number;
   engine_version: string;
   created_at: string;
 };

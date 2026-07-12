@@ -1210,3 +1210,43 @@ def get_latest_for_workspace(
         .order_by(GrowthDnaProfile.created_at.desc())
         .first()
     )
+
+
+def list_for_workspace(db: Session, *, workspace_id) -> list[GrowthDnaProfile]:
+    """Every saved Growth DNA for the workspace, newest first."""
+    return (
+        db.query(GrowthDnaProfile)
+        .filter(GrowthDnaProfile.workspace_id == workspace_id)
+        .order_by(GrowthDnaProfile.created_at.desc())
+        .all()
+    )
+
+
+def get_by_id(db: Session, *, workspace_id, dna_id) -> GrowthDnaProfile | None:
+    return (
+        db.query(GrowthDnaProfile)
+        .filter(
+            GrowthDnaProfile.id == dna_id,
+            GrowthDnaProfile.workspace_id == workspace_id,
+        )
+        .first()
+    )
+
+
+def set_label(
+    db: Session, *, dna: GrowthDnaProfile, label: str | None
+) -> GrowthDnaProfile:
+    cleaned = (label or "").strip()
+    dna.label = cleaned[:160] or None
+    db.commit()
+    db.refresh(dna)
+    return dna
+
+
+def delete_profile(db: Session, *, workspace_id, dna_id) -> bool:
+    dna = get_by_id(db, workspace_id=workspace_id, dna_id=dna_id)
+    if dna is None:
+        return False
+    db.delete(dna)
+    db.commit()
+    return True

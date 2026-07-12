@@ -1,19 +1,28 @@
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AdVantaError
 from app.db.session import get_db
 from app.models.workspace_member import WorkspaceMember
-from app.schemas.growth_dna import GrowthDnaPublic
+from app.schemas.growth_dna import (
+    GrowthDnaLabelUpdate,
+    GrowthDnaPublic,
+    GrowthDnaSummary,
+)
 from app.schemas.onboarding import OnboardingProfilePublic, OnboardingProfileUpdate
 from app.security.dependencies import get_current_member, require_role
 from app.security.permissions import Role
 from app.services.growth_dna_service import (
+    delete_profile,
     enrich_growth_dna_background,
     generate_growth_dna,
+    get_by_id,
     get_latest_for_workspace,
+    list_for_workspace,
+    set_label,
 )
 from app.services.onboarding_service import (
     get_or_create_profile,
@@ -83,3 +92,61 @@ def get_growth_dna(
     if dna is None:
         raise GrowthDnaNotFoundError("No Growth DNA Profile generated for this workspace yet.")
     return GrowthDnaPublic.model_validate(dna)
+
+
+# Static path declared before "/{dna_id}" so "history" never hits the UUID route.
+@router.get(
+    "/{workspace_id}/growth-dna/history",
+    response_model=list[GrowthDnaSummary],
+)
+def list_growth_dna_history(
+    workspace_id: UUID,
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> list[GrowthDnaSummary]:
+    rows = list_for_workspace(db, workspace_id=workspace_id)
+    return [GrowthDnaSummary.model_validate(r) for r in rows]
+
+
+@router.get("/{workspace_id}/growth-dna/{dna_id}", response_model=GrowthDnaPublic)
+def get_growth_dna_by_id(
+    workspace_id: UUID,
+    dna_id: UUID,
+    _member: WorkspaceMember = Depends(get_current_member),
+    db: Session = Depends(get_db),
+) -> GrowthDnaPublic:
+    dna = get_by_id(db, workspace_id=workspace_id, dna_id=dna_id)
+    if dna is None:
+        raise GrowthDnaNotFoundError("Growth DNA Profile not found in this workspace.")
+    return GrowthDnaPublic.model_validate(dna)
+
+
+@router.patch("/{workspace_id}/growth-dna/{dna_id}", response_model=GrowthDnaPublic)
+def rename_growth_dna(
+    workspace_id: UUID,
+    dna_id: UUID,
+    payload: GrowthDnaLabelUpdate,
+    _member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
+    db: Session = Depends(get_db),
+) -> GrowthDnaPublic:
+    dna = get_by_id(db, workspace_id=workspace_id, dna_id=dna_id)
+    if dna is None:
+        raise GrowthDnaNotFoundError("Growth DNA Profile not found in this workspace.")
+    dna = set_label(db, dna=dna, label=payload.label)
+    return GrowthDnaPublic.model_validate(dna)
+
+
+@router.delete(
+    "/{workspace_id}/growth-dna/{dna_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_growth_dna(
+    workspace_id: UUID,
+    dna_id: UUID,
+    _member: WorkspaceMember = Depends(require_role(Role.MARKETER)),
+    db: Session = Depends(get_db),
+) -> Response:
+    deleted = delete_profile(db, workspace_id=workspace_id, dna_id=dna_id)
+    if not deleted:
+        raise GrowthDnaNotFoundError("Growth DNA Profile not found in this workspace.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

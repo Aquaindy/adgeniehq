@@ -27,6 +27,10 @@ class GrowthDnaProfile(Base, TimestampMixin):
         index=True,
     )
 
+    # Optional user-given name ("DemoGenius launch", "Q3 offer") so saved
+    # profiles stay identifiable in the history list.
+    label: Mapped[str | None] = mapped_column(String(160), nullable=True)
+
     business_summary: Mapped[str] = mapped_column(Text, nullable=False)
     icp_summary: Mapped[str] = mapped_column(Text, nullable=False)
     offer_positioning: Mapped[str] = mapped_column(Text, nullable=False)

@@ -309,3 +309,99 @@ def test_onboarding_endpoints_require_membership(client: TestClient) -> None:
     response = other.get(f"/api/v1/workspaces/{workspace_id}/onboarding")
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "workspace_not_found"
+
+
+def _fill_minimum_onboarding(client: TestClient, workspace_id: str) -> None:
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/onboarding",
+        json={
+            "business_name": "Acme Marketing",
+            "website_url": "https://acme.example",
+            "target_audience": "Series A founders.",
+            "offer_description": "AI growth command center for performance teams.",
+            "primary_conversion_goal": "Lead form submissions",
+        },
+    )
+
+
+def test_growth_dna_history_rename_and_delete(client: TestClient) -> None:
+    _, workspace_id = _signup_and_workspace(client)
+    _fill_minimum_onboarding(client, workspace_id)
+
+    with _force_no_llm():
+        first = client.post(f"/api/v1/workspaces/{workspace_id}/growth-dna/generate").json()
+        second = client.post(f"/api/v1/workspaces/{workspace_id}/growth-dna/generate").json()
+
+    # Regenerating keeps the earlier profile — history lists both.
+    history = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/history")
+    assert history.status_code == 200
+    rows = history.json()
+    assert {r["id"] for r in rows} == {first["id"], second["id"]}
+    assert all(r["label"] is None for r in rows)
+
+    # A specific saved profile can still be fetched by id.
+    fetched = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/{first['id']}")
+    assert fetched.status_code == 200
+    assert fetched.json()["id"] == first["id"]
+    assert fetched.json()["business_summary"] == first["business_summary"]
+
+    # Naming a profile persists (trimmed) and shows up in history.
+    renamed = client.patch(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/{first['id']}",
+        json={"label": "  DemoGenius launch  "},
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["label"] == "DemoGenius launch"
+    rows = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/history").json()
+    assert {r["id"]: r["label"] for r in rows}[first["id"]] == "DemoGenius launch"
+
+    # An empty label clears the name.
+    cleared = client.patch(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/{first['id']}",
+        json={"label": ""},
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["label"] is None
+
+    # Deleting removes the profile; the remaining one becomes the latest.
+    deleted = client.delete(f"/api/v1/workspaces/{workspace_id}/growth-dna/{second['id']}")
+    assert deleted.status_code == 204
+    gone = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna/{second['id']}")
+    assert gone.status_code == 404
+    latest = client.get(f"/api/v1/workspaces/{workspace_id}/growth-dna").json()
+    assert latest["id"] == first["id"]
+
+
+def test_growth_dna_history_is_workspace_isolated(client: TestClient) -> None:
+    _, workspace_id = _signup_and_workspace(client, "alice@example.com")
+    _fill_minimum_onboarding(client, workspace_id)
+    with _force_no_llm():
+        dna = client.post(f"/api/v1/workspaces/{workspace_id}/growth-dna/generate").json()
+
+    other = TestClient(client.app)
+    other.post(
+        "/api/v1/auth/register",
+        json={"email": "bob@example.com", "password": "correct-horse-9"},
+    )
+    bob_token = other.post(
+        "/api/v1/auth/login",
+        json={"email": "bob@example.com", "password": "correct-horse-9"},
+    ).json()["access_token"]
+    other.headers.update({"Authorization": f"Bearer {bob_token}"})
+    bob_workspace = other.post("/api/v1/workspaces", json={"name": "Bob Co"}).json()
+
+    # Alice's workspace is invisible to Bob entirely.
+    assert other.get(
+        f"/api/v1/workspaces/{workspace_id}/growth-dna/history"
+    ).status_code == 404
+
+    # Alice's profile id resolves to nothing inside Bob's own workspace.
+    resp = other.get(f"/api/v1/workspaces/{bob_workspace['id']}/growth-dna/{dna['id']}")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "growth_dna_not_found"
+    assert other.delete(
+        f"/api/v1/workspaces/{bob_workspace['id']}/growth-dna/{dna['id']}"
+    ).status_code == 404
+    assert other.get(
+        f"/api/v1/workspaces/{bob_workspace['id']}/growth-dna/history"
+    ).json() == []

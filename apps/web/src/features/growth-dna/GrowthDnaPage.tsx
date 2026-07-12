@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -10,24 +11,36 @@ import {
   growthDnaFilename,
   growthDnaToMarkdown,
 } from "@/lib/growth-dna-export";
-import { generateGrowthDna, getGrowthDna } from "@/lib/onboarding";
+import {
+  deleteGrowthDna,
+  generateGrowthDna,
+  getGrowthDna,
+  getGrowthDnaById,
+  listGrowthDnaHistory,
+  renameGrowthDna,
+} from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type {
   ChannelStrategy,
   ContentPillar,
   GrowthDna,
+  GrowthDnaSummary,
   MarketingStrategy,
 } from "@/types/api";
 
 export function GrowthDnaPage() {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // `?profile=<id>` pins the page to a saved (historical) profile.
+  const savedId = searchParams.get("profile");
+  const [showHistory, setShowHistory] = useState(false);
 
-  const dna = useQuery({
+  const latest = useQuery({
     queryKey: ["growth-dna", workspaceId],
     queryFn: () => getGrowthDna(workspaceId!),
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !savedId,
     retry: false,
     // While the AI tailoring runs in the background, poll until it lands.
     refetchInterval: (query) =>
@@ -37,21 +50,71 @@ export function GrowthDnaPage() {
         : false,
   });
 
+  const saved = useQuery({
+    queryKey: ["growth-dna", workspaceId, savedId],
+    queryFn: () => getGrowthDnaById(workspaceId!, savedId!),
+    enabled: !!workspaceId && !!savedId,
+    retry: false,
+  });
+
+  const history = useQuery({
+    queryKey: ["growth-dna-history", workspaceId],
+    queryFn: () => listGrowthDnaHistory(workspaceId!),
+    enabled: !!workspaceId,
+  });
+
+  const viewSaved = (id: string | null) =>
+    setSearchParams(id ? { profile: id } : {});
+
   const regenerate = useMutation({
     mutationFn: () => generateGrowthDna(workspaceId!),
     onSuccess: (fresh) => {
       queryClient.setQueryData(["growth-dna", workspaceId], fresh);
       queryClient.invalidateQueries({ queryKey: ["growth-dna", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["growth-dna-history", workspaceId] });
     },
   });
 
-  if (dna.isLoading) {
+  const rename = useMutation({
+    mutationFn: ({ id, label }: { id: string; label: string | null }) =>
+      renameGrowthDna(workspaceId!, id, label),
+    onSuccess: (fresh) => {
+      queryClient.setQueryData(["growth-dna", workspaceId, fresh.id], fresh);
+      queryClient.invalidateQueries({ queryKey: ["growth-dna", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["growth-dna-history", workspaceId] });
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteGrowthDna(workspaceId!, id),
+    onSuccess: (_res, id) => {
+      if (savedId === id) viewSaved(null);
+      queryClient.invalidateQueries({ queryKey: ["growth-dna", workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["growth-dna-history", workspaceId] });
+    },
+  });
+
+  const active = savedId ? saved : latest;
+  const historyItems = history.data ?? [];
+
+  if (active.isLoading) {
     return <div className="text-sm text-slate-400">Loading…</div>;
   }
 
-  if (dna.error) {
-    const code = dna.error instanceof ApiError ? dna.error.code : null;
+  if (active.error) {
+    const code = active.error instanceof ApiError ? active.error.code : null;
     if (code === "growth_dna_not_found") {
+      if (savedId) {
+        return (
+          <div className="mx-auto max-w-3xl">
+            <EmptyState
+              title="Saved profile not found"
+              description="This Growth DNA profile no longer exists — it may have been deleted."
+              action={<Button onClick={() => viewSaved(null)}>View latest profile</Button>}
+            />
+          </div>
+        );
+      }
       return (
         <div className="mx-auto max-w-3xl">
           <EmptyState
@@ -68,22 +131,62 @@ export function GrowthDnaPage() {
     }
     return (
       <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-        {dna.error instanceof Error ? dna.error.message : "Could not load Growth DNA Profile."}
+        {active.error instanceof Error ? active.error.message : "Could not load Growth DNA Profile."}
       </div>
     );
   }
 
-  if (!dna.data) return null;
+  if (!active.data) return null;
 
   return (
-    <GrowthDnaView
-      dna={dna.data}
-      onRegenerate={() => regenerate.mutate()}
-      regenerating={regenerate.isPending}
-      regenerateError={
-        regenerate.error instanceof Error ? regenerate.error.message : null
-      }
-    />
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" onClick={() => setShowHistory((v) => !v)}>
+          {showHistory
+            ? "Hide saved profiles"
+            : `Saved profiles${historyItems.length > 0 ? ` (${historyItems.length})` : ""}`}
+        </Button>
+        {savedId && (
+          <Button variant="secondary" onClick={() => viewSaved(null)}>
+            ← Back to latest
+          </Button>
+        )}
+      </div>
+
+      {showHistory && (
+        <HistoryPanel
+          items={historyItems}
+          activeId={active.data.id}
+          loading={history.isLoading}
+          onView={(id) => viewSaved(id)}
+          onRename={(id, label) => rename.mutate({ id, label })}
+          onDelete={(id) => {
+            if (window.confirm("Delete this saved Growth DNA profile? This cannot be undone.")) {
+              remove.mutate(id);
+            }
+          }}
+        />
+      )}
+
+      {savedId && (
+        <div className="rounded-xl border border-grape-100 bg-grape-soft px-4 py-3 text-sm text-grape-800">
+          You&apos;re viewing a saved profile generated{" "}
+          {new Date(active.data.created_at).toLocaleString()}. The latest profile stays
+          untouched — go back to it to regenerate.
+        </div>
+      )}
+
+      <GrowthDnaView
+        dna={active.data}
+        onRegenerate={savedId ? undefined : () => regenerate.mutate()}
+        regenerating={regenerate.isPending}
+        regenerateError={
+          regenerate.error instanceof Error ? regenerate.error.message : null
+        }
+        onRename={(label) => rename.mutate({ id: active.data!.id, label })}
+        renamePending={rename.isPending}
+      />
+    </div>
   );
 }
 
@@ -92,11 +195,15 @@ export function GrowthDnaView({
   onRegenerate,
   regenerating = false,
   regenerateError = null,
+  onRename,
+  renamePending = false,
 }: {
   dna: GrowthDna;
   onRegenerate?: () => void;
   regenerating?: boolean;
   regenerateError?: string | null;
+  onRename?: (label: string | null) => void;
+  renamePending?: boolean;
 }) {
   const isAi = dna.marketing_strategy?.source === "ai";
   const enriching = dna.marketing_strategy?.enrichment === "pending";
@@ -105,11 +212,25 @@ export function GrowthDnaView({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-grape-700">Growth DNA Profile</p>
-          <h1 className="mt-1 text-2xl font-semibold text-ink sm:text-3xl">{dna.business_summary}</h1>
+          {dna.label ? (
+            <>
+              <h1 className="mt-1 text-2xl font-semibold text-ink sm:text-3xl">{dna.label}</h1>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+                {dna.business_summary}
+              </p>
+            </>
+          ) : (
+            <h1 className="mt-1 text-2xl font-semibold text-ink sm:text-3xl">{dna.business_summary}</h1>
+          )}
           <p className="mt-1 text-xs text-slate-400">
             Generated {new Date(dna.created_at).toLocaleString()} · engine {dna.engine_version}
             {isAi ? " · AI-tailored" : ""}
           </p>
+          {onRename && (
+            <div className="mt-2">
+              <NameControl value={dna.label} onSave={onRename} pending={renamePending} />
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -283,6 +404,207 @@ export function GrowthDnaView({
         </Link>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Saved profiles (history)
+// ---------------------------------------------------------------------------
+
+/** Label if named, else the first sentence of the business summary. */
+function profileDisplayName(item: { label: string | null; business_summary: string }) {
+  if (item.label) return item.label;
+  const idx = item.business_summary.indexOf(". ");
+  const first = idx > 0 ? item.business_summary.slice(0, idx) : item.business_summary;
+  return first.length > 72 ? `${first.slice(0, 71).trimEnd()}…` : first;
+}
+
+function NameControl({
+  value,
+  onSave,
+  pending = false,
+}: {
+  value: string | null;
+  onSave: (label: string | null) => void;
+  pending?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setDraft(value ?? "");
+          setEditing(true);
+        }}
+        className="text-xs font-medium text-grape-700 hover:underline"
+      >
+        {value ? "Rename profile" : "Name this profile"}
+      </button>
+    );
+  }
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave(draft.trim() || null);
+        setEditing(false);
+      }}
+      className="flex flex-wrap items-center gap-2"
+    >
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        maxLength={160}
+        placeholder="e.g. DemoGenius launch"
+        className="w-64 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:border-grape-500 focus:outline-none"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="text-xs font-medium text-grape-700 hover:underline disabled:opacity-50"
+      >
+        Save
+      </button>
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        className="text-xs font-medium text-slate-500 hover:underline"
+      >
+        Cancel
+      </button>
+    </form>
+  );
+}
+
+function HistoryPanel({
+  items,
+  activeId,
+  loading = false,
+  onView,
+  onRename,
+  onDelete,
+}: {
+  items: GrowthDnaSummary[];
+  activeId: string;
+  loading?: boolean;
+  onView: (id: string) => void;
+  onRename: (id: string, label: string | null) => void;
+  onDelete: (id: string) => void;
+}) {
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+
+  return (
+    <Card>
+      <CardHeader
+        title="Saved profiles"
+        subtitle="Every generated Growth DNA is kept here automatically. Name the ones you want to find again, and reopen any of them at any time."
+      />
+      {loading ? (
+        <p className="mt-3 text-sm text-slate-400">Loading saved profiles…</p>
+      ) : items.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">
+          Nothing saved yet — generate a profile and it will appear here.
+        </p>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-2">
+          {items.map((item) => {
+            const isActive = item.id === activeId;
+            const isAi = item.engine_version.startsWith("ai-");
+            return (
+              <li
+                key={item.id}
+                className={cn(
+                  "flex flex-col gap-2 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+                  isActive ? "border-grape-100 bg-grape-soft/40" : "border-slate-100",
+                )}
+              >
+                <div className="min-w-0">
+                  {renamingId === item.id ? (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        onRename(item.id, draft.trim() || null);
+                        setRenamingId(null);
+                      }}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <input
+                        autoFocus
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        maxLength={160}
+                        placeholder="e.g. DemoGenius launch"
+                        className="w-56 rounded-lg border border-slate-200 px-2.5 py-1 text-sm focus:border-grape-500 focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-grape-700 hover:underline"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRenamingId(null)}
+                        className="text-xs font-medium text-slate-500 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-ink">
+                        {profileDisplayName(item)}
+                      </span>
+                      {isAi && <span className="pill pill-grape">AI-tailored</span>}
+                      {isActive && (
+                        <span className="pill bg-slate-100 text-slate-600">Viewing</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {new Date(item.created_at).toLocaleString()} · Funnel{" "}
+                    {item.funnel_readiness_score} · Paid ads {item.paid_ads_readiness_score}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  {!isActive && (
+                    <button
+                      type="button"
+                      onClick={() => onView(item.id)}
+                      className="text-xs font-medium text-grape-700 hover:underline"
+                    >
+                      View
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(item.label ?? "");
+                      setRenamingId(item.id);
+                    }}
+                    className="text-xs font-medium text-slate-600 hover:underline"
+                  >
+                    {item.label ? "Rename" : "Name"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(item.id)}
+                    className="text-xs font-medium text-danger hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
   );
 }
 
