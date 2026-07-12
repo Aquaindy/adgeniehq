@@ -117,6 +117,8 @@ export function GrowthDnaPage() {
 
   const active = savedId ? saved : latest;
   const historyItems = history.data ?? [];
+  // Newest first — opening this one means "just show the latest" (unpinned).
+  const latestId = historyItems[0]?.id ?? null;
 
   if (active.isLoading) {
     return <div className="text-sm text-slate-400">Loading…</div>;
@@ -164,25 +166,30 @@ export function GrowthDnaPage() {
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="ghost" onClick={() => setShowHistory((v) => !v)}>
           {showHistory
-            ? "Hide saved profiles"
+            ? "← Back to profile"
             : `Saved profiles${historyItems.length > 0 ? ` (${historyItems.length})` : ""}`}
         </Button>
         <Button variant="secondary" onClick={() => navigate("/onboarding?new=1")}>
           + New product profile
         </Button>
-        {savedId && (
+        {!showHistory && savedId && (
           <Button variant="ghost" onClick={() => viewSaved(null)}>
             ← Back to latest
           </Button>
         )}
       </div>
 
-      {showHistory && (
+      {showHistory ? (
+        // Library view: the grid takes over the page; opening a card returns
+        // to the detail view pinned to that profile.
         <HistoryPanel
           items={historyItems}
           activeId={active.data.id}
           loading={history.isLoading}
-          onView={(id) => viewSaved(id)}
+          onView={(id) => {
+            viewSaved(id === latestId ? null : id);
+            setShowHistory(false);
+          }}
           onRename={(id, label) => rename.mutate({ id, label })}
           onReuse={onReuse}
           reusePending={reuse.isPending}
@@ -192,37 +199,39 @@ export function GrowthDnaPage() {
             }
           }}
         />
-      )}
-
-      {savedId && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-grape-100 bg-grape-soft px-4 py-3 text-sm text-grape-800">
-          <span>
-            You&apos;re viewing a saved profile generated{" "}
-            {new Date(active.data.created_at).toLocaleString()}.
-          </span>
-          {active.data.has_onboarding_snapshot && (
-            <button
-              type="button"
-              onClick={() => onReuse(active.data!.id)}
-              disabled={reuse.isPending}
-              className="text-sm font-semibold text-grape-800 underline-offset-2 hover:underline disabled:opacity-50"
-            >
-              {reuse.isPending ? "Loading answers…" : "Edit answers & regenerate this product →"}
-            </button>
+      ) : (
+        <>
+          {savedId && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-grape-100 bg-grape-soft px-4 py-3 text-sm text-grape-800">
+              <span>
+                You&apos;re viewing a saved profile generated{" "}
+                {new Date(active.data.created_at).toLocaleString()}.
+              </span>
+              {active.data.has_onboarding_snapshot && (
+                <button
+                  type="button"
+                  onClick={() => onReuse(active.data!.id)}
+                  disabled={reuse.isPending}
+                  className="text-sm font-semibold text-grape-800 underline-offset-2 hover:underline disabled:opacity-50"
+                >
+                  {reuse.isPending ? "Loading answers…" : "Edit answers & regenerate this product →"}
+                </button>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      <GrowthDnaView
-        dna={active.data}
-        onRegenerate={savedId ? undefined : () => regenerate.mutate()}
-        regenerating={regenerate.isPending}
-        regenerateError={
-          regenerate.error instanceof Error ? regenerate.error.message : null
-        }
-        onRename={(label) => rename.mutate({ id: active.data!.id, label })}
-        renamePending={rename.isPending}
-      />
+          <GrowthDnaView
+            dna={active.data}
+            onRegenerate={savedId ? undefined : () => regenerate.mutate()}
+            regenerating={regenerate.isPending}
+            regenerateError={
+              regenerate.error instanceof Error ? regenerate.error.message : null
+            }
+            onRename={(label) => rename.mutate({ id: active.data!.id, label })}
+            renamePending={rename.isPending}
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -600,12 +609,14 @@ function HistoryPanel({
                   </form>
                 ) : (
                   <div className="flex items-start justify-between gap-2">
-                    <h3
-                      className="line-clamp-2 text-sm font-semibold text-ink"
+                    <button
+                      type="button"
+                      onClick={() => onView(item.id)}
                       title={profileDisplayName(item)}
+                      className="line-clamp-2 text-left text-sm font-semibold text-ink hover:text-grape-700"
                     >
                       {profileDisplayName(item)}
-                    </h3>
+                    </button>
                     {isActive && (
                       <span className="pill shrink-0 bg-slate-100 text-slate-600">Viewing</span>
                     )}
@@ -627,15 +638,13 @@ function HistoryPanel({
                 </div>
 
                 <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 pt-2.5">
-                  {!isActive && (
-                    <button
-                      type="button"
-                      onClick={() => onView(item.id)}
-                      className="text-xs font-semibold text-grape-700 hover:underline"
-                    >
-                      Open
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => onView(item.id)}
+                    className="text-xs font-semibold text-grape-700 hover:underline"
+                  >
+                    Open
+                  </button>
                   {item.has_onboarding_snapshot && (
                     <button
                       type="button"
