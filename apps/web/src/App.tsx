@@ -16,6 +16,7 @@ import { VerifyEmailPage } from "@/features/auth/VerifyEmailPage";
 import { AppSumoRedeemPage } from "@/features/appsumo/AppSumoRedeemPage";
 import { BlogPage } from "@/features/marketing/BlogPage";
 import { BlogPostPage } from "@/features/marketing/BlogPostPage";
+import { AboutPage } from "@/features/marketing/AboutPage";
 import { LandingPage } from "@/features/marketing/LandingPage";
 import { PricingPage } from "@/features/marketing/PricingPage";
 import { PrivacyPage } from "@/features/marketing/PrivacyPage";
@@ -113,6 +114,7 @@ export function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/welcome" element={<Navigate to="/" replace />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:slug" element={<BlogPostPage />} />
           <Route path="/terms" element={<TermsPage />} />

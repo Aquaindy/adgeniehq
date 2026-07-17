@@ -17,6 +17,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex items-center gap-1 text-sm">
             <MarketingLink to="/pricing">Pricing</MarketingLink>
+            <MarketingLink to="/about">About</MarketingLink>
             <MarketingLink to="/blog">Blog</MarketingLink>
             <ThemeToggle className="ml-1" />
             <Link
@@ -67,6 +68,7 @@ function SiteFooter() {
           <FooterColumn title="Product">
             <FooterLink to="/">Overview</FooterLink>
             <FooterLink to="/pricing">Pricing</FooterLink>
+            <FooterLink to="/about">About us</FooterLink>
             <FooterLink to="/blog">Blog</FooterLink>
           </FooterColumn>
 
