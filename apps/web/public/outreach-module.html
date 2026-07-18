@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Outreach — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Outreach cheat sheet: discover and score backlink prospects, draft personalized outreach emails, approve before every send, track replies via reply tokens, and auto-draft follow-ups." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/outreach-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/outreach-module.html">Outreach</a>
+    <a href="/seo-module.html">SEO</a>
+    <a href="/content-social-module.html">Content &amp; Social</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Outreach</h1>
+    <p>Build real authority and backlinks: discover and score link prospects, draft personalized outreach emails, then approve every send yourself. Nothing leaves your account until an Admin says so — and follow-ups are drafted for you, never fired off automatically.</p>
+    <div class="chips">
+      <span class="chip">Backlink prospects</span>
+      <span class="chip">AI-drafted emails</span>
+      <span class="chip">Approve before send</span>
+      <span class="chip">Reply tracking</span>
+      <span class="chip">Auto follow-up drafts</span>
+    </div>
+  </section>
+
+  <p class="lead">Everything in this module runs on <b>real data</b> — prospects you add or discover, and emails you draft and approve. Emails are <b>drafts until an Admin approves them</b>; nothing sends on its own, and every send is audit-logged.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#what">What Outreach is</a></li>
+      <li><a href="#prospects">Backlink prospects</a></li>
+      <li><a href="#draft">Drafting outreach emails</a></li>
+      <li><a href="#approve">Approval before send</a></li>
+      <li><a href="#followups">Auto follow-ups</a></li>
+      <li><a href="#seo">Ties to SEO &amp; GEO</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p>Open <span class="path">/outreach</span> → <b>Add a prospect</b> (or discover from a competitor) → open it → add a <b>contact email</b> → <b>Draft email</b> → review → an Admin clicks <b>Approve</b> → <b>Send via SMTP</b>. Reply comes back? Status flips to <i>replied</i> automatically.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="what"><span class="num">1</span>What Outreach is <span style="font-weight:400;font-size:14px;color:var(--muted)">— /outreach</span></h2>
+  <p>Outreach is your backlink-building workspace. You collect the sites you'd like a link from (<b>prospects</b>), draft a tailored email to each contact, and work them from first touch to a live backlink. It is deliberately <b>human-in-the-loop</b>: the AI (or a template) writes the draft, but a person approves and sends.</p>
+  <ul class="tight">
+    <li><b>Prospects list</b> at <span class="path">/outreach</span> — every domain you're tracking, with status, contact, relevance and domain-authority scores.</li>
+    <li><b>Prospect detail</b> at <span class="path">/outreach/:id</span> — edit the contact, draft emails, and run the approve → send → reply flow.</li>
+    <li>A <b>usage meter</b> tracks outreach-email sends against your plan limit; sending is blocked once you hit the cap.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">✅ You approve every send</p>
+    <p>No email in this module reaches a recipient without an Admin approving it first. Drafts, edits, and follow-ups all wait for that human step by design.</p>
+  </div>
+
+  <!-- 2 -->
+  <h2 id="prospects"><span class="num">2</span>Backlink prospects <span style="font-weight:400;font-size:14px;color:var(--muted)">— discover, add &amp; score</span></h2>
+  <p>A prospect is one domain you'd like a backlink from. There are three ways to add them:</p>
+  <table>
+    <tr><th>Method</th><th>What it does</th><th>Access</th></tr>
+    <tr><td><b>Add manually</b></td><td>Enter a domain plus an optional contact name/email, right on the Outreach page.</td><td><span class="badge b-read">Member</span></td></tr>
+    <tr><td><b>Discover from competitor</b></td><td>Crawl a competitor URL, collect the external sites it links to, and add each new domain (scored by mention count). New domains only — existing rows are never overwritten.</td><td><span class="badge b-med">Marketer+</span></td></tr>
+    <tr><td><b>Bulk import</b></td><td>Paste a CSV-style batch of domains/contacts. Per-row errors (duplicate or invalid domain) are reported without aborting the whole batch.</td><td><span class="badge b-med">Marketer+</span></td></tr>
+  </table>
+  <p>Each prospect can carry a <b>relevance score</b>, a <b>domain authority</b> (DA), a specific target page, contact role, and free-text notes. Domains are normalized (scheme, <code>www.</code>, and casing stripped) and are <b>unique per workspace</b> — you can't add the same site twice.</p>
+  <h3>Prospect statuses</h3>
+  <p>The status moves through the pipeline as you work a prospect — some steps are automatic (a send flips it to <i>contacted</i>; an inbound reply or bounce updates it too):</p>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td><span class="badge b-read">new</span></td><td>Just added — no outreach yet.</td></tr>
+    <tr><td><span class="badge b-read">queued</span></td><td>Lined up for outreach.</td></tr>
+    <tr><td><span class="badge b-med">contacted</span></td><td>An approved email was sent (set automatically on send).</td></tr>
+    <tr><td><span class="badge b-med">replied</span></td><td>They wrote back (set automatically on an inbound reply, or manually).</td></tr>
+    <tr><td><span class="badge b-live">won</span></td><td>Backlink secured — you can attach the live backlink URL.</td></tr>
+    <tr><td><span class="badge b-read">declined</span></td><td>They said no.</td></tr>
+    <tr><td><span class="badge b-high">bounced</span></td><td>The address bounced (set automatically from a bounce notification).</td></tr>
+    <tr><td><span class="badge b-read">archived</span></td><td>Parked / no longer pursuing.</td></tr>
+  </table>
+  <p>You can export the full prospect list to <b>CSV</b> at any time.</p>
+
+  <!-- 3 -->
+  <h2 id="draft"><span class="num">3</span>Drafting outreach emails <span style="font-weight:400;font-size:14px;color:var(--muted)">— personalized per prospect</span></h2>
+  <p>Open a prospect and use <b>Draft an outreach email</b>. The draft is personalized from that prospect and your Growth DNA / onboarding profile.</p>
+  <ol class="steps">
+    <li><b>Add a contact email first</b> — you can't draft to a prospect with no <code>contact_email</code>. Edit the contact card to add one.</li>
+    <li><b>Optionally set an angle and sender name</b> — a hook for the pitch and the name it should sign off with.</li>
+    <li><b>Draft email</b> — uses your configured LLM if available, otherwise a deterministic template, so you always get a real draft. It lands in <span class="badge b-read">draft</span> status.</li>
+    <li><b>Edit inline</b> — tweak the subject and body while it's a draft. (Editing an <i>approved</i> email drops it back to draft so it must be re-approved.)</li>
+  </ol>
+  <p>Every draft records its <b>source</b> (agent / deterministic / follow-up) and the model used, and each draft is audit-logged. You can draft more than one email per prospect — they're listed newest-first on the prospect page.</p>
+
+  <!-- 4 -->
+  <h2 id="approve"><span class="num">4</span>Approval before send <span style="font-weight:400;font-size:14px;color:var(--muted)">— nothing sends on its own</span></h2>
+  <p>This is the safety core of the module. A draft becomes a real email only after an <b>Admin</b> approves it, and only then can it be sent.</p>
+  <ol class="steps">
+    <li><b>Approve</b> — an <b>Admin+</b> reviews the draft and approves it. Status → <span class="badge b-med">approved</span>, stamped with who approved and when.</li>
+    <li><b>Send via SMTP</b> — an <b>Admin+</b> sends. SMTP can hang for 10+ seconds, so with workers enabled the send runs in the <b>background</b> and you get immediate feedback.</li>
+    <li><b>Status flips</b> — on success → <span class="badge b-live">sent</span> (and the prospect → contacted, timestamped). If SMTP isn't configured or the transport rejects it → <span class="badge b-high">failed</span> with the error saved, so a message is never silently dropped.</li>
+    <li><b>Retry or track</b> — a failed email can be re-sent. A sent email can be marked <b>replied</b> or <b>won</b> by hand if you're not using inbound tracking.</li>
+  </ol>
+  <div class="callout warn">
+    <p class="t">Guardrails on send</p>
+    <p>Sends are <b>throttled per minute</b> to protect your sending domain, and counted against your <b>plan's outreach-email limit</b>. Every send appends a CAN-SPAM/GDPR unsubscribe footer automatically, and each send/approve/edit is written to the audit log.</p>
+  </div>
+  <h3>Reply tokens &amp; threading</h3>
+  <p>The first time an email goes out, AdGenieHQ mints a signed <b>reply token</b> and sends the message with a <code>Reply-To</code> of <code>reply+&lt;token&gt;@&lt;your-inbound-domain&gt;</code>. When the recipient replies, your inbound-email parse service forwards it to AdGenieHQ, which matches the token and:</p>
+  <ul class="tight">
+    <li>marks the email <span class="badge b-med">replied</span> and the prospect <b>replied</b> — or</li>
+    <li>if the message looks like a bounce, marks the email <span class="badge b-high">bounced</span> and the prospect <b>bounced</b>.</li>
+  </ul>
+  <p>The token is HMAC-signed to the deployment secret, so forged or tampered tokens are rejected before they ever touch your data — and one conversation always routes back to the same email row for clean threading.</p>
+
+  <!-- 5 -->
+  <h2 id="followups"><span class="num">5</span>Auto follow-ups <span style="font-weight:400;font-size:14px;color:var(--muted)">— drafted, never auto-sent</span></h2>
+  <p>Prospects go quiet. A background job (Celery beat) finds <b>sent</b> emails that have had no reply past your configured silence threshold and <b>no existing follow-up</b>, then drafts a gentle bump for each.</p>
+  <ul class="tight">
+    <li>The follow-up is a <span class="badge b-read">draft</span> — an Admin still has to approve it before it can send. The auto-scheduler only <i>writes drafts</i>; it never sends.</li>
+    <li>The subject prepends <code>Re:</code> and the body opens with a short "bumping this to the top of your inbox," then quotes the original note for context.</li>
+    <li>You can also draft a follow-up on demand from any sent (or replied) email (<b>Marketer+</b>). Follow-ups chain to the original via <code>parent_email_id</code> with an incrementing <code>step_index</code>.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">✅ Still human-gated</p>
+    <p>Auto follow-ups exist to save you writing time, not to take over your inbox. Like every other email here, they wait in <b>draft</b> for an Admin to approve.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="seo"><span class="num">6</span>Ties to SEO &amp; GEO</h2>
+  <p>Backlinks are off-page SEO. Every link you win in Outreach strengthens your domain's authority and how search engines — and AI answer engines — trust and surface your site.</p>
+  <ul class="tight">
+    <li>Discover the right prospects by targeting sites your <b>competitors</b> already earn links from — the same competitor analysis that powers your SEO work.</li>
+    <li>Won backlinks feed the bigger picture in the <a href="/seo-module.html">SEO &amp; GEO module</a>: authority, visibility, and content-gap closing.</li>
+    <li>Use Outreach to act on link-building opportunities the SEO agent surfaces, then track them through to a live <b>backlink URL</b> on the won prospect.</li>
+  </ul>
+  <p>See the <a href="/seo-module.html">SEO &amp; GEO guide</a> for keyword, content, and technical work that pairs with your link building.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Can it email people without me?</h3>
+    <p>No. Every outreach email — first touch or follow-up — is created as a <b>draft</b>. It can only be sent after an <b>Admin</b> approves it and an Admin triggers the send. There is no mode that sends automatically.</p>
+    <h3>What happens when a prospect replies?</h3>
+    <p>If you've set up inbound-email routing, the reply lands at the message's <code>reply+&lt;token&gt;</code> address, AdGenieHQ matches the token, and it marks the email and prospect <b>replied</b> automatically (or <b>bounced</b> if it's a bounce notice). No inbound setup? Just click <b>Mark replied</b> or <b>Mark won</b> on the sent email yourself.</p>
+    <h3>Why can't I draft an email for this prospect?</h3>
+    <p>The prospect needs a <b>contact email</b>. Open the contact card, add one, and the draft form appears.</p>
+    <h3>My send said "failed" — what now?</h3>
+    <p>Almost always SMTP isn't configured (set <code>SMTP_HOST</code> and friends) or the transport rejected the message. The exact error is saved on the email; fix the config and hit <b>Send</b> again to retry.</p>
+    <h3>Do I need an LLM key to draft?</h3>
+    <p>No. Without a key, drafting falls back to a deterministic template so you still get a real, personalized email. With a key, the copy gets richer.</p>
+    <h3>Who can do what?</h3>
+    <p>Adding and drafting are open to any member; discover, bulk import, editing emails, follow-ups and marking replies need <b>Marketer+</b>; <b>approving and sending require Admin+</b>.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/outreach-module.html">Outreach</a>
+  <a href="/seo-module.html">SEO &amp; GEO</a>
+  <a href="/content-social-module.html">Content &amp; Social</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Content &amp; Social Studio — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Content &amp; Social Studio cheat sheet: generate AI drafts grounded in your Growth DNA, turn one topic into platform-native posts and Reels/Shorts scripts, add a headline image, then review, approve, and publish — nothing auto-posts." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/content-social-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/content-social-module.html">Content &amp; Social</a>
+    <a href="/blog-module.html">Blog</a>
+    <a href="/seo-module.html">SEO</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Content &amp; Social Studio</h1>
+    <p>Generate AI drafts grounded in your Growth DNA, turn one topic into platform-native posts and short-form video scripts, add a headline image, then review and approve. You stay the editor — nothing publishes or posts on its own.</p>
+    <div class="chips">
+      <span class="chip">Content Studio · /content</span>
+      <span class="chip">Social Studio · /social</span>
+      <span class="chip">Posts + Reels/Shorts scripts</span>
+      <span class="chip">Draft → approve → publish</span>
+      <span class="chip">AI headline images</span>
+    </div>
+  </section>
+
+  <p class="lead">Everything here runs on <b>real data</b> — your onboarding, your Growth DNA, and saved AI outputs. Every generation is stored as a reviewable draft; drafts <b>never auto-publish</b>. No connected data yet? You get a clean empty state and a prompt to generate your first draft, never fake copy.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#what">What it is</a></li>
+      <li><a href="#content">Content Studio &amp; draft types</a></li>
+      <li><a href="#generate">Generate &amp; edit a draft</a></li>
+      <li><a href="#lifecycle">Draft lifecycle</a></li>
+      <li><a href="#social">Social Studio</a></li>
+      <li><a href="#image">The generated image</a></li>
+      <li><a href="#next">Where content flows next</a></li>
+      <li><a href="#limits">Plan limits &amp; AI credits</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p>Open <span class="path">/social</span> → type a topic (or paste a blog URL) → pick <b>LinkedIn</b>, <b>X</b>, a <b>Reel</b> → <b>Generate</b> → tweak copy → <b>Generate image</b> → <b>Copy for posting</b> or download <code>.docx</code>. Every draft is saved under <span class="path">/content</span> for review and approval.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="what"><span class="num">1</span>What it is</h2>
+  <p>The Studio is where the AI drafts your written content and organic social — and where you stay firmly in charge of it. Two surfaces, one draft store:</p>
+  <table>
+    <tr><th>Surface</th><th>Route</th><th>What it does</th></tr>
+    <tr><td><b>Content Studio</b></td><td><span class="path">/content</span></td><td>Generate, edit, approve, and publish long- and short-form copy: blog posts, landing-page copy, ad copy, meta descriptions, emails, social posts.</td></tr>
+    <tr><td><b>Social Studio</b></td><td><span class="path">/social</span></td><td>Turn one topic (or a web link) into a platform-native draft per network, plus Reels/Shorts/TikTok video scripts — each with its own keywords, hashtags, and image.</td></tr>
+  </table>
+  <ul class="tight">
+    <li>Drafts are grounded in your <b>Growth DNA</b> and onboarding — offer, audience, brand voice — so output sounds like your business, not a generic template.</li>
+    <li>Every generation is <b>saved and traceable</b>: each draft links back to the agent run that produced it, and the model used (or <span class="badge b-manual">deterministic</span> when no LLM was used).</li>
+    <li>You are the editor. The AI proposes; you edit, approve, reject, or archive. <b>Publishing is always a deliberate human step.</b></li>
+  </ul>
+
+  <!-- 2 -->
+  <h2 id="content"><span class="num">2</span>Content Studio &amp; draft types <span style="font-weight:400;font-size:14px;color:var(--muted)">— /content</span></h2>
+  <p>Each draft has a <b>type</b> that shapes how it's generated and rendered. These are the types the Studio produces:</p>
+  <table>
+    <tr><th>Type</th><th>Use it for</th><th>Where authored</th></tr>
+    <tr><td><code>blog_post</code></td><td>Full SEO article for the public blog</td><td>Content Studio / Blog</td></tr>
+    <tr><td><code>landing_page</code></td><td>Hero, benefits, and CTA copy for a page</td><td>Content Studio</td></tr>
+    <tr><td><code>ad_copy</code></td><td>Headlines + descriptions for paid ads</td><td>Content Studio</td></tr>
+    <tr><td><code>meta_description</code></td><td>SEO title tag + meta description snippet</td><td>Content Studio</td></tr>
+    <tr><td><code>email</code></td><td>Lifecycle / nurture email copy</td><td>Content Studio</td></tr>
+    <tr><td><code>social_post</code></td><td>Organic post tailored to one network</td><td>Social Studio</td></tr>
+    <tr><td><code>short_video_script</code></td><td>Shot-by-shot script for a Reel / Short / TikTok</td><td>Social Studio</td></tr>
+  </table>
+  <div class="callout">
+    <p class="t">Why social lives on its own page</p>
+    <p>Platform-native posts and video scripts need a platform, hashtags, and per-network limits the generic form has no inputs for — so <code>social_post</code> and <code>short_video_script</code> are authored in the <a href="#social">Social Studio</a>. They still land in the same draft list at <span class="path">/content</span>.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="generate"><span class="num">3</span>Generate &amp; edit a draft</h2>
+  <p>On <span class="path">/content</span>, use the <b>Generate a draft</b> form. The agent uses your configured LLM if one is set; otherwise it falls back to a deterministic template populated from onboarding — so you always get a real draft.</p>
+  <ol class="steps">
+    <li><b>Pick a type</b> — blog post, landing page, ad copy, meta description, email, or social post.</li>
+    <li><b>Give it a topic</b> (required), and optionally an <b>audience</b> and comma-separated <b>keywords</b>.</li>
+    <li><b>Generate</b> — the new draft appears in the list with its type, source, and model badges.</li>
+    <li><b>Open it</b> to read the full body, then <b>Edit</b> the title and body inline (available until it's published or archived).</li>
+  </ol>
+  <p>Extra tools on a draft:</p>
+  <ul class="tight">
+    <li><b>AI Assist</b> (Marketer+) — one-shot actions on a draft: <code>outline</code>, <code>expand</code>, <code>refine</code>, <code>suggest_title</code>, <code>suggest_meta</code>. It returns a suggestion; <i>you</i> decide to insert, replace, or discard it. Token and dollar cost are metered.</li>
+    <li><b>Refresh / repurpose</b> — rewrite an existing draft, or turn any URL into a new draft (the origin is recorded on the new draft).</li>
+    <li><b>Export</b> — download a draft as <code>.txt</code> or <code>.docx</code> (the <code>.docx</code> embeds its image), or export all drafts to CSV.</li>
+    <li><b>Manual drafts</b> — you can also hand-author a draft via the API; it lands in the same review flow.</li>
+  </ul>
+
+  <!-- 4 -->
+  <h2 id="lifecycle"><span class="num">4</span>Draft lifecycle</h2>
+  <p>Every draft moves through an explicit review flow. It starts in <code>draft</code> and only becomes public when a human approves and publishes it.</p>
+  <table>
+    <tr><th>Status</th><th>Meaning</th><th>Who / gate</th></tr>
+    <tr><td><span class="badge b-med">draft</span></td><td>Freshly generated or hand-written. Fully editable. The default — nothing auto-advances from here.</td><td>Anyone with access</td></tr>
+    <tr><td><span class="badge b-low">approved</span></td><td>Signed off and ready to publish. Approval gates publication.</td><td><span class="badge b-manual">Admin+</span></td></tr>
+    <tr><td><span class="badge b-high">rejected</span></td><td>Sent back with an optional reason. Can be re-approved after edits.</td><td><span class="badge b-manual">Admin+</span></td></tr>
+    <tr><td><span class="badge b-live">published</span></td><td>Marked live. For blog posts this powers the public blog; for other types you optionally paste the live URL — the record is stamped published either way.</td><td><span class="badge b-manual">Admin+</span></td></tr>
+    <tr><td><span class="badge b-read">archived</span></td><td>Retired from the working list without deleting the record.</td><td>Anyone with access</td></tr>
+  </table>
+  <div class="callout safe">
+    <p class="t">✅ Nothing ships by itself</p>
+    <p>Drafts are never auto-published. Publishing is a deliberate step behind an Admin approval — and for networks without a publishing integration it's a <b>manual</b> "mark published" that records where you posted it. AdGenieHQ does not post to social networks for you.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="social"><span class="num">5</span>Social Studio <span style="font-weight:400;font-size:14px;color:var(--muted)">— /social</span></h2>
+  <p>One topic in, a tailored draft per platform out — each with the right length, tone, and hashtag convention for that network.</p>
+  <ol class="steps">
+    <li><b>Start from a topic</b> or <b>paste a web link</b> to repurpose (we fetch the page and turn its content into posts; leave the topic blank to use the page's own title).</li>
+    <li><b>Optional angle</b> — audience, a link to promote, and a call to action.</li>
+    <li><b>Pick platforms</b> across <b>Posts</b> and <b>Reels &amp; Shorts</b>. Each card shows its length and hashtag limits before you generate.</li>
+    <li><b>Generate</b> — one draft per selected platform, each saved to <span class="path">/content</span>. Copy for posting, download the whole pack as <code>.docx</code>/<code>.txt</code>, or open any draft to refine it.</li>
+  </ol>
+  <div class="grid">
+    <div class="card">
+      <h3>Posts</h3>
+      <ul class="tight">
+        <li><b>LinkedIn</b> — up to 3,000 chars, 3–5 hashtags</li>
+        <li><b>Facebook</b> — long-form, few/no hashtags</li>
+        <li><b>X (Twitter)</b> — hard 280-char ceiling, 0–2 hashtags</li>
+        <li><b>Instagram</b> — up to 2,200 chars, 8–15 hashtags</li>
+        <li><b>Pinterest</b> — search-intent pin description</li>
+        <li><b>Threads</b> — casual, 0–1 hashtag</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Reels &amp; Shorts (scripts)</h3>
+      <ul class="tight">
+        <li><b>TikTok</b> — 9:16, ~21–60s</li>
+        <li><b>Instagram Reels</b> — 9:16, ~15–60s</li>
+        <li><b>YouTube Shorts</b> — 9:16, ~20–60s</li>
+      </ul>
+      <p>Each script is shot-by-shot: a <b>Hook (0–2s)</b>, numbered <b>scene beats</b> (narration + on-screen text + visual), and a closing <b>CTA</b>, with the target aspect ratio and duration.</p>
+    </div>
+  </div>
+  <ul class="tight">
+    <li>Each network draft carries its own <b>keywords</b> and <b>hashtags</b>. Posts show a live <b>composed character count</b> (body + hashtags) against the platform limit, and flag anything that would go over once hashtags are appended.</li>
+    <li>Provenance is honest: drafts made with an LLM show the model; those built from the deterministic skeleton are badged <span class="badge b-manual">deterministic</span>.</li>
+    <li>Generating a pack needs <span class="badge b-manual">Marketer+</span> and spends one content-draft credit per platform.</li>
+  </ul>
+
+  <!-- 6 -->
+  <h2 id="image"><span class="num">6</span>The generated image</h2>
+  <p>Social drafts can get a matching AI creative image, saved onto the draft. Pick a style, then <b>Generate image</b> (or regenerate later):</p>
+  <table>
+    <tr><th>Style</th><th>What it renders</th></tr>
+    <tr><td><b>Concept</b></td><td>Headline + CTA + graphics — a clean, scroll-stopping promo card</td></tr>
+    <tr><td><b>Product cover</b></td><td>A 3D product-box mockup with the headline and CTA</td></tr>
+  </table>
+  <div class="callout warn">
+    <p class="t">📌 What text goes on the image</p>
+    <p>The headline rendered onto the image is <b>the draft's title</b> — not the shared hook or the body. The detail page shows it back to you as <i>"Text sent to the image: …"</i>. Want different image text? Edit the draft title first, then generate.</p>
+  </div>
+  <p>Image generation requires an OpenAI key and <span class="badge b-manual">Marketer+</span>, and costs image credits. In a social pack you can also generate images for every draft at once (run serially so the credit spend stays legible).</p>
+
+  <!-- 7 -->
+  <h2 id="next"><span class="num">7</span>Where content flows next</h2>
+  <ul class="tight">
+    <li><b>Blog</b> — <code>blog_post</code> drafts feed the <a href="/blog-module.html">Blog module</a> (<span class="path">/blog/posts</span>); once approved and published they power your public blog with slug, excerpt, and cover image.</li>
+    <li><b>Campaigns &amp; Creatives</b> — <code>ad_copy</code> and the copy the Studio generates surface alongside the <b>Creatives</b> library (<span class="path">/creatives</span>), ready to attach to ad sets and campaigns.</li>
+    <li><b>Reports</b> — saved drafts and agent runs are real outputs your reports can summarize; no data means no fabricated numbers.</li>
+  </ul>
+  <p>Because every draft is a saved, workspace-scoped record tied to its agent run, it's traceable end to end — from the run that wrote it to wherever you take it next.</p>
+
+  <!-- 8 -->
+  <h2 id="limits"><span class="num">8</span>Plan limits &amp; AI credits</h2>
+  <ul class="tight">
+    <li>Content generation is metered. Both pages show a <b>usage meter</b> for the <code>content_drafts</code> resource so you can see where you stand on your plan.</li>
+    <li>A social pack costs <b>one content-draft credit per platform</b> — select three platforms, spend three.</li>
+    <li><b>Image generation</b> costs image credits and needs an OpenAI key; <b>AI Assist</b> calls are metered against your workspace's LLM meter with token and dollar cost recorded.</li>
+    <li>Editing, approving, publishing, exporting, and copying an existing draft do <b>not</b> spend generation credits.</li>
+  </ul>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Does anything auto-post to my social accounts?</h3>
+    <p>No. Everything is created as a <code>draft</code>, an Admin must approve it, and publishing is a deliberate step — for social there's no auto-poster, so you copy the finished text (and download the image) and post it yourself. AdGenieHQ never posts on your behalf.</p>
+    <h3>What image is shown, and what text is on it?</h3>
+    <p>The image is generated per social draft in the style you pick (Concept or Product cover), and the headline burned onto it is the <b>draft's title</b>. Change the title before generating to change the on-image text.</p>
+    <h3>Do I need an LLM / OpenAI key?</h3>
+    <p>Not to write copy — every agent has a deterministic fallback that builds a real draft from your onboarding, badged <span class="badge b-manual">deterministic</span>. With a key, drafts get richer. <b>Image generation</b> does require an OpenAI key.</p>
+    <h3>Can I turn an existing blog post into social posts?</h3>
+    <p>Yes. In the Social Studio, paste the URL under "repurpose a web link" — we fetch the page and spin it into a post or script per platform. Leave the topic blank to use the page's own title, or set both to angle it.</p>
+    <h3>Why is a draft flagged as over the limit?</h3>
+    <p>Platforms count the body <i>plus</i> hashtags together. The composed character count is shown against each platform's ceiling (e.g. X's 280); trim the body before posting if it's over.</p>
+    <h3>Who can generate, approve, and publish?</h3>
+    <p>Generating a social pack, generating images, and AI Assist need Marketer or above. Approving and publishing are Admin-gated. Viewers and analysts can read drafts but not spend credits or ship them.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/content-social-module.html">Content &amp; Social</a>
+  <a href="/blog-module.html">Blog</a>
+  <a href="/seo-module.html">SEO &amp; GEO</a>
+  <a href="/ads-module.html">Ads</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>

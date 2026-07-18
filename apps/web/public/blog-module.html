@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blog — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Blog Module cheat sheet: write long-form posts, use the AI Assistant, move drafts through approve → publish, push to your own CMS via the publish webhook, and get the SEO structure right." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/blog-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/blog-module.html">Blog</a>
+    <a href="/content-social-module.html">Content &amp; Social</a>
+    <a href="/seo-module.html">SEO</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Blog Module</h1>
+    <p>Write long-form posts in a real editor, get grounded help from the AI Assistant, then move each post through approve → publish. Publish to your AdGenieHQ blog, or push it straight into your own CMS with the publish webhook — nothing ever goes live on its own.</p>
+    <div class="chips">
+      <span class="chip">Markdown editor + preview</span>
+      <span class="chip">AI Assistant</span>
+      <span class="chip">Approve → Publish</span>
+      <span class="chip">Publish webhook</span>
+      <span class="chip">SEO structure</span>
+    </div>
+  </section>
+
+  <p class="lead">Every post is a <b>real record</b> in your workspace — your words, your uploads, and saved AI suggestions you chose to keep. Drafts are never auto-published: an Admin approves, then publishes. No fabricated posts, no fake view counts.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#what">What the Blog module is</a></li>
+      <li><a href="#write">Writing &amp; editing</a></li>
+      <li><a href="#status">Status workflow</a></li>
+      <li><a href="#publish">Publishing &amp; the webhook</a></li>
+      <li><a href="#seo">SEO &amp; structure</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p>Open <span class="path">/blog/posts</span> → <b>New post</b> → write the title &amp; body → set the <b>slug</b> in Settings (optional) → <b>Approve</b> (Admin) → <b>Publish</b>. It appears on your blog and/or is pushed to your own site. Done.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="what"><span class="num">1</span>What the Blog module is <span style="font-weight:400;font-size:14px;color:var(--muted)">— /blog/posts</span></h2>
+  <p>The Blog module turns long-form drafts into published pages with proper SEO structure — a slug, excerpt, meta tags, keywords, and a cover image. Each post is a <code>content_draft</code> of type <code>blog_post</code>, so the same review-and-approve discipline applies as everywhere else in AdGenieHQ.</p>
+  <ul class="tight">
+    <li><b>Long-form → live pages.</b> Compose in Markdown, preview exactly what readers see at <span class="path">/blog/{slug}</span>, then publish.</li>
+    <li><b>Grounded, not generic.</b> AI help draws on your workspace context and offer so posts match your business, not a template. Topic ideas can flow in from your <a href="/seo-module.html">SEO &amp; GEO</a> keyword work.</li>
+    <li><b>Honest by default.</b> Disconnected/empty? You get a clean empty state and a <i>New post</i> button — never placeholder articles or invented metrics.</li>
+  </ul>
+  <p>The list at <span class="path">/blog/posts</span> shows <b>every</b> <code>blog_post</code> draft in the workspace — ones you start here plus any generated elsewhere in AdGenieHQ (e.g. the Content Writer / <a href="/content-social-module.html">Content &amp; Social</a> studio). Filter by status and click any post to open its editor.</p>
+
+  <!-- 2 -->
+  <h2 id="write"><span class="num">2</span>Writing &amp; editing <span style="font-weight:400;font-size:14px;color:var(--muted)">— the 3-tab editor</span></h2>
+  <p><b>New post</b> mints an empty draft and drops you straight into the editor at <span class="path">/blog/posts/:id</span>. Each post has three tabs:</p>
+  <table>
+    <tr><th>Tab</th><th>What you do there</th></tr>
+    <tr><td><b>Editor</b></td><td>Title + Markdown body with a live preview. Drag an image into the body (or <i>Insert image</i>) to upload &amp; embed it. Pick a cover image.</td></tr>
+    <tr><td><b>AI Assistant</b></td><td>Outline, expand a selection, refine a selection, suggest titles, suggest meta. Each result is a card you <i>Insert / Replace / Discard</i> — you stay in control.</td></tr>
+    <tr><td><b>Settings</b></td><td>Slug, excerpt, target URL, keywords, cover image, and SEO metadata (meta title, meta description, OG image, canonical URL).</td></tr>
+  </table>
+  <ol class="steps">
+    <li><b>Write</b> — type the title and body. Markdown is supported and the preview updates as you go.</li>
+    <li><b>Add media</b> — drop an image into the body to upload + insert it, and set a cover image for cards and the post header.</li>
+    <li><b>Ask the assistant (optional)</b> — pick an action; keep only what you like via <i>Append / Use as title / Apply to settings</i>.</li>
+    <li><b>Save</b> — persists your edits. Each post counts against your plan's content-draft limit.</li>
+  </ol>
+  <div class="callout safe">
+    <p class="t">✅ No LLM key? Still fully usable.</p>
+    <p>The editor is 100% manual — you never need AI to write. When no LLM is configured, the AI Assistant returns a deterministic stub clearly tagged <b>"stub (no LLM key)"</b> instead of a hallucination. With a key, suggestions get richer and are metered against your workspace's LLM budget.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="status"><span class="num">3</span>Status workflow <span style="font-weight:400;font-size:14px;color:var(--muted)">— draft → published</span></h2>
+  <p>Every post moves through the same lifecycle, and each transition is written to the audit log with actor, IP, and user agent.</p>
+  <table>
+    <tr><th>Status</th><th>Meaning</th><th>Who can move it</th></tr>
+    <tr><td><span class="badge b-manual">draft</span></td><td>Being written. Editable.</td><td>Edit: Marketer+</td></tr>
+    <tr><td><span class="badge b-read">approved</span></td><td>Signed off, ready to go live. Still not public.</td><td>Approve: Admin+</td></tr>
+    <tr><td><span class="badge b-live">published</span></td><td>Live. Slug + excerpt auto-fill if they were blank.</td><td>Publish: Admin+</td></tr>
+    <tr><td><span class="badge b-manual">archived</span></td><td>Retired from the working list.</td><td>Archive: Marketer+</td></tr>
+    <tr><td><span class="badge b-high">rejected</span></td><td>Sent back (from draft or approved).</td><td>Reject: Marketer+</td></tr>
+  </table>
+  <ul class="tight">
+    <li>You can only <b>edit</b> a post while it's <code>draft</code>, <code>approved</code>, or <code>rejected</code> — <code>published</code> and <code>archived</code> posts are locked.</li>
+    <li>Only an <b>approved</b> draft can be published, so nothing skips review.</li>
+    <li>The <span class="path">/blog/posts</span> list shows a status pill on every row and a status filter up top.</li>
+  </ul>
+
+  <!-- 4 -->
+  <h2 id="publish"><span class="num">4</span>Publishing &amp; the webhook</h2>
+  <p>Publishing is always a deliberate, human <b>Admin</b> action on an approved draft. On publish, AdGenieHQ auto-fills a <b>slug</b> (from the title) and an <b>excerpt</b> (first part of the body) if you left them blank, so the post is render-ready. There are three ways a published post reaches readers:</p>
+  <table>
+    <tr><th>Destination</th><th>How it works</th><th>Setup</th></tr>
+    <tr><td><b>AdGenieHQ public blog</b></td><td>Served at <span class="path">/public/blog</span> and <span class="path">/public/blog/{slug}</span>. Only the workspace configured as the marketing workspace surfaces here; otherwise the endpoints stay empty (honest empty state, never fabricated).</td><td><code>MARKETING_WORKSPACE_SLUG</code> env</td></tr>
+    <tr><td><b>Your own site (publish webhook)</b></td><td>AdGenieHQ POSTs the draft as JSON to your URL with the secret in <code>Authorization: Bearer …</code>. Your endpoint returns <code>{"published_url": "https://…"}</code>, which we store on the post.</td><td>Workspace <b>Settings → Publish webhook</b> (Admin)</td></tr>
+    <tr><td><b>Manual URL</b></td><td>Publish elsewhere yourself and record the live URL on the post.</td><td>None</td></tr>
+  </table>
+  <p>The webhook contract is generic — WordPress, Webflow, Ghost, Contentful, a Zapier/Make hook, or a small custom adapter all just implement the same JSON POST. An Admin sets <code>publish_webhook_url</code> and a secret (stored encrypted) at <span class="path">/workspaces/{id}/publish-webhook</span>; the full contract lives in <code>docs/cms-publish-webhook.md</code>.</p>
+  <div class="callout warn">
+    <p class="t">Heads up — the webhook must confirm</p>
+    <p>If the webhook is configured, the post is only marked <b>published</b> after your receiver responds successfully. A failure surfaces as an error you can retry once your endpoint is healthy — the draft won't silently flip to published.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="seo"><span class="num">5</span>SEO &amp; structure</h2>
+  <p>Good structure is what makes a post discoverable in both classic search and AI answer engines. The Settings tab covers all of it:</p>
+  <table>
+    <tr><th>Field</th><th>Used for</th></tr>
+    <tr><td><b>Slug</b></td><td>The URL at <span class="path">/blog/{slug}</span>. Unique per workspace; auto-generated from the title on publish if blank.</td></tr>
+    <tr><td><b>Excerpt</b></td><td>Cards, OG previews, and RSS. Auto-derived from the body on publish if blank.</td></tr>
+    <tr><td><b>Keywords</b></td><td>Search targeting for the post (distinct from social hashtags).</td></tr>
+    <tr><td><b>Meta title / description</b></td><td>The <code>&lt;head&gt;</code> tags. Keep the title ≤60 and description ≤155 characters.</td></tr>
+    <tr><td><b>OG image / canonical URL</b></td><td>Social share cards and canonicalization for duplicate content.</td></tr>
+    <tr><td><b>Cover image</b></td><td>Shown on listing cards and the post header.</td></tr>
+  </table>
+  <p>This ties directly into the <a href="/seo-module.html">SEO &amp; GEO agent</a>: its keyword opportunities and content gaps are the raw material for what to write, and the meta/slug/excerpt you set here are what its audits look for. Write the post, wire up the metadata, and the SEO module can track how it performs.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Where do published posts appear?</h3>
+    <p>Depends on your setup. If this workspace is the configured marketing workspace, published posts show on the AdGenieHQ public blog at <span class="path">/public/blog</span>. Otherwise they're meant for your own site via the publish webhook. Either way, the <span class="path">/blog/posts</span> list always shows every post and its live status.</p>
+    <h3>How does my own site get the post?</h3>
+    <p>Through the <b>publish webhook</b>. On publish, AdGenieHQ sends the draft as JSON to the URL you configured (with a bearer secret), and your endpoint replies with the <code>published_url</code> it created. Configure it once at workspace <b>Settings → Publish webhook</b> — it works with WordPress, Webflow, Ghost, Contentful, Zapier/Make, or a custom adapter.</p>
+    <h3>Can I schedule posts to publish later?</h3>
+    <p>No — there's no scheduled or automatic publishing by design. Publishing is a manual Admin action on an approved draft, so a human always makes the call. Prepare the post, approve it, and publish when you're ready.</p>
+    <h3>Do I need AI to write a post?</h3>
+    <p>No. The editor is fully manual. The AI Assistant is optional, and without an LLM key it returns clearly tagged deterministic stubs rather than making things up.</p>
+    <h3>What if I leave the slug or excerpt blank?</h3>
+    <p>They're auto-filled on publish — the slug from the title (made unique), the excerpt from the start of the body. You can set either explicitly in Settings beforehand to control them.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/blog-module.html">Blog</a>
+  <a href="/content-social-module.html">Content &amp; Social</a>
+  <a href="/seo-module.html">SEO &amp; GEO</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>

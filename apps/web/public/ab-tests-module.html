@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A/B Tests — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ A/B Tests cheat sheet: run head-to-head tests on ads or landing pages, generate variants with AI, launch safely, split traffic with a bandit, and pick a statistically significant winner from real exposures and conversions." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/ab-tests-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/ab-tests-module.html">A/B Tests</a>
+    <a href="/website-module.html">Website</a>
+    <a href="/ads-module.html">Ads</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>A/B Tests</h1>
+    <p>Run head-to-head experiments on an ad or a landing page, let AI draft the variants, and learn what actually converts — from real tracked visits and conversions, scored for statistical significance. No simulated results, ever.</p>
+    <div class="chips">
+      <span class="chip">Ads · Landing pages</span>
+      <span class="chip">AI variant ideas</span>
+      <span class="chip">Real exposures &amp; conversions</span>
+      <span class="chip">Static or bandit split</span>
+      <span class="chip">Significant winner</span>
+    </div>
+  </section>
+
+  <p class="lead">Every number on this page comes from <b>real events</b> — the public traffic-split snippet, GA4 sync, or metrics you enter yourself. Ad-target tests publish campaigns <b>paused</b>, so nothing spends until you say so. Find it at <span class="path">Experiments → A/B tests</span>.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#what">What A/B testing is</a></li>
+      <li><a href="#targets">Test targets: ad vs page</a></li>
+      <li><a href="#create">Create a test</a></li>
+      <li><a href="#launch">Launch safely</a></li>
+      <li><a href="#traffic">Traffic strategy (bandit)</a></li>
+      <li><a href="#measure">Measuring &amp; the winner</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p><span class="path">A/B tests</span> → <b>Create a test</b> → pick <b>Landing page</b> or <b>Ad creative</b> → add a control + treatment (or <b>generate variants with AI</b>) → <b>Launch</b> (Admin) → install the snippet / record metrics → read the stats → <b>Declare winner</b>. Done.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="what"><span class="num">1</span>What A/B testing is</h2>
+  <p>An A/B test compares two or more <b>variants</b> of the same thing — an ad or a landing page — and measures which one wins on a chosen <b>objective</b>. AdGenieHQ splits traffic between variants, counts what happens, and tells you when the difference is real rather than noise.</p>
+  <ul class="tight">
+    <li><b>Variants</b> — at least two, each with a unique name; one may be marked the <b>control</b> (your baseline).</li>
+    <li><b>Traffic share</b> — the slice of visitors each variant receives. Shares must sum to 100% (leave them blank and they split evenly).</li>
+    <li><b>Objective</b> — what "winning" means: <code>conversion_rate</code>, <code>click_through_rate</code>, <code>signup_rate</code>, <code>revenue_per_visit</code>, plus <code>cpa</code> and <code>roas</code> for ad tests.</li>
+    <li><b>Hypothesis</b> (optional) — a one-line note on what you expect and why, saved with the test.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">Real data only</p>
+    <p>Results are counted from tracked <b>exposures</b> (a visitor saw a variant) and <b>conversions</b> (they acted). AdGenieHQ never fabricates visits or conversion rates — an unlaunched or untracked test simply shows dashes.</p>
+  </div>
+
+  <!-- 2 -->
+  <h2 id="targets"><span class="num">2</span>Test targets: ad vs landing page</h2>
+  <p>Pick the target when you create the test — it decides how variants are launched and measured.</p>
+  <table>
+    <tr><th>Target</th><th>What a variant is</th><th>How it launches</th><th>How it's measured</th></tr>
+    <tr>
+      <td><b>Landing page</b><br><span class="badge b-read">landing_page</span></td>
+      <td>A URL (and optional hero copy). Payload needs <code>url</code>.</td>
+      <td>No provider write — launching just timestamps the variants and starts counting.</td>
+      <td>The public traffic-split snippet, or a GA4 sync. Fully tracked.</td>
+    </tr>
+    <tr>
+      <td><b>Ad creative</b><br><span class="badge b-manual">ad</span></td>
+      <td>A campaign payload. Needs <code>name</code> and <code>daily_budget_cents</code>.</td>
+      <td>Publishes <b>one campaign per variant</b> on the connected provider, created <b>paused</b>.</td>
+      <td>Enter provider metrics yourself, or sync them in later.</td>
+    </tr>
+  </table>
+  <p>Ad tests require a connected <b>provider</b> (Meta / Google / LinkedIn Ads) and an <b>external account ID</b>. Landing-page tests need no integration to launch — the snippet does the work.</p>
+
+  <!-- 3 -->
+  <h2 id="create"><span class="num">3</span>Create a test <span style="font-weight:400;font-size:14px;color:var(--muted)">— /ab-tests</span></h2>
+  <p>Open <span class="path">A/B tests</span> and use the <b>Create a test</b> card. Choose the <b>Landing page</b> or <b>Ad creative</b> tab, name the test, pick an objective, and fill in the two starter variants.</p>
+  <ol class="steps">
+    <li><b>Name &amp; objective</b> — give the test a clear name and choose what winning means.</li>
+    <li><b>Landing page:</b> paste the <b>control URL</b> and the <b>treatment URL</b>. <br><b>Ad creative:</b> pick the provider, enter the account ID, and set each variant's campaign name + daily budget (in cents).</li>
+    <li><b>Generate variants with AI</b> (optional) — the variant generator drafts <b>1–4</b> new variants from your control, grounded in your onboarding <b>offer + brand voice</b>. No LLM key? It falls back to a deterministic skeleton you edit before shipping.</li>
+    <li><b>Save</b> — the test is created in <span class="badge b-read">ready</span>; traffic shares auto-rebalance to sum to 100%.</li>
+  </ol>
+  <p><b>Guardrails at create time:</b> at least two variants, unique non-empty names, at most one control, and shares that total 1.0. AI variants can only be added while the test is <span class="badge b-read">draft</span> or <span class="badge b-med">ready</span> — not after launch.</p>
+  <p class="updated">Creating a test, recording metrics, and archiving are <span class="badge b-low">Marketer+</span> actions.</p>
+
+  <!-- 4 -->
+  <h2 id="launch"><span class="num">4</span>Launch safely</h2>
+  <p>Launching is an <span class="badge b-med">Admin+</span> action — it's the gate that can put campaigns on a provider, so it's never automatic.</p>
+  <table>
+    <tr><th>Target</th><th>What "Launch" does</th><th>Spend risk</th></tr>
+    <tr><td><b>Landing page</b></td><td>Flips the test to <span class="badge b-live">launched</span> and timestamps variants. Assignment + conversion tracking begins.</td><td><span class="badge b-low">None</span> — no ad money involved.</td></tr>
+    <tr><td><b>Ad creative</b></td><td>Creates one campaign per variant via the provider write pipeline, each <b>paused</b>. Runs as a background task; each variant gets its own provider id.</td><td><span class="badge b-low">Paused</span> — nothing spends until you activate it.</td></tr>
+  </table>
+  <div class="callout safe">
+    <p class="t">🛡️ Why your spend is safe</p>
+    <p>Ad variants publish <b>paused</b> by default. To start spending you flip a campaign to active in the provider's UI — or through an <b>approve-then-execute recommendation</b> in AdGenieHQ. Money never moves on launch alone.</p>
+  </div>
+  <div class="callout warn">
+    <p class="t">Partial launches</p>
+    <p>If a provider rejects some variants, the ones that launched stay launched and the test stays <span class="badge b-med">ready</span> so you can retry just the failures — AdGenieHQ won't roll back a partial spend. If <i>every</i> variant fails, launch surfaces the provider error instead of a hollow "launched" test.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="traffic"><span class="num">5</span>Traffic strategy (bandit)</h2>
+  <p>For landing-page tests, the <b>bandit strategy</b> (set when the test is created) decides how visitors are assigned to variants. Assignment is <b>sticky</b> — a visitor keeps the same variant on every return.</p>
+  <table>
+    <tr><th>Strategy</th><th>How traffic is split</th><th>Best for</th></tr>
+    <tr><td><b>Static</b> <span class="badge b-read">static</span></td><td>Fixed weights — each variant gets exactly its <b>traffic share</b>, start to finish.</td><td>Clean, even splits and classic significance testing.</td></tr>
+    <tr><td><b>Thompson sampling</b> <span class="badge b-read">thompson_sampling</span></td><td>Samples a Beta posterior from live visits + conversions on every assignment, funnelling more traffic to the leading variant while still exploring the others.</td><td>Cutting losses early — shifting traffic toward the winner as evidence builds.</td></tr>
+  </table>
+  <p>Thompson sampling naturally balances exploit vs explore: an under-tested variant has a wide posterior, so it still gets occasional traffic instead of being starved.</p>
+
+  <!-- 6 -->
+  <h2 id="measure"><span class="num">6</span>Measuring &amp; the winner</h2>
+  <h3>Where the numbers come from</h3>
+  <ul class="tight">
+    <li><b>Public snippet</b> — drop <code>adgeniehq-ab.js</code> on your landing page (redirect mode for separate URLs, or in-place mode to swap copy on one URL). It sticky-assigns a variant and records an <b>exposure</b>; call <code>adgeniehqConvert()</code> on a form submit / purchase / signup to record a <b>conversion</b>.</li>
+    <li><b>GA4 sync</b> — pull sessions + conversions from a connected Google Analytics property, matched to each variant's URL path.</li>
+    <li><b>Manual metrics</b> — for ad tests (or off-platform data), open a variant and enter visits + conversions yourself.</li>
+  </ul>
+  <p>Each variant shows <b>visits</b>, <b>conversions</b>, and <b>conversion rate</b>. Landing-page counts refresh live from the tracked events — no sync job needed.</p>
+  <h3>Declaring a winner</h3>
+  <p>AdGenieHQ runs a two-proportion <b>z-test</b> (95% confidence by default) with confidence intervals and a suggested winner. Declaring a winner is an <span class="badge b-med">Admin+</span> action and, for landing-page tests, is <b>guarded</b>:</p>
+  <ul class="tight">
+    <li><b>Underpowered</b> — refused until each variant clears the minimum sample size.</li>
+    <li><b>Not significant</b> — refused while the p-value is above the threshold. Keep the test running.</li>
+    <li><b>Override</b> — pass <code>force</code> to declare anyway (e.g. you have qualitative, off-platform proof).</li>
+  </ul>
+  <p>Declaring a winner marks the test <span class="badge b-live">completed</span> and stamps its end time. Ad tests rely on your entered metrics, so their winner isn't blocked by the significance guard.</p>
+  <h3>Test statuses</h3>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td><span class="badge b-read">draft</span></td><td>Being built; variants can still be added or AI-generated.</td></tr>
+    <tr><td><span class="badge b-med">ready</span></td><td>Variants defined and balanced; awaiting launch.</td></tr>
+    <tr><td><span class="badge b-live">launched</span></td><td>Live and collecting exposures / conversions.</td></tr>
+    <tr><td><span class="badge b-manual">paused</span></td><td>Temporarily halted; can be relaunched.</td></tr>
+    <tr><td><span class="badge b-live">completed</span></td><td>Winner declared; the test is closed.</td></tr>
+    <tr><td><span class="badge b-read">archived</span></td><td>Retired from the active list.</td></tr>
+  </table>
+  <p class="updated">Create, launch, metrics, winner, and archive are all written to the audit log with actor, IP, and user agent.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Is my ad spend safe when I launch an ad test?</h3>
+    <p>Yes. Launching is Admin-gated, and every ad variant is published <b>paused</b>. No budget spends until you explicitly activate a campaign — in the provider's UI or via an approved recommendation. Results, in turn, always come from real tracked data, never simulated numbers.</p>
+    <h3>How is the winner chosen?</h3>
+    <p>A two-proportion z-test at 95% confidence, plus a minimum-sample check. For landing-page tests you can't declare a winner while the result is underpowered or not statistically significant — unless you override with <code>force</code>. AdGenieHQ also suggests the leading variant for you.</p>
+    <h3>Do I need a tracking snippet?</h3>
+    <p>For landing-page tests, yes — that's how exposures and conversions are counted. Install the redirect or in-place snippet, and fire <code>adgeniehqConvert()</code> on your success event. Prefer analytics? Sync visits + conversions from a connected GA4 property instead.</p>
+    <h3>Can AI write my variants?</h3>
+    <p>Yes. The variant generator drafts 1–4 alternatives from your control and your onboarding offer + brand voice. With no LLM key it produces an editable skeleton so you always get a real starting point. You can only generate while the test is draft or ready.</p>
+    <h3>Static or Thompson sampling — which split?</h3>
+    <p>Use <b>static</b> for a clean, even test and textbook significance. Use <b>Thompson sampling</b> when you'd rather shift traffic toward the leader as evidence accumulates and cut wasted exposure to a losing variant.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/ab-tests-module.html">A/B Tests</a>
+  <a href="/website-module.html">Website</a>
+  <a href="/ads-module.html">Ads</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>

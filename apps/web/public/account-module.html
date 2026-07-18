@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Settings, Team & Billing — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ account cheat sheet: workspace settings, team roles & permissions, OAuth integrations, bring-your-own AI keys, workspace API keys, and PayPal plans, credits & platform fees." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/account-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/account-module.html">Settings &amp; Billing</a>
+    <a href="/ads-module.html">Ads</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Settings, Team &amp; Billing</h1>
+    <p>Run the account: set up your workspace, invite the team with the right roles, connect real ad &amp; analytics accounts, bring your own AI keys, mint scoped API keys, and manage your plan, AI credits, and platform fees through PayPal.</p>
+    <div class="chips">
+      <span class="chip">Workspaces</span>
+      <span class="chip">Roles &amp; permissions</span>
+      <span class="chip">OAuth integrations</span>
+      <span class="chip">BYOK AI keys</span>
+      <span class="chip">API keys</span>
+      <span class="chip">PayPal plans &amp; fees</span>
+    </div>
+  </section>
+
+  <p class="lead">This is the control room for everything <b>account-level</b>. Access is gated by role, secrets are encrypted at rest and never sent to your browser, and every connect, disconnect, invite, and approval is written to the audit log.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#workspace">Workspace settings</a></li>
+      <li><a href="#team">Team &amp; roles</a></li>
+      <li><a href="#integrations">Integrations</a></li>
+      <li><a href="#ai-keys">Bring-your-own AI keys</a></li>
+      <li><a href="#api-keys">API keys</a></li>
+      <li><a href="#billing">Billing &amp; plans</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p><span class="path">Settings</span> → <b>Team</b> invite your teammates → <b>Integrations</b> connect Google/Meta/LinkedIn → (optional) add your own <b>AI key</b> → <b>Billing</b> pick a plan and approve at PayPal. You're set.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="workspace"><span class="num">1</span>Workspace settings <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings</span></h2>
+  <p>A <b>workspace</b> is the container for everything you do in AdGenieHQ: its members, connected accounts, campaigns, agent runs, recommendations, reports, plan, and billing all belong to one workspace and never leak across to another.</p>
+  <ul class="tight">
+    <li><b>Name &amp; identity</b> — rename the workspace any time (Admin+). Each workspace has its own <code>slug</code>.</li>
+    <li><b>Multiple workspaces</b> — you can belong to several (e.g. one per brand or client) and switch between them with the workspace picker. Your role can differ in each.</li>
+    <li><b>Publish webhook</b> (Admin+) — an optional CMS hook for pushing content out; the secret is encrypted at rest with the same key as OAuth tokens and never returned to the browser.</li>
+    <li><b>Isolation</b> — data is scoped per workspace at the API layer, so members of one workspace can never see another's records.</li>
+  </ul>
+  <div class="callout">
+    <p class="t">Create a second workspace</p>
+    <p>Use the workspace switcher → <b>New workspace</b>. Whoever creates it becomes its <b>Owner</b>. Agencies typically run one workspace per client so limits, integrations, and billing stay cleanly separated.</p>
+  </div>
+
+  <!-- 2 -->
+  <h2 id="team"><span class="num">2</span>Team &amp; roles <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings · Team</span></h2>
+  <p>Invite teammates by email (Admin+). Invitations expire and can be revoked before they're accepted; the new member joins with the role you pick (default <b>Marketer</b>). Every workspace keeps at least one <b>Owner</b> — you can't demote the last one.</p>
+  <ol class="steps">
+    <li><b>Invite</b> — enter an email and choose a role. You can never grant a role higher than your own.</li>
+    <li><b>Accept</b> — the invitee opens the link and joins the workspace.</li>
+    <li><b>Manage</b> — change a member's role or disable them. A non-Owner can't modify a peer at or above their own rank.</li>
+  </ol>
+  <h3>Roles &amp; permissions matrix</h3>
+  <p>Five roles, ranked <b>Owner &gt; Admin &gt; Marketer &gt; Analyst &gt; Viewer</b>. Higher roles inherit everything below them. This is exactly what the backend enforces:</p>
+  <table>
+    <tr><th>Capability</th><th>Owner</th><th>Admin</th><th>Marketer</th><th>Analyst</th><th>Viewer</th></tr>
+    <tr><td>View dashboards, campaigns &amp; reports</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Sync data, run agents, generate reports</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+    <tr><td>Change campaigns (pause / budget / publish drafts)</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+    <tr><td>Approve <span class="badge b-low">low-risk</span> recommendations</td><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+    <tr><td>Approve <span class="badge b-med">medium-risk</span> recommendations</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Approve <span class="badge b-high">high-risk</span> recommendations · revert executions</td><td>✓</td><td>Admin+ for revert</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Connect / disconnect integrations · add AI keys</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Invite &amp; manage team members</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Autopilot guardrails · manage billing · API keys</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+  </table>
+  <p class="lead"><b>Analyst</b> and <b>Viewer</b> are read-only — perfect for stakeholders and clients who should see the numbers but never trigger actions or spend.</p>
+
+  <!-- 3 -->
+  <h2 id="integrations"><span class="num">3</span>Integrations <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings · Integrations</span></h2>
+  <p>This is the only place OAuth "connections" live. Connecting and disconnecting is an <b>Admin+</b> action; syncing data is <b>Marketer+</b>. Access tokens are Fernet-encrypted at rest and <b>never exposed to the browser</b> — all provider calls run server-side.</p>
+  <table>
+    <tr><th>Platform</th><th>What it brings in</th><th>Access</th><th>Status</th></tr>
+    <tr><td><b>Google Ads</b></td><td>Campaigns, budgets, structure, performance</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>Meta Ads</b> (Facebook/Instagram)</td><td>Campaigns, budgets, structure, performance</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>LinkedIn Ads</b></td><td>B2B campaigns &amp; reporting</td><td>Read + optional write</td><td><span class="badge b-live">OAuth</span></td></tr>
+    <tr><td><b>Google Analytics 4</b></td><td>Conversions &amp; funnel data for ROAS/attribution</td><td>Read</td><td><span class="badge b-read">OAuth</span></td></tr>
+    <tr><td><b>Google Search Console</b></td><td>Search queries, impressions, CTR</td><td>Read</td><td><span class="badge b-read">OAuth</span></td></tr>
+  </table>
+  <ul class="tight">
+    <li><b>Write-access toggle</b> — choose <code>read</code> or <code>write</code> scope when you connect an ad platform. Read-only is analytics-only (Advisor); write lets AdGenieHQ run &amp; manage ads. Reconnect to change it later.</li>
+    <li><b>Disconnected = a clean connect prompt</b>, never fake data. Connect, then <b>Sync</b> to pull records into the workspace.</li>
+    <li>Every connect and disconnect is written to the audit log with actor, IP, and user agent.</li>
+    <li>Only OAuth platforms live here. Channels with no API (solo ads, paid email, etc.) are planned &amp; tracked in the <a href="/traffic-module.html">Traffic Module</a> instead.</li>
+  </ul>
+
+  <!-- 4 -->
+  <h2 id="ai-keys"><span class="num">4</span>Bring-your-own AI keys <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings · AI keys</span></h2>
+  <p>Prefer to run agents on your own LLM account? Add a <b>provider credential</b> (Admin+) and AdGenieHQ will use it for AI work in this workspace.</p>
+  <table>
+    <tr><th>Provider</th><th>Key type</th><th>Notes</th></tr>
+    <tr><td><b>OpenAI</b></td><td><code>openai</code></td><td>Your own API key</td></tr>
+    <tr><td><b>Anthropic</b></td><td><code>anthropic</code></td><td>Your own API key</td></tr>
+    <tr><td><b>Google AI</b></td><td><code>google_ai</code></td><td>Your own API key</td></tr>
+  </table>
+  <ul class="tight">
+    <li><b>Encrypted, one active per provider</b> — the secret is Fernet-encrypted at rest; only a cosmetic <i>last-four</i> hint is shown. Adding a new key for a provider automatically revokes the previous one.</li>
+    <li><b>Test button</b> — validates the key against the provider and records the result (<span class="badge b-low">OK</span> / <span class="badge b-high">failed</span>) so you can see "last tested — OK" in the UI.</li>
+    <li><b>Optional</b> — agents work without a key thanks to deterministic fallbacks; your own key makes outputs richer.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">✅ Your key, your account</p>
+    <p>BYOK keys are never shown back to the browser after saving and can be revoked (Admin+) at any time. Plaintext is stored nowhere — only the encrypted ciphertext.</p>
+  </div>
+
+  <!-- 5 -->
+  <h2 id="api-keys"><span class="num">5</span>API keys <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings · API keys</span></h2>
+  <p>Programmatic access to a workspace uses scoped API keys. Creating and revoking keys is <b>Owner-only</b>.</p>
+  <ol class="steps">
+    <li><b>Create</b> — give it a label and the role it should grant when used (default <b>Marketer</b>); optionally set an expiry.</li>
+    <li><b>Copy once</b> — the full key is shown exactly once at creation in the form <code>ak_&lt;prefix&gt;.&lt;secret&gt;</code>. Store it now; the secret is SHA-256 hashed and unrecoverable.</li>
+    <li><b>Use it</b> — calls act with the key's role, scoped strictly to this workspace. <code>last_used_at</code> tracks activity.</li>
+    <li><b>Revoke</b> — kill a key instantly; revoked keys stop working immediately.</li>
+  </ol>
+  <div class="callout warn">
+    <p class="t">Keys inherit a role</p>
+    <p>An API key can never do more than the role it was minted with — a Marketer key can't approve a high-risk change or manage billing. Give each integration the least privilege it needs.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="billing"><span class="num">6</span>Billing &amp; plans <span style="font-weight:400;font-size:14px;color:var(--muted)">— /settings · Billing</span></h2>
+  <p>Plans and payments are handled by <b>PayPal</b> — the sole subscription processor. Managing billing is <b>Owner-only</b>.</p>
+  <table>
+    <tr><th>Plan</th><th>Monthly</th><th>Annual</th><th>AI credits / mo</th><th>Landing pages</th><th>Team seats</th></tr>
+    <tr><td><b>Starter</b></td><td>$67</td><td>$670</td><td>3,000</td><td>50</td><td>15</td></tr>
+    <tr><td><b>Pro</b></td><td>$129</td><td>$1,290</td><td>12,000</td><td>200</td><td>50</td></tr>
+    <tr><td><b>Agency</b></td><td>$299</td><td>$2,990</td><td>Unlimited</td><td>Unlimited</td><td>Unlimited</td></tr>
+  </table>
+  <p class="lead">Prices are display-only; the actual charge lives on the matching PayPal Billing Plan. Starter/Pro also cap outbound writes (1,000 / 5,000 per month); Agency is unlimited.</p>
+
+  <h3>Subscribe with PayPal</h3>
+  <ol class="steps">
+    <li><b>Choose a plan &amp; interval</b> (monthly or annual) on the Billing page.</li>
+    <li><b>Approve at PayPal</b> — AdGenieHQ creates the subscription server-side and redirects you to PayPal's approval page.</li>
+    <li><b>Activates on webhook</b> — once you approve, PayPal fires <code>BILLING.SUBSCRIPTION.ACTIVATED</code> (signature-verified) and your plan goes live.</li>
+    <li><b>Manage or cancel</b> — <b>Manage plan</b> opens your PayPal autopay list, where you can view and cancel the subscription.</li>
+  </ol>
+
+  <h3>What counts against your plan</h3>
+  <ul class="tight">
+    <li><b>AI credits</b> — a single monthly pool (rolling 30 days). Each AI action deducts credits: agent run <code>10</code>, image generation <code>10</code>, content draft <code>5</code>, A/B test <code>3</code>, outreach email <code>2</code>. Run out and AI actions are blocked with a clear "upgrade for more credits" message — nothing fails silently. Agency plans never block.</li>
+    <li><b>Non-AI caps</b> — landing pages, team seats, and outbound provider writes are enforced separately from credits.</li>
+  </ul>
+
+  <h3>Platform fees</h3>
+  <p>Separate from your subscription, AdGenieHQ can charge <b>platform fees</b> on campaigns (a listing fee plus run fees — flat and/or a percentage of spend). You can preview them with a <b>fee quote</b> before launching a campaign, and see accrued fees under Billing → <b>Fees</b> and <b>Invoices</b>. Platform-fee invoices are billed via <b>PayPal invoice</b>.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>Who can connect an ad account?</h3>
+    <p>An <b>Admin</b> or <b>Owner</b>. Marketers can sync and act on already-connected accounts, but connecting/disconnecting is Admin+ and always audit-logged.</p>
+    <h3>Are my tokens ever exposed to the browser?</h3>
+    <p>No. OAuth tokens, BYOK AI keys, and webhook secrets are encrypted at rest and never sent to the frontend — every provider call happens server-side.</p>
+    <h3>How do I cancel my subscription?</h3>
+    <p>Billing → <b>Manage plan</b>, which sends you to your PayPal autopay list. Cancel it there; PayPal notifies AdGenieHQ via webhook and the plan winds down.</p>
+    <h3>What are platform fees, and how are they different from my plan?</h3>
+    <p>Your <b>plan</b> is a recurring subscription (PayPal). <b>Platform fees</b> are per-campaign charges (listing + run fees) billed separately as a PayPal invoice. Preview them with a fee quote before you launch.</p>
+    <h3>Do I have to bring my own AI key?</h3>
+    <p>No. Agents have deterministic fallbacks, so they produce real output with no key configured. Add your own OpenAI / Anthropic / Google AI key only if you want richer results on your own account.</p>
+    <h3>What's the safest way to onboard a client or stakeholder?</h3>
+    <p>Invite them as an <b>Analyst</b> or <b>Viewer</b> — full read access to dashboards and reports, zero ability to run agents, change campaigns, spend, or touch billing.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/account-module.html">Settings &amp; Billing</a>
+  <a href="/ads-module.html">Ads</a>
+  <a href="/traffic-module.html">Traffic</a>
+  <a href="/email-marketing-module.html">Email</a>
+  <a href="/seo-module.html">SEO &amp; GEO</a>
+  <a href="/website-module.html">Website</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>

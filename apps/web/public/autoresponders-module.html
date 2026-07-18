@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Autoresponders — Step-by-Step Guide | AdGenieHQ</title>
+<meta name="description" content="The AdGenieHQ Autoresponders cheat sheet: connect Omnisend, GetResponse, or any webhook with encrypted API keys, then push and pull contacts between your email/SMS lists and AdGenieHQ — every sync logged and audited." />
+<meta name="robots" content="index,follow" />
+<link rel="canonical" href="https://adgeniehq.com/autoresponders-module.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:880px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:24px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:30px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:62ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .chip{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:500}
+  h2{font-size:21px;font-weight:700;margin:34px 0 6px;color:var(--night);scroll-margin-top:16px}
+  h2 .num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--lav);color:var(--grape);font-size:14px;margin-right:8px;vertical-align:middle}
+  h3{font-size:16px;font-weight:600;margin:20px 0 4px;color:var(--night)}
+  p{margin:8px 0;color:var(--slate)}
+  .lead{color:var(--muted);margin-top:0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:8px}
+  .toc h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin:4px 0}
+  .toc a{text-decoration:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .steps{counter-reset:step;list-style:none;padding:0;margin:12px 0}
+  .steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:0}
+  .steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:10px;width:28px;height:28px;border-radius:50%;background:var(--grape);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps b{color:var(--night)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--lav);color:var(--grape);font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+  .b-live{background:#dcfce7;color:#166534}
+  .b-manual{background:#fef3c7;color:#92400e}
+  .b-read{background:#e0e7ff;color:#3730a3}
+  .b-low{background:#dcfce7;color:#166534}
+  .b-med{background:#fef3c7;color:#92400e}
+  .b-high{background:#fee2e2;color:#991b1b}
+  .callout{border-left:4px solid var(--violet);background:#faf9ff;border-radius:0 12px 12px 0;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--amber);background:#fffbeb}
+  .callout.safe{border-left-color:var(--green);background:#f0fdf4}
+  .callout p{margin:4px 0}
+  .callout .t{font-weight:700;color:var(--night)}
+  code{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0f172a}
+  ul.tight{margin:8px 0;padding-left:20px}
+  ul.tight li{margin:4px 0;color:var(--slate)}
+  .path{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;color:var(--grape);font-weight:600}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}.toc ol{columns:1}.hero h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a class="active" href="/autoresponders-module.html">Autoresponders</a>
+    <a href="/email-marketing-module.html">Email</a>
+    <a href="/traffic-module.html">Traffic</a>
+    <a href="/guides.html">All guides</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Module guide · Cheat sheet</p>
+    <h1>Autoresponders</h1>
+    <p>Connect your email &amp; SMS automation platform — Omnisend, GetResponse, or any webhook — then move contacts both ways: push ad leads into your lists and pull subscribers back into AdGenieHQ. Keys are encrypted; every sync is logged.</p>
+    <div class="chips">
+      <span class="chip">Omnisend · GetResponse · Custom</span>
+      <span class="chip">Encrypted API keys</span>
+      <span class="chip">Push &amp; pull contacts</span>
+      <span class="chip">Audience lists &amp; tags</span>
+      <span class="chip">Every sync audited</span>
+    </div>
+  </section>
+
+  <p class="lead">Autoresponders are API-key based (not OAuth), so they live on their own page — separate from the ad-platform integrations. Nothing is ever sent without a <b>real authorized connection</b> and an explicit push. Not connected? You get a clean connect form, never fake data.</p>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ol>
+      <li><a href="#what">What it is</a></li>
+      <li><a href="#providers">Supported providers</a></li>
+      <li><a href="#connect">Connecting a provider</a></li>
+      <li><a href="#sync">Syncing audiences</a></li>
+      <li><a href="#health">Health &amp; audit</a></li>
+      <li><a href="#email">How it feeds Email Marketing</a></li>
+      <li><a href="#faq">FAQ &amp; tips</a></li>
+    </ol>
+  </div>
+
+  <div class="callout">
+    <p class="t">⚡ 60-second quickstart</p>
+    <p>Open <span class="path">Autoresponders</span> → pick a provider card → paste your <b>API key</b> (Admin role) → <b>Connect</b> → choose a <b>list or tag</b> → paste contacts and <b>Push to list</b>, or <b>Pull from list</b>. Check the <b>Recent contact syncs</b> feed. Done.</p>
+  </div>
+
+  <!-- 1 -->
+  <h2 id="what"><span class="num">1</span>What it is</h2>
+  <p>The Autoresponders module connects AdGenieHQ to your email/SMS marketing platform so your audiences flow between the two systems:</p>
+  <ul class="tight">
+    <li><b>Push</b> — send contacts (e.g. leads captured in AdGenieHQ) into a list, tag, or segment on your provider.</li>
+    <li><b>Pull</b> — read subscribers from a provider list back into AdGenieHQ.</li>
+  </ul>
+  <p>Each provider plugs in through a small adapter, so adding platforms doesn't change how you use the page. Credentials are <b>encrypted at rest</b> and never returned to the browser; the platform only talks to your provider when you explicitly connect, list, push, or pull.</p>
+
+  <!-- 2 -->
+  <h2 id="providers"><span class="num">2</span>Supported providers</h2>
+  <p>Three connectors ship today. The first two are first-class adapters; the third covers everything else.</p>
+  <table>
+    <tr><th>Provider</th><th>What to connect with</th><th>Audience model</th><th>Auth</th></tr>
+    <tr>
+      <td><b>Omnisend</b><br><span style="color:var(--muted);font-size:13px">Email &amp; SMS</span></td>
+      <td>An <b>Omnisend API key</b> — Store settings → Integrations &amp; API → API keys.</td>
+      <td>No list API, so you push to a free-text <b>tag</b> that Omnisend segments &amp; automations target.</td>
+      <td><span class="badge b-live">API key</span></td>
+    </tr>
+    <tr>
+      <td><b>GetResponse</b></td>
+      <td>A <b>GetResponse API key</b> — Menu → Integrations &amp; API → API → Generate API key.</td>
+      <td>Real list API (lists are called <i>campaigns</i>), so you pick a <b>list from a dropdown</b>.</td>
+      <td><span class="badge b-live">API key</span></td>
+    </tr>
+    <tr>
+      <td><b>Custom / Webhook</b></td>
+      <td>A <b>Push URL</b> (required) plus an optional <b>Pull URL</b>; optional auth header name &amp; scheme (e.g. <code>Bearer</code>).</td>
+      <td>Free-text <b>list value</b> passed through to your endpoint.</td>
+      <td><span class="badge b-manual">Token · optional</span></td>
+    </tr>
+  </table>
+  <div class="callout">
+    <p class="t">Contacts pull</p>
+    <p>Omnisend and GetResponse both support pulling contacts back. The Custom connector can pull only if you configure a Pull URL — otherwise it's push-only.</p>
+  </div>
+
+  <!-- 3 -->
+  <h2 id="connect"><span class="num">3</span>Connecting a provider <span style="font-weight:400;font-size:14px;color:var(--muted)">— /autoresponders</span></h2>
+  <p>Open <span class="path">Autoresponders</span> in the sidebar. Each provider shows as a card with a status pill. <b>Connecting requires the workspace Admin role.</b></p>
+  <ol class="steps">
+    <li><b>Enter credentials</b> — the API key (Omnisend / GetResponse) or the Push/Pull URLs and optional auth token (Custom).</li>
+    <li><b>Connect</b> — AdGenieHQ <b>verifies the credentials with the provider before saving them</b>. Bad keys are rejected and the card flips to an <span class="badge b-high">error</span> state with the reason.</li>
+    <li><b>Stored securely</b> — on success the key is Fernet-encrypted at rest; non-secret settings (URLs, header names) are saved as plain config. The card shows the connected account name.</li>
+    <li><b>Disconnect</b> anytime (Admin) — the secret is dropped immediately, the card returns to <span class="badge b-med">disconnected</span>, and the row is kept for history.</li>
+  </ol>
+  <p>Connection status is one of three, shown on the pill: <span class="badge b-low">connected</span> · <span class="badge b-med">disconnected</span> · <span class="badge b-high">error</span>. Any last error from the provider is surfaced right on the card.</p>
+
+  <!-- 4 -->
+  <h2 id="sync"><span class="num">4</span>Syncing audiences</h2>
+  <p>Once connected, the card opens a <b>Sync contacts</b> panel. Pushing and pulling requires the <b>Marketer</b> role or higher.</p>
+  <h3>Choose the audience</h3>
+  <ul class="tight">
+    <li><b>GetResponse</b> — pick a list from the dropdown (fetched live from your account).</li>
+    <li><b>Omnisend</b> — type a free-text <b>tag</b>; pushed contacts are tagged so your segments/automations catch them.</li>
+    <li><b>Custom</b> — type a free-text list value that's forwarded to your endpoint.</li>
+  </ul>
+  <h3>Push contacts</h3>
+  <p>Paste contacts one per line as <code>email, first name, last name</code> (name parts optional), then <b>Push to list</b>. GetResponse requires an email; Omnisend and Custom accept email or phone.</p>
+  <h3>Pull contacts</h3>
+  <p><b>Pull from list</b> reads up to the configured limit of subscribers back into the page for review. AdGenieHQ stores only the <b>counts</b> of a pull, not the contact PII.</p>
+  <table>
+    <tr><th>Field</th><th>What it captures</th></tr>
+    <tr><td><b>Direction</b></td><td><code>push</code> (AdGenieHQ → provider) or <code>pull</code> (provider → AdGenieHQ)</td></tr>
+    <tr><td><b>Status</b></td><td><code>running</code> → <code>succeeded</code> / <code>partial</code> / <code>failed</code></td></tr>
+    <tr><td><b>Counts</b></td><td>requested · succeeded · failed</td></tr>
+    <tr><td><b>Audience &amp; source</b></td><td>the target list/tag and where the contacts came from (e.g. <code>manual</code>)</td></tr>
+  </table>
+  <p>Outcome rules: all succeed → <span class="badge b-low">succeeded</span>; some fail → <span class="badge b-med">partial</span>; none succeed → <span class="badge b-high">failed</span>. Provider error messages are captured on the sync record.</p>
+
+  <!-- 5 -->
+  <h2 id="health"><span class="num">5</span>Health &amp; audit</h2>
+  <p>Every connection and sync is traceable — nothing happens silently.</p>
+  <ul class="tight">
+    <li><b>Connection health at a glance</b> — each card shows its status pill, the connected account name, the last sync time, and any last provider error.</li>
+    <li><b>Recent contact syncs feed</b> — a running ledger of every push and pull with direction, counts, target audience, status, and timestamp. Empty until your first sync.</li>
+    <li><b>Full audit logging</b> — connect, connect-failed, disconnect, and every push/pull are written to the workspace audit log with the actor, IP address, and user agent.</li>
+    <li><b>Least data retained</b> — pulled contacts are shown for review but only their counts are persisted; secrets are dropped on disconnect.</li>
+  </ul>
+  <div class="callout safe">
+    <p class="t">✅ Safe by default</p>
+    <p>No contact leaves AdGenieHQ without an authorized connection <i>and</i> an explicit push you trigger. Credentials are verified before they're stored, encrypted while stored, and never exposed to the frontend.</p>
+  </div>
+
+  <!-- 6 -->
+  <h2 id="email"><span class="num">6</span>How it feeds Email Marketing</h2>
+  <p>Autoresponders is the <b>connection layer</b>; the <a href="/email-marketing-module.html">Email Marketing module</a> is where you analyze what those platforms send.</p>
+  <ul class="tight">
+    <li>Connect <b>Omnisend</b> here first, then open the Email module and click <b>Sync now</b> to pull your email campaigns with engagement and deliverability metrics.</li>
+    <li>Contacts pushed here (tagged in Omnisend) can be targeted by the automations and journeys you monitor elsewhere in AdGenieHQ.</li>
+  </ul>
+  <p>See the <a href="/email-marketing-module.html">Email Marketing guide</a> for the reporting side.</p>
+
+  <!-- FAQ -->
+  <h2 id="faq"><span class="num">?</span>FAQ &amp; tips</h2>
+  <div class="card">
+    <h3>My platform isn't listed — Mailchimp, ActiveCampaign, ConvertKit, Klaviyo, Brevo…</h3>
+    <p>Use the <b>Custom / Webhook</b> connector. Point its Push URL (and optional Pull URL) at your platform's contact endpoint, add an auth header if needed, and it works like any other provider — no waiting for a first-class adapter.</p>
+    <h3>Are my API keys safe?</h3>
+    <p>Yes. Keys are encrypted at rest with Fernet, are never returned to the browser or written to logs, and are deleted the moment you disconnect. They're also verified with the provider before being saved, so a bad key never becomes a "working" connection.</p>
+    <h3>Why can't I pick a list for Omnisend?</h3>
+    <p>Omnisend has no public endpoint to enumerate lists, so you push to a free-text <b>tag</b> instead. Your Omnisend segments and automations target that tag.</p>
+    <h3>Who can connect and who can sync?</h3>
+    <p><b>Admin</b> role connects and disconnects providers. <b>Marketer</b> role (or higher) can push and pull contacts.</p>
+    <h3>Does connecting send anything automatically?</h3>
+    <p>No. Connecting only verifies the credentials. Contacts move only when you explicitly push or pull — and each of those is recorded in the sync feed and the audit log.</p>
+  </div>
+
+</main>
+<footer>
+  <a href="/autoresponders-module.html">Autoresponders</a>
+  <a href="/email-marketing-module.html">Email</a>
+  <a href="/traffic-module.html">Traffic</a>
+  <a href="/ads-module.html">Ads</a>
+  <a href="/guides.html">All guides</a>
+  <a href="/">Home</a>
+  <div class="updated">AdGenieHQ — module guide · Last updated July 2026</div>
+</footer>
+</body>
+</html>
