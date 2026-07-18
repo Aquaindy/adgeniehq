@@ -120,7 +120,7 @@ class Settings(BaseSettings):
         default="eleven_multilingual_v2", alias="ELEVENLABS_MODEL"
     )
     elevenlabs_default_voice_id: str = Field(
-        default="", alias="ELEVENLABS_DEFAULT_VOICE_ID"
+        default="gs0tAILXbY5DNrJrsM6F", alias="ELEVENLABS_DEFAULT_VOICE_ID"
     )
     # TTS synthesis of a full article can take a while, so it gets a generous
     # timeout of its own (like image generation).
