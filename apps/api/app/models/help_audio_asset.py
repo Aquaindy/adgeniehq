@@ -40,7 +40,15 @@ class HelpAudioAsset(Base, TimestampMixin):
     # Public URL of the stored MP3 (object storage). Null until READY.
     url: Mapped[str | None] = mapped_column(String(1024))
     status: Mapped[HelpAudioStatus] = mapped_column(
-        Enum(HelpAudioStatus, name="help_audio_status"),
+        # Store the lowercase enum VALUES ("generating"/"ready"/"failed") to match
+        # the PG enum the migration created. Without values_callable SQLAlchemy
+        # persists the member NAMES ("GENERATING"), which Postgres rejects — see
+        # the enum-casing convention used across the models (ad.py, creative.py…).
+        Enum(
+            HelpAudioStatus,
+            name="help_audio_status",
+            values_callable=lambda enum: [m.value for m in enum],
+        ),
         nullable=False,
         default=HelpAudioStatus.GENERATING,
     )

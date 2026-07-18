@@ -212,6 +212,8 @@ function AudioTab({
     queryKey: ["help-audio", topicId],
     queryFn: () => getHelpAudio(topicId),
     enabled: audioSupported,
+    // One quiet retry smooths over a transient blip before we surface an error.
+    retry: 1,
     // Poll only while a narration is being generated.
     refetchInterval: (query) =>
       query.state.data?.status === "generating" ? 2500 : false,
@@ -222,14 +224,36 @@ function AudioTab({
     onSuccess: (data) => queryClient.setQueryData(["help-audio", topicId], data),
   });
 
+  const status = audio.data?.status;
+
   // Auto-start generation the first time someone opens Audio for this topic.
+  // Gated on start.isIdle so a *failed* attempt doesn't silently loop — after a
+  // failure the user retries explicitly via the button below.
   useEffect(() => {
-    if (audioSupported && audio.data?.status === "none" && start.isIdle) {
+    if (audioSupported && status === "none" && start.isIdle) {
       start.mutate();
     }
-  }, [audioSupported, audio.data?.status, start]);
+  }, [audioSupported, status, start]);
 
-  if (!audioSupported) {
+  // Safety net: if generation never resolves (e.g. the worker died mid-run, or
+  // the server keeps reporting "generating"), stop after a while and offer a
+  // retry instead of spinning forever.
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    setTimedOut(false);
+    if (status !== "generating") return;
+    const timer = setTimeout(() => setTimedOut(true), 90_000);
+    return () => clearTimeout(timer);
+  }, [status]);
+
+  const retry = () => {
+    setTimedOut(false);
+    start.reset();
+    start.mutate();
+  };
+
+  // 1) TTS not configured on the server → honest "coming soon".
+  if (!audioSupported || status === "unavailable") {
     return (
       <ComingSoon
         title="Audio narration coming soon"
@@ -238,17 +262,7 @@ function AudioTab({
     );
   }
 
-  const status = audio.data?.status;
-
-  if (audio.isLoading || status === "generating" || start.isPending || status === "none") {
-    return (
-      <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-6 text-sm text-slate-600">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-grape-300 border-t-grape-700" />
-        Preparing narration… this can take a few seconds the first time.
-      </div>
-    );
-  }
-
+  // 2) Ready → play.
   if (status === "ready" && audio.data?.url) {
     return (
       <div className="flex flex-col gap-3 py-2">
@@ -262,17 +276,41 @@ function AudioTab({
     );
   }
 
-  // failed / unavailable
+  // 3) Actively working — the initial status check, the first auto-start, an
+  // in-flight retry, or generation in progress. Takes precedence over a stale
+  // error so a retry shows the spinner, not the old message. Bails out if
+  // generation has stalled past the timeout.
+  const working =
+    !timedOut &&
+    (start.isPending ||
+      status === "generating" ||
+      audio.isLoading ||
+      (status === "none" && !start.isError));
+  if (working) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-6 text-sm text-slate-600">
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-grape-300 border-t-grape-700" />
+        Preparing narration… this can take a few seconds the first time.
+      </div>
+    );
+  }
+
+  // 4) Anything else is a failure we can retry: the status request failed, the
+  // start request failed, the server marked the asset "failed", or generation
+  // stalled. Never a stuck spinner.
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-amber-50 px-4 py-5 text-sm text-amber-800">
-      <p>We couldn&apos;t prepare the narration right now.</p>
+      <p>We couldn&apos;t load the narration right now.</p>
       <button
-        onClick={() => start.mutate()}
+        onClick={retry}
         disabled={start.isPending}
         className="w-fit rounded-lg bg-grape px-3 py-1.5 text-sm font-medium text-white transition hover:bg-grape-800 disabled:opacity-60"
       >
         Try again
       </button>
+      <p className="text-xs text-amber-700/70">
+        You can keep reading on the Text tab in the meantime.
+      </p>
     </div>
   );
 }
