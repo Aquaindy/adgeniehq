@@ -1,17 +1,17 @@
 """Subscription plan catalog — provider-neutral.
 
 The catalog defines AdVanta's plans and their limits. Pricing is processed by
-**Paddle** (Merchant of Record); the actual charged amount lives on the Paddle
-Price, and the per-plan Paddle Price IDs are resolved in
-`app.integrations.paddle_billing` (monthly + annual). The `monthly_price_usd` /
-`annual_price_usd` here are **display only**.
+**PayPal**; the actual charged amount lives on the PayPal Billing Plan, and the
+per-plan PayPal Plan IDs are resolved in `app.integrations.paypal_billing`
+(monthly + annual). The `monthly_price_usd` / `annual_price_usd` here are
+**display only**.
 
 AI work is metered as a single monthly **AI-credit** pool (`monthly_credits`);
 each AI action deducts credits per the cost table in `billing_service`
 (`CREDIT_COST`). Non-AI caps — landing-page count, team seats, provider writes —
 stay as their own limits. `None` = unlimited on any limit.
 
-`paid=True` marks a sellable plan (resolvable to a Paddle Price). `is_public`
+`paid=True` marks a sellable plan (resolvable to a PayPal Plan). `is_public`
 controls whether it shows on the pricing page + billing UI. `free` is the
 internal fallback for workspaces without an active subscription; the AppSumo
 tiers are granted by redeeming lifetime codes, never sold through checkout.
@@ -51,12 +51,12 @@ class Plan:
     code: str
     display_name: str
     description: str
-    # Display only — Paddle's Price is the source of truth for the charge.
+    # Display only — PayPal's Billing Plan is the source of truth for the charge.
     monthly_price_usd: int | None
     limits: PlanLimits
-    # True = a sellable plan with Paddle Price IDs (PADDLE_PRICE_ID_<CODE>[_ANNUAL]).
+    # True = a sellable plan with PayPal Plan IDs (PAYPAL_PLAN_ID_<CODE>[_ANNUAL]).
     paid: bool = False
-    # Display only; annual checkout uses the PADDLE_PRICE_ID_<CODE>_ANNUAL price.
+    # Display only; annual checkout uses the PAYPAL_PLAN_ID_<CODE>_ANNUAL plan.
     annual_price_usd: int | None = None
     # When False, hidden from the public pricing page + the billing UI's
     # available-plans list (still reachable as a technical default).

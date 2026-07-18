@@ -10,15 +10,16 @@ from app.db.base import Base, TimestampMixin
 
 
 class SubscriptionSource(StrEnum):
-    """Where the current plan grant comes from. `paddle` is the Merchant-of-
-    Record processor for recurring plans (handles global tax/VAT). `appsumo`
-    rows are lifetime deals with no recurring charge. `stripe` is a legacy
-    tombstone — Stripe was removed; it's never written, kept only so the DB
-    enum type stays stable without a migration."""
+    """Where the current plan grant comes from. `paypal` is the processor for
+    recurring plans. `appsumo` rows are lifetime deals with no recurring charge.
+    `stripe` and `paddle` are legacy tombstones — both processors were removed;
+    they're never written, kept only so the DB enum type stays stable without a
+    value-drop migration (Postgres can't easily drop an enum value)."""
 
     STRIPE = "stripe"  # legacy — Stripe removed; no longer written
     APPSUMO = "appsumo"
-    PADDLE = "paddle"
+    PADDLE = "paddle"  # legacy — Paddle removed (domain never approved); no longer written
+    PAYPAL = "paypal"
 
 
 class SubscriptionStatus(StrEnum):
@@ -36,7 +37,7 @@ class SubscriptionStatus(StrEnum):
 
 
 class BillingSubscription(Base, TimestampMixin):
-    """One row per workspace subscription (Paddle / AppSumo). Latest = current."""
+    """One row per workspace subscription (PayPal / AppSumo). Latest = current."""
 
     __tablename__ = "billing_subscriptions"
 
@@ -57,7 +58,7 @@ class BillingSubscription(Base, TimestampMixin):
     source: Mapped[SubscriptionSource] = mapped_column(
         Enum(SubscriptionSource, name="subscription_source"),
         nullable=False,
-        default=SubscriptionSource.PADDLE,
+        default=SubscriptionSource.PAYPAL,
     )
 
     # Legacy Stripe identifiers — Stripe was removed; inert tombstones (never
@@ -65,10 +66,11 @@ class BillingSubscription(Base, TimestampMixin):
     stripe_subscription_id: Mapped[str | None] = mapped_column(String(64), unique=True)
     stripe_price_id: Mapped[str | None] = mapped_column(String(64))
 
-    # Provider-neutral identifiers used by non-Stripe processors (Paddle).
+    # Provider-neutral identifiers used by non-Stripe processors (PayPal).
     # Kept separate from the stripe_* columns so AppSumo/Stripe rows are
-    # untouched. `management_url` is the processor-hosted page where the
-    # customer can update or cancel (Paddle returns these on the subscription).
+    # untouched. `management_url` is the processor page where the customer can
+    # view or cancel (PayPal has no per-customer portal, so this is the PayPal
+    # autopay list).
     external_subscription_id: Mapped[str | None] = mapped_column(String(64), unique=True)
     external_price_id: Mapped[str | None] = mapped_column(String(64))
     management_url: Mapped[str | None] = mapped_column(String(1024))

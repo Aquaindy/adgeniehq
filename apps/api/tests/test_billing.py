@@ -53,28 +53,44 @@ def _seed_paid_subscription(
     *,
     workspace_id,
     plan_code: str = "pro",
-    management_url: str = "https://paddle.example/manage",
+    management_url: str = "https://www.paypal.com/myaccount/autopay/",
 ) -> None:
-    """Seed an active Paddle subscription row (no Stripe — removed)."""
+    """Seed an active PayPal subscription row (no Stripe/Paddle — removed)."""
     db.add(
         BillingSubscription(
             workspace_id=workspace_id,
             plan_code=plan_code,
             status=SubscriptionStatus.ACTIVE,
-            source=SubscriptionSource.PADDLE,
-            external_subscription_id=f"sub_{plan_code}_{workspace_id}",
+            source=SubscriptionSource.PAYPAL,
+            external_subscription_id=f"I-{plan_code}-{workspace_id}",
             management_url=management_url,
         )
     )
     db.commit()
 
 
-def _configure_paddle(monkeypatch) -> None:
-    monkeypatch.setenv("PADDLE_API_KEY", "pdl_test_key")
-    monkeypatch.setenv("PADDLE_WEBHOOK_SECRET", "pdl_test_whsec")
-    monkeypatch.setenv("PADDLE_CLIENT_TOKEN", "pdl_test_ctkn")
-    monkeypatch.setenv("PADDLE_PRICE_ID_PRO", "pri_pro_monthly")
-    monkeypatch.setenv("PADDLE_PRICE_ID_PRO_ANNUAL", "pri_pro_yearly")
+def _configure_paypal(monkeypatch) -> None:
+    monkeypatch.setenv("PAYPAL_CLIENT_ID", "ppl_test_cid")
+    monkeypatch.setenv("PAYPAL_CLIENT_SECRET", "ppl_test_secret")
+    monkeypatch.setenv("PAYPAL_WEBHOOK_ID", "ppl_test_whid")
+    monkeypatch.setenv("PAYPAL_PLAN_ID_PRO", "P-pro-monthly")
+    monkeypatch.setenv("PAYPAL_PLAN_ID_PRO_ANNUAL", "P-pro-yearly")
+
+
+def _stub_paypal_create(monkeypatch) -> dict:
+    """Replace the PayPal subscription-create HTTP call with a capture stub.
+    Returns the dict that receives the kwargs create_subscription was called
+    with, so tests can assert plan_id / custom_id without hitting the network."""
+    from app.integrations import paypal_billing
+
+    captured: dict = {}
+
+    def _fake_create(**kwargs):
+        captured.update(kwargs)
+        return {"id": "I-TEST-123", "approval_url": "https://paypal.example/approve?ba_token=abc"}
+
+    monkeypatch.setattr(paypal_billing, "create_subscription", _fake_create)
+    return captured
 
 
 # ---------------------------------------------------------------------------
@@ -113,9 +129,9 @@ def test_status_reflects_active_subscription(
     ).json()
     assert body["plan"]["code"] == "pro"
     assert body["subscription_status"] == "active"
-    # A manageable Paddle subscription (has a management URL).
+    # A manageable PayPal subscription (has a subscription id).
     assert body["has_billing_customer"] is True
-    assert body["subscription_source"] == "paddle"
+    assert body["subscription_source"] == "paypal"
 
 
 def test_status_falls_back_to_free_for_past_due(
@@ -254,7 +270,7 @@ def test_free_plan_blocks_landing_page_over_cap(
 
 
 # ---------------------------------------------------------------------------
-# Paddle checkout / portal
+# PayPal checkout / portal
 # ---------------------------------------------------------------------------
 
 
@@ -274,7 +290,8 @@ def test_checkout_503_when_billing_unconfigured(
 def test_checkout_404_for_unknown_plan(
     client: TestClient, db_session: Session, monkeypatch
 ) -> None:
-    _configure_paddle(monkeypatch)
+    _configure_paypal(monkeypatch)
+    _stub_paypal_create(monkeypatch)
     _, workspace = _seed_workspace(db_session)
     _login(client, "alice@example.com")
     response = client.post(
@@ -285,10 +302,11 @@ def test_checkout_404_for_unknown_plan(
     assert response.json()["error"]["code"] == "unknown_plan"
 
 
-def test_checkout_returns_paddle_overlay_monthly(
+def test_checkout_returns_paypal_approval_url_monthly(
     client: TestClient, db_session: Session, monkeypatch
 ) -> None:
-    _configure_paddle(monkeypatch)
+    _configure_paypal(monkeypatch)
+    captured = _stub_paypal_create(monkeypatch)
     _, workspace = _seed_workspace(db_session)
     _login(client, "alice@example.com")
     response = client.post(
@@ -297,16 +315,19 @@ def test_checkout_returns_paddle_overlay_monthly(
     )
     assert response.status_code == 201, response.text
     body = response.json()
-    assert body["provider"] == "paddle"
-    assert body["paddle"]["price_id"] == "pri_pro_monthly"
-    assert body["paddle"]["custom_data"]["workspace_id"] == str(workspace.id)
-    assert body["paddle"]["custom_data"]["interval"] == "month"
+    assert body["provider"] == "paypal"
+    assert body["paypal"]["approval_url"] == "https://paypal.example/approve?ba_token=abc"
+    # The subscription was created against the monthly plan id, and custom_id
+    # round-trips workspace + plan + interval for the webhook.
+    assert captured["plan_id"] == "P-pro-monthly"
+    assert captured["custom_id"] == f"{workspace.id}|pro|month"
 
 
-def test_checkout_annual_uses_annual_price(
+def test_checkout_annual_uses_annual_plan(
     client: TestClient, db_session: Session, monkeypatch
 ) -> None:
-    _configure_paddle(monkeypatch)
+    _configure_paypal(monkeypatch)
+    captured = _stub_paypal_create(monkeypatch)
     _, workspace = _seed_workspace(db_session)
     _login(client, "alice@example.com")
     response = client.post(
@@ -314,9 +335,8 @@ def test_checkout_annual_uses_annual_price(
         json={"plan_code": "pro", "interval": "year"},
     )
     assert response.status_code == 201, response.text
-    body = response.json()
-    assert body["paddle"]["price_id"] == "pri_pro_yearly"
-    assert body["paddle"]["custom_data"]["interval"] == "year"
+    assert captured["plan_id"] == "P-pro-yearly"
+    assert captured["custom_id"] == f"{workspace.id}|pro|year"
 
 
 def test_checkout_requires_owner_role(
@@ -331,21 +351,21 @@ def test_checkout_requires_owner_role(
     assert response.status_code == 403
 
 
-def test_portal_returns_paddle_management_url(
+def test_portal_returns_paypal_management_url(
     client: TestClient, db_session: Session
 ) -> None:
     _, workspace = _seed_workspace(db_session)
     _seed_paid_subscription(
         db_session,
         workspace_id=workspace.id,
-        management_url="https://paddle.example/manage/abc",
+        management_url="https://www.paypal.com/myaccount/autopay/",
     )
     _login(client, "alice@example.com")
     response = client.post(
         f"/api/v1/workspaces/{workspace.id}/billing/portal-session"
     )
     assert response.status_code == 201
-    assert response.json()["url"] == "https://paddle.example/manage/abc"
+    assert response.json()["url"] == "https://www.paypal.com/myaccount/autopay/"
 
 
 def test_portal_503_when_no_subscription_to_manage(

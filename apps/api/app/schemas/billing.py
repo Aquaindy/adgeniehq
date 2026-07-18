@@ -19,7 +19,7 @@ class PlanPublic(BaseModel):
     display_name: str
     description: str
     monthly_price_usd: int | None
-    # Display only; annual checkout uses the plan's annual Paddle Price.
+    # Display only; annual checkout uses the plan's annual PayPal Billing Plan.
     annual_price_usd: int | None = None
     is_paid: bool
     limits: PlanLimitsPublic
@@ -47,14 +47,14 @@ class BillingStatus(BaseModel):
     current_period_end: datetime | None
     trial_end: datetime | None
     usage: UsagePublic
-    # True when there's a manageable Paddle subscription (a portal URL exists).
+    # True when there's a manageable PayPal subscription (a manage URL exists).
     has_billing_customer: bool
-    paddle_configured: bool = False
-    # Which processor handles recurring plans: "paddle" | "none".
+    paypal_configured: bool = False
+    # Which processor handles recurring plans: "paypal" | "none".
     subscription_provider: str = "none"
-    # "paddle" (recurring, MoR) | "appsumo" (lifetime). Lets the UI pick the
-    # right badge / manage flow.
-    subscription_source: str = "paddle"
+    # "paypal" (recurring) | "appsumo" (lifetime). Lets the UI pick the right
+    # badge / manage flow.
+    subscription_source: str = "paypal"
 
 
 class CheckoutRequest(BaseModel):
@@ -62,19 +62,16 @@ class CheckoutRequest(BaseModel):
     interval: Literal["month", "year"] = "month"
 
 
-class PaddleCheckout(BaseModel):
-    """Client-side overlay config for Paddle.js (there is no server redirect)."""
+class PayPalCheckout(BaseModel):
+    """Server-created PayPal subscription. The client redirects to approval_url
+    to complete approval; activation is confirmed by the webhook."""
 
-    client_token: str
-    environment: str
-    price_id: str
-    customer_email: str
-    custom_data: dict[str, str]
+    approval_url: str
 
 
 class CheckoutResponse(BaseModel):
-    provider: str = "paddle"
-    paddle: PaddleCheckout | None = None
+    provider: str = "paypal"
+    paypal: PayPalCheckout | None = None
 
 
 class PortalResponse(BaseModel):

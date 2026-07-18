@@ -66,6 +66,26 @@ def run_agent_task(
         }
 
 
+@celery_app.task(name="advanta.generate_help_audio", bind=True, ignore_result=False)
+def generate_help_audio_task(
+    self,  # noqa: ARG001
+    *,
+    topic_id: str,
+) -> dict[str, Any]:
+    """Synthesize + cache the ElevenLabs narration for a Help article.
+
+    Runs on a worker (or inline when workers are off) so the first listener
+    doesn't hold an HTTP request open through a multi-second TTS call. The help
+    service records the resulting MP3 URL + status on the asset row."""
+
+    from app.services import help_service
+
+    with _session() as db:
+        help_service.generate_audio(db, topic_id=topic_id)
+        status = help_service.get_audio_status(db, topic_id=topic_id)
+        return {"topic_id": topic_id, "status": status.get("status")}
+
+
 @celery_app.task(name="advanta.send_outreach_email", bind=True, ignore_result=False)
 def send_outreach_email_task(
     self,  # noqa: ARG001

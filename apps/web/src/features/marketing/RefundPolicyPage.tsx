@@ -20,8 +20,7 @@ export function RefundPolicyPage() {
           <p>
             AdGenieHQ subscriptions (Starter, Pro, Agency) are billed in advance
             on a recurring basis — monthly or annually, depending on the plan
-            you choose — through our payment provider, Paddle, who acts as the
-            merchant of record.
+            you choose — through our payment provider, PayPal.
           </p>
         </Section>
 
@@ -31,8 +30,8 @@ export function RefundPolicyPage() {
             <span className="font-medium text-slate-700">
               Settings → Billing → Manage plan
             </span>
-            , which opens your secure Paddle billing portal. Cancellation stops
-            future renewals.
+            , which takes you to your PayPal account to manage or cancel the
+            subscription. Cancellation stops future renewals.
           </p>
           <p>
             When you cancel, you keep full access to your paid plan until the end
@@ -79,10 +78,11 @@ export function RefundPolicyPage() {
 
         <Section title="7. Taxes">
           <p>
-            As merchant of record, Paddle calculates and collects any applicable
-            sales tax or VAT, which is added on top of the listed plan price at
-            checkout. Tax amounts are handled by Paddle in accordance with their
-            policies.
+            Listed plan prices are in US dollars. Depending on your location, sales
+            tax or VAT may apply to your purchase; where we are required to collect
+            it, any applicable tax is shown before you confirm payment. You are
+            responsible for any taxes not collected at checkout as required by your
+            local law.
           </p>
         </Section>
 

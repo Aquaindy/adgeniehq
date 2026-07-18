@@ -6,7 +6,6 @@ the fee ledger are unchanged."""
 from app.core.exceptions import AdVantaError
 from app.payments.base import PaymentProvider
 from app.payments.manual import ManualPaymentProvider
-from app.payments.paddle import PaddlePaymentProvider
 from app.payments.paypal import PayPalPaymentProvider
 
 
@@ -17,7 +16,6 @@ class UnknownPaymentProviderError(AdVantaError):
 
 PAYMENT_REGISTRY: dict[str, type[PaymentProvider]] = {
     ManualPaymentProvider.provider_id: ManualPaymentProvider,
-    PaddlePaymentProvider.provider_id: PaddlePaymentProvider,
     PayPalPaymentProvider.provider_id: PayPalPaymentProvider,
 }
 

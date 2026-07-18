@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.billing.plans import PLANS
 from app.db.session import get_db
-from app.integrations import paddle_billing
+from app.integrations import paypal_billing
 from app.models.usage_event import UsageEventType
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
@@ -14,7 +14,7 @@ from app.schemas.billing import (
     BillingStatus,
     CheckoutRequest,
     CheckoutResponse,
-    PaddleCheckout,
+    PayPalCheckout,
     PlanLimitsPublic,
     PlanPublic,
     PortalResponse,
@@ -26,7 +26,7 @@ from app.services import billing_service
 # Workspace-scoped routes (auth required)
 workspace_router = APIRouter()
 
-# Public webhook router (Paddle-signed, no auth)
+# Public webhook router (PayPal-signed, no auth)
 public_router = APIRouter()
 
 
@@ -90,13 +90,11 @@ def get_billing_status(
                 db, workspace_id=workspace_id
             ),
         ),
-        # Show "Manage billing" for any real Paddle subscription — the portal
-        # URL is resolved on demand (Paddle often omits it from webhooks), so we
-        # don't require a pre-stored management_url here.
+        # Show "Manage billing" for any real PayPal subscription.
         has_billing_customer=bool(sub and sub.external_subscription_id),
-        paddle_configured=paddle_billing.is_configured(),
+        paypal_configured=paypal_billing.is_configured(),
         subscription_provider=billing_service.subscription_provider(),
-        subscription_source=(sub.source.value if sub else "paddle"),
+        subscription_source=(sub.source.value if sub else "paypal"),
     )
 
 
@@ -113,14 +111,14 @@ def create_checkout(
 ) -> CheckoutResponse:
     workspace = db.get(Workspace, workspace_id)
     assert workspace is not None  # require_owner guarantees membership
-    cfg = billing_service.create_paddle_checkout(
+    cfg = billing_service.create_paypal_checkout(
         db,
         workspace=workspace,
         user=member.user,
         plan_code=payload.plan_code,
         interval=payload.interval,
     )
-    return CheckoutResponse(provider="paddle", paddle=PaddleCheckout(**cfg))
+    return CheckoutResponse(provider="paypal", paypal=PayPalCheckout(**cfg))
 
 
 @workspace_router.post(
@@ -133,7 +131,7 @@ def create_portal(
     member: WorkspaceMember = Depends(require_owner),
     db: Session = Depends(get_db),
 ) -> PortalResponse:
-    url = billing_service.paddle_management_url(db, workspace_id=workspace_id)
+    url = billing_service.paypal_management_url(db, workspace_id=workspace_id)
     return PortalResponse(url=url)
 
 
@@ -142,14 +140,19 @@ def create_portal(
 # ---------------------------------------------------------------------------
 
 
-@public_router.post("/paddle/webhook")
-async def paddle_webhook(
+@public_router.post("/paypal/webhook")
+async def paypal_webhook(
     request: Request,
-    paddle_signature: str | None = Header(default=None, alias="Paddle-Signature"),
     db: Session = Depends(get_db),
 ) -> JSONResponse:
+    import json
+
     payload = await request.body()
-    # Verify the HMAC signature over the RAW body before doing anything else.
-    event = paddle_billing.verify_webhook(payload, paddle_signature)
-    billing_service.process_paddle_webhook(db, event)
+    try:
+        event = json.loads(payload)
+    except json.JSONDecodeError:
+        return JSONResponse({"received": False}, status_code=400)
+    # Verify the transmission signature against PayPal before acting on it.
+    paypal_billing.verify_webhook(dict(request.headers), event)
+    billing_service.process_paypal_webhook(db, event)
     return JSONResponse({"received": True})

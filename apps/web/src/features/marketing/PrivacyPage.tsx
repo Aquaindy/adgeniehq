@@ -26,7 +26,7 @@ export function PrivacyPage() {
 
         <Section title="Subprocessors">
           <p>
-            We use a small set of subprocessors: Paddle (billing),
+            We use a small set of subprocessors: PayPal (billing),
             OpenAI-compatible LLM providers (content generation),
             transactional email (send/receive), Sentry (error tracking),
             and the platforms you explicitly connect via OAuth.

@@ -11,7 +11,7 @@ import {
   getBillingStatus,
 } from "@/lib/billing";
 import { getWorkspaceFees, getWorkspaceInvoices } from "@/lib/fees";
-import { openPaddleCheckout } from "@/lib/paddle";
+import { redirectToPayPalCheckout } from "@/lib/paypal";
 import { cn } from "@/lib/utils";
 import { useWorkspaceStore } from "@/stores/workspace-store";
 import type {
@@ -53,7 +53,7 @@ export function BillingPage() {
     enabled: !!workspaceId,
   });
 
-  // Surface the Paddle checkout outcome (?checkout=success|cancelled).
+  // Surface the PayPal checkout outcome (?checkout=success|cancelled).
   useEffect(() => {
     const outcome = searchParams.get("checkout");
     if (!outcome) return;
@@ -71,11 +71,11 @@ export function BillingPage() {
   const checkout = useMutation({
     mutationFn: (planCode: string) =>
       createCheckoutSession(workspaceId!, planCode, interval),
-    onSuccess: async (resp) => {
-      // Paddle opens a client-side overlay; the subscription lands via webhook.
-      if (resp.paddle) {
-        await openPaddleCheckout(resp.paddle);
-        queryClient.invalidateQueries({ queryKey: ["billing", workspaceId] });
+    onSuccess: (resp) => {
+      // PayPal is a full-page redirect to approve; activation lands via webhook
+      // when the buyer returns to /billing?checkout=success.
+      if (resp.paypal) {
+        redirectToPayPalCheckout(resp.paypal);
       }
     },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Could not start checkout."),
@@ -94,7 +94,7 @@ export function BillingPage() {
       <header>
         <h1 className="text-2xl font-semibold text-ink sm:text-3xl">Plan & usage</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Subscriptions are billed by Paddle; webhook updates land here within seconds.
+          Subscriptions are billed by PayPal; webhook updates land here within seconds.
           Platform fees on your ad activity are shown below.
         </p>
         <p className="mt-2 text-sm text-slate-500">
@@ -166,9 +166,9 @@ export function BillingPage() {
       {status.data && status.data.subscription_provider === "none" ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <strong>Subscription billing isn't configured on this server yet.</strong> Plan
-          limits still apply, but Upgrade actions will fail with a clear error until Paddle
-          is set (<code>PADDLE_API_KEY</code> + <code>PADDLE_WEBHOOK_SECRET</code> +{" "}
-          <code>PADDLE_PRICE_ID_*</code>).
+          limits still apply, but Upgrade actions will fail with a clear error until PayPal
+          is set (<code>PAYPAL_CLIENT_ID</code> + <code>PAYPAL_CLIENT_SECRET</code> +{" "}
+          <code>PAYPAL_WEBHOOK_ID</code> + <code>PAYPAL_PLAN_ID_*</code>).
         </div>
       ) : null}
     </div>

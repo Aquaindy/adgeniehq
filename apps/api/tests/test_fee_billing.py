@@ -170,26 +170,15 @@ def test_void_releases_accruals(client: TestClient, db_session: Session) -> None
 # ---------------------------------------------------------------------------
 
 
-def test_paddle_provider_unconfigured_503(client: TestClient, db_session: Session) -> None:
-    ws = _superuser(client, db_session)
-    _accrual(db_session, ws=ws, amount=2500)
-    with patch.dict(os.environ, {}, clear=False):
-        os.environ.pop("PADDLE_API_KEY", None)
-        resp = client.post(
-            "/api/v1/admin/fees/invoices",
-            json={"workspace_id": str(ws.id), "provider": "paddle"},
-        )
-    assert resp.status_code == 503
-
-
 def test_payment_provider_catalog(client: TestClient, db_session: Session) -> None:
     _superuser(client, db_session)
     resp = client.get("/api/v1/admin/fees/payment-providers")
     assert resp.status_code == 200
     providers = {p["provider"]: p for p in resp.json()}
     assert providers["manual"]["configured"] is True
-    assert "paddle" in providers and "paypal" in providers
+    assert "paypal" in providers
     assert "stripe" not in providers  # Stripe removed
+    assert "paddle" not in providers  # Paddle removed
 
 
 def test_invoicing_requires_superuser(client: TestClient, db_session: Session) -> None:
@@ -233,12 +222,12 @@ def _invoice(
 
 
 def test_mark_paid_rejects_non_manual_invoice(db_session: Session) -> None:
-    """Staff cannot mark a processor-backed (paddle/paypal) invoice paid — that
-    must come from a verified webhook, not an unverified button click."""
+    """Staff cannot mark a processor-backed (paypal) invoice paid — that must
+    come from a verified webhook, not an unverified button click."""
     from app.services import fee_billing_service
 
     _, ws = _seed_member(db_session, email="o1@example.com")
-    inv = _invoice(db_session, ws=ws, provider="paddle", status=FeeInvoiceStatus.OPEN)
+    inv = _invoice(db_session, ws=ws, provider="paypal", status=FeeInvoiceStatus.OPEN)
     with pytest.raises(fee_billing_service.FeeInvoiceNotManuallyPayableError):
         fee_billing_service.mark_invoice_paid(db_session, invoice_id=inv.id)
     db_session.refresh(inv)
@@ -282,9 +271,9 @@ def test_confirm_invoice_payment_marks_processor_invoice_paid(db_session: Sessio
     from app.services import fee_billing_service
 
     _, ws = _seed_member(db_session, email="o5@example.com")
-    inv = _invoice(db_session, ws=ws, provider="paddle", status=FeeInvoiceStatus.OPEN)
+    inv = _invoice(db_session, ws=ws, provider="paypal", status=FeeInvoiceStatus.OPEN)
     confirmed = fee_billing_service.confirm_invoice_payment(
-        db_session, invoice=inv, confirmation_ref="txn_123"
+        db_session, invoice=inv, confirmation_ref="INV-123"
     )
     assert confirmed.status == FeeInvoiceStatus.PAID
     assert confirmed.paid_at is not None
@@ -307,35 +296,6 @@ class _Resp:
 
     def json(self):
         return self._b
-
-
-def test_paddle_create_invoice_builds_transaction() -> None:
-    import httpx
-
-    from app.payments.base import InvoiceCustomer, InvoiceLine
-    from app.payments.paddle import PaddlePaymentProvider
-
-    captured: dict = {}
-
-    def _post(url, **kwargs):
-        captured["url"] = url
-        captured["json"] = kwargs.get("json")
-        return _Resp({"data": {"id": "txn_1", "status": "draft", "checkout": {"url": "https://paddle/pay"}}})
-
-    from uuid import uuid4
-
-    customer = InvoiceCustomer(workspace_id=uuid4(), email="o@example.com", external_customer_id="ctm_1")
-    lines = [InvoiceLine(description="Listing fee", amount_cents=2500, accrual_id=uuid4())]
-    with patch.dict(os.environ, {"PADDLE_API_KEY": "pk"}, clear=False):
-        with patch.object(httpx, "post", side_effect=_post):
-            result = PaddlePaymentProvider.create_invoice(
-                customer=customer, currency="USD", lines=lines, period=None, metadata={"x": "y"}
-            )
-    assert result.external_id == "txn_1"
-    assert result.hosted_url == "https://paddle/pay"
-    item = captured["json"]["items"][0]
-    assert item["price"]["unit_price"]["amount"] == "2500"
-    assert captured["json"]["customer_id"] == "ctm_1"
 
 
 def test_paypal_create_invoice_sends_and_returns_link() -> None:
@@ -366,31 +326,38 @@ def test_paypal_create_invoice_sends_and_returns_link() -> None:
     assert result.hosted_url == "https://paypal/payerview"
 
 
-def test_generate_invoice_via_paddle_end_to_end(client: TestClient, db_session: Session) -> None:
+def test_generate_invoice_via_paypal_end_to_end(client: TestClient, db_session: Session) -> None:
     import httpx
 
     ws = _superuser(client, db_session)
     _accrual(db_session, ws=ws, amount=2500)
 
     def _post(url, **kwargs):
-        if url.endswith("/customers"):
-            return _Resp({"data": {"id": "ctm_x"}})
-        if url.endswith("/transactions"):
-            return _Resp({"data": {"id": "txn_9", "status": "draft", "checkout": {"url": "https://paddle/pay9"}}})
+        if url.endswith("/v1/oauth2/token"):
+            return _Resp({"access_token": "tok"})
+        if url.endswith("/v2/invoicing/invoices"):
+            return _Resp(
+                {"href": "https://api-m.paypal.com/v2/invoicing/invoices/INV2-END"},
+                status_code=201,
+            )
+        if url.endswith("/send"):
+            return _Resp({"href": "https://paypal/payerview9"})
         return _Resp({}, status_code=404)
 
-    with patch.dict(os.environ, {"PADDLE_API_KEY": "pk"}, clear=False):
+    with patch.dict(
+        os.environ, {"PAYPAL_CLIENT_ID": "c", "PAYPAL_CLIENT_SECRET": "s"}, clear=False
+    ):
         with patch.object(httpx, "post", side_effect=_post):
             resp = client.post(
                 "/api/v1/admin/fees/invoices",
-                json={"workspace_id": str(ws.id), "provider": "paddle"},
+                json={"workspace_id": str(ws.id), "provider": "paypal"},
             )
     assert resp.status_code == 201, resp.text
     body = resp.json()
     assert body["status"] == "open"
-    assert body["provider"] == "paddle"
-    assert body["external_id"] == "txn_9"
-    assert body["hosted_url"] == "https://paddle/pay9"
+    assert body["provider"] == "paypal"
+    assert body["external_id"] == "INV2-END"
+    assert body["hosted_url"] == "https://paypal/payerview9"
 
     db_session.expire_all()
     rows = db_session.query(FeeAccrual).filter(FeeAccrual.workspace_id == ws.id).all()

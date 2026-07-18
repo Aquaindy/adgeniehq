@@ -1003,24 +1003,48 @@ export type BillingStatus = {
   trial_end: string | null;
   usage: Usage;
   has_billing_customer: boolean;
-  paddle_configured: boolean;
-  subscription_provider: "paddle" | "none";
-  subscription_source: "paddle" | "appsumo";
+  paypal_configured: boolean;
+  subscription_provider: "paypal" | "none";
+  subscription_source: "paypal" | "appsumo";
 };
 
-export type PaddleCheckout = {
-  client_token: string;
-  environment: string;
-  price_id: string;
-  customer_email: string;
-  custom_data: Record<string, string>;
+export type PayPalCheckout = {
+  // Server-created PayPal subscription approval URL — redirect the buyer here.
+  approval_url: string;
 };
 
 export type CheckoutSessionResponse = {
-  provider: "paddle";
-  paddle?: PaddleCheckout | null;
+  provider: "paypal";
+  paypal?: PayPalCheckout | null;
 };
 export type PortalSessionResponse = { url: string };
+
+// ---- Help / Knowledge Base ----
+export type HelpTopicSummary = {
+  id: string;
+  category: string;
+  title: string;
+  summary: string;
+  order: number;
+};
+
+export type HelpTopicDetail = HelpTopicSummary & {
+  body_markdown: string;
+  // Whether platform ElevenLabs narration is available (drives the Audio tab).
+  audio_supported: boolean;
+};
+
+export type HelpAudioStatusValue =
+  | "none" // configured, not generated yet
+  | "generating"
+  | "ready"
+  | "failed"
+  | "unavailable"; // TTS not configured on the server
+
+export type HelpAudioStatus = {
+  status: HelpAudioStatusValue;
+  url: string | null;
+};
 
 // ---- Content drafts (Phase B) ----
 

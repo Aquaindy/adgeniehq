@@ -207,7 +207,7 @@ function TrustBand() {
     "LinkedIn Ads",
     "Google Analytics 4",
     "Search Console",
-    "Paddle",
+    "PayPal",
   ];
   return (
     <section className="border-y border-slate-100 bg-surface">

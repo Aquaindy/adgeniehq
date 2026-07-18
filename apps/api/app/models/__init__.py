@@ -37,6 +37,7 @@ from app.models.fee_accrual import FeeAccrual, FeeAccrualStatus, FeeType
 from app.models.fee_invoice import FeeInvoice, FeeInvoiceStatus
 from app.models.fee_rule import FeeRule
 from app.models.growth_dna_profile import GrowthDnaProfile
+from app.models.help_audio_asset import HelpAudioAsset, HelpAudioStatus
 from app.models.keyword import Keyword
 from app.models.landing_page import LandingPage, LandingPageSource
 from app.models.oauth_token import OAuthToken
@@ -117,6 +118,8 @@ __all__ = [
     "FeeInvoiceStatus",
     "FeeRule",
     "GrowthDnaProfile",
+    "HelpAudioAsset",
+    "HelpAudioStatus",
     "Keyword",
     "LandingPage",
     "LandingPageSource",

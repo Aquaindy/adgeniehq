@@ -17,6 +17,7 @@ from app.api.v1 import (
     email_campaigns,
     fees,
     health,
+    help,
     inbound,
     integrations,
     landing_pages,
@@ -40,6 +41,7 @@ from app.api.v1 import (
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(help.router, tags=["help"])
 api_router.include_router(workspaces.router, prefix="/workspaces", tags=["workspaces"])
 api_router.include_router(onboarding.router, prefix="/workspaces", tags=["onboarding"])
 api_router.include_router(agents.router, prefix="/workspaces", tags=["agents"])

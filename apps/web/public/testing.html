@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AdGenieHQ QA Testing Guide — checklist &amp; demo data</title>
+<meta name="description" content="A comprehensive manual QA test plan for AdGenieHQ across every module, plus copy-paste demo data you can use to exercise each flow." />
+<meta name="robots" content="noindex,nofollow" />
+<link rel="canonical" href="https://adgeniehq.com/testing.html" />
+<style>
+  :root{
+    --grape:#3E2F84; --violet:#7C3AED; --lav:#EEEAFE; --night:#111827; --cloud:#F9FAFB;
+    --green:#16A34A; --amber:#F59E0B; --red:#DC2626; --slate:#334155; --line:#e5e7eb; --muted:#64748B;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#111827;line-height:1.6;margin:0;background:var(--cloud)}
+  a{color:var(--grape)}
+  header,main,footer{max-width:920px;margin:0 auto;padding:0 20px}
+  header{display:flex;align-items:center;justify-content:space-between;min-height:64px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+  .brand{font-weight:700;color:var(--grape);text-decoration:none;font-size:16px}
+  nav a{margin-left:16px;text-decoration:none;color:var(--slate);font-size:14px}
+  nav a.active{color:var(--grape);font-weight:600}
+  main{padding-top:32px;padding-bottom:24px}
+  .hero{background:linear-gradient(135deg,#3E2F84,#7C3AED);color:#fff;border-radius:18px;padding:30px 26px;margin-bottom:22px}
+  .hero .eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:12px;opacity:.8;margin:0 0 6px}
+  .hero h1{font-size:32px;font-weight:700;margin:0 0 8px;color:#fff}
+  .hero p{margin:0;color:rgba(255,255,255,.92);max-width:64ch}
+  h2{font-size:14px;font-weight:700;margin:34px 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  h3{font-size:17px;font-weight:700;margin:0 0 8px;color:var(--night)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 4px}
+  .toc a{background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;text-decoration:none;color:var(--slate)}
+  .toc a:hover{border-color:var(--violet);color:var(--grape)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 14px}
+  .card .lead{font-size:13px;color:var(--muted);margin:0 0 10px}
+  ul.checks{list-style:none;margin:0;padding:0}
+  ul.checks li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line)}
+  ul.checks li:first-child{border-top:none}
+  ul.checks input{margin-top:5px;width:16px;height:16px;flex-shrink:0;accent-color:var(--grape)}
+  .step{font-size:14px}
+  .step .exp{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+  .exp b{color:var(--green);font-weight:600}
+  .banner{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;border-radius:12px;padding:12px 16px;font-size:14px;margin:0 0 16px}
+  .banner b{color:#78350F}
+  .demo{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+  .demo .dh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
+  .demo .dh .t{font-size:14px;font-weight:700;color:var(--night)}
+  pre{background:#0c1121;color:#e2e8f0;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.55;overflow-x:auto;margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+  button.copy{background:var(--grape);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+  button.copy:hover{background:#33276e}
+  button.copy.ok{background:var(--green)}
+  .note{font-size:13px;color:var(--muted)}
+  .pill{display:inline-block;background:var(--lav);color:var(--grape);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:middle}
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:14px;padding-top:20px;padding-bottom:48px;margin-top:40px}
+  footer a{margin-right:16px;text-decoration:none}
+  .updated{color:#94a3b8;font-size:13px;margin-top:6px}
+  @media (max-width:640px){.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">AdGenieHQ</a>
+  <nav>
+    <a href="/guides.html">Guides</a>
+    <a class="active" href="/testing.html">Testing</a>
+    <a href="/">App</a>
+  </nav>
+</header>
+<main>
+
+  <section class="hero">
+    <p class="eyebrow">Quality Assurance</p>
+    <h1>AdGenieHQ Testing Guide</h1>
+    <p>A comprehensive manual test plan for every module, plus ready-to-use demo data you can paste straight into the app to exercise each flow. Tick items off as you go — checkboxes are local to your browser.</p>
+  </section>
+
+  <div class="toc">
+    <a href="#how">How to use</a>
+    <a href="#auth">Auth</a>
+    <a href="#workspaces">Workspaces</a>
+    <a href="#onboarding">Onboarding &amp; Growth DNA</a>
+    <a href="#agents">Agents</a>
+    <a href="#recs">Recommendations</a>
+    <a href="#billing">Billing / PayPal</a>
+    <a href="#integrations">Integrations</a>
+    <a href="#modules">Modules</a>
+    <a href="#help">Help center</a>
+    <a href="#empty">Empty states</a>
+    <a href="#mobile">Mobile</a>
+    <a href="#security">Security</a>
+    <a href="#demo">Demo data</a>
+  </div>
+
+  <h2 id="how">How to use this page</h2>
+  <div class="card">
+    <p class="lead">Two parts: a <b>manual QA checklist</b> (below) and a <b>Demo Test Data</b> section at the bottom with copy buttons. Work top-to-bottom; each checklist item states the expected result in green.</p>
+    <p class="note">Test on a non-production workspace where possible. For payments, always use PayPal <b>Sandbox</b> accounts — never a real card. Resize the browser (or use device emulation) to confirm mobile layouts.</p>
+  </div>
+
+  <!-- AUTH -->
+  <h2 id="auth">1 · Authentication</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Register a new account with a valid email + strong password.<span class="exp">Expected: <b>account created</b>, redirected into the app; a verification path is available.</span></span></li>
+      <li><input type="checkbox"><span class="step">Log out, then log back in with the same credentials.<span class="exp">Expected: <b>login succeeds</b> and lands on the dashboard.</span></span></li>
+      <li><input type="checkbox"><span class="step">Attempt login with a wrong password.<span class="exp">Expected: a <b>clear error</b>, no token issued.</span></span></li>
+      <li><input type="checkbox"><span class="step">Use "Forgot password" → request reset.<span class="exp">Expected: request accepted with a neutral confirmation (no account enumeration).</span></span></li>
+      <li><input type="checkbox"><span class="step">Leave the app idle until the access token expires, then act.<span class="exp">Expected: token <b>refreshes silently</b>; you stay signed in.</span></span></li>
+      <li><input type="checkbox"><span class="step">Visit an app URL (e.g. <code>/dashboard</code>) while logged out.<span class="exp">Expected: redirected to <b>login</b>.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- WORKSPACES -->
+  <h2 id="workspaces">2 · Workspaces, roles &amp; isolation</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Create a second workspace and switch between them.<span class="exp">Expected: the switcher changes context; data does not leak between workspaces.</span></span></li>
+      <li><input type="checkbox"><span class="step">Invite a teammate and assign a role (Admin / Marketer / Analyst / Viewer).<span class="exp">Expected: invite sent; role saved.</span></span></li>
+      <li><input type="checkbox"><span class="step">As a non-Owner, try an Owner-only action (e.g. start checkout).<span class="exp">Expected: <b>403 / blocked</b> with a clear message.</span></span></li>
+      <li><input type="checkbox"><span class="step">As a Viewer, confirm write actions are hidden or disabled.<span class="exp">Expected: read-only experience.</span></span></li>
+      <li><input type="checkbox"><span class="step">Try to open another workspace's record by ID in the URL.<span class="exp">Expected: <b>not found / forbidden</b> — never another tenant's data.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- ONBOARDING -->
+  <h2 id="onboarding">3 · Onboarding &amp; Growth DNA</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Complete the onboarding wizard using the <a href="#demo-onboarding">demo business profile</a>.<span class="exp">Expected: all steps save; you reach the finish state.</span></span></li>
+      <li><input type="checkbox"><span class="step">Generate the Growth DNA profile.<span class="exp">Expected: a <b>saved profile</b> with summary, readiness scores, and a 30-day plan.</span></span></li>
+      <li><input type="checkbox"><span class="step">Regenerate / create a second profile, then reopen an earlier one.<span class="exp">Expected: history library lists versions; reopening restores its answers.</span></span></li>
+      <li><input type="checkbox"><span class="step">Rename and delete a saved profile.<span class="exp">Expected: label updates; delete removes it from the library.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- AGENTS -->
+  <h2 id="agents">4 · Agents &amp; runs</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">From the Agents dashboard, run a skill agent.<span class="exp">Expected: a run is created with status; output is <b>saved and traceable</b> to the workspace.</span></span></li>
+      <li><input type="checkbox"><span class="step">Open the run detail page.<span class="exp">Expected: inputs, outputs, model, and token/cost info are shown.</span></span></li>
+      <li><input type="checkbox"><span class="step">Exceed the plan's monthly AI-credit pool with repeated runs.<span class="exp">Expected: a <b>402 with a clear upgrade message</b> — nothing runs silently over the cap.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <h2 id="recs">5 · Recommendations &amp; approvals</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Open a recommendation card.<span class="exp">Expected: shows what/why, expected impact, risk level, and related platform/campaign.</span></span></li>
+      <li><input type="checkbox"><span class="step">Approve, reject, and edit-before-applying a recommendation.<span class="exp">Expected: status changes; an <b>audit-log entry</b> records the action.</span></span></li>
+      <li><input type="checkbox"><span class="step">Confirm a sensitive action (budget/launch/tracking) requires approval by default.<span class="exp">Expected: it is <b>gated</b> unless Autopilot is explicitly enabled with limits.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- BILLING -->
+  <h2 id="billing">6 · Billing &amp; PayPal <span class="pill">payments</span></h2>
+  <div class="card">
+    <p class="lead">Recurring plans are billed by <b>PayPal</b> (Paddle removed). Use PayPal <b>Sandbox</b> — see the <a href="#demo-paypal">demo data</a> below.</p>
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Open Settings → Billing. Confirm plan cards, usage meters, and (if unconfigured) the "not configured yet" notice reference PayPal.<span class="exp">Expected: no Paddle references anywhere.</span></span></li>
+      <li><input type="checkbox"><span class="step">With PayPal configured (sandbox), click Upgrade on a plan.<span class="exp">Expected: <b>full-page redirect to PayPal</b> approval (not an overlay).</span></span></li>
+      <li><input type="checkbox"><span class="step">Approve in the PayPal sandbox and return.<span class="exp">Expected: land on <code>/billing?checkout=success</code> with a success banner.</span></span></li>
+      <li><input type="checkbox"><span class="step">Wait for the <code>BILLING.SUBSCRIPTION.ACTIVATED</code> webhook (or fire it from PayPal's simulator).<span class="exp">Expected: plan flips to <b>active</b>; billing status reflects it.</span></span></li>
+      <li><input type="checkbox"><span class="step">Re-deliver the same webhook event id.<span class="exp">Expected: <b>idempotent no-op</b> (no duplicate state change).</span></span></li>
+      <li><input type="checkbox"><span class="step">Click "Manage plan".<span class="exp">Expected: opens PayPal's autopay page to view/cancel.</span></span></li>
+      <li><input type="checkbox"><span class="step">Cancel, then fire <code>BILLING.SUBSCRIPTION.CANCELLED</code>.<span class="exp">Expected: reverts to <b>free tier</b> limits; data preserved.</span></span></li>
+      <li><input type="checkbox"><span class="step">Cancel the checkout on PayPal instead of approving.<span class="exp">Expected: land on <code>?checkout=cancelled</code>; no charge, no plan change.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- INTEGRATIONS -->
+  <h2 id="integrations">7 · Integrations / OAuth</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Open Settings → Integrations.<span class="exp">Expected: real connection status per provider; disconnected ones show a Connect button.</span></span></li>
+      <li><input type="checkbox"><span class="step">Start an OAuth connect flow for a provider.<span class="exp">Expected: redirects to the provider's consent screen; tokens are never shown in the UI.</span></span></li>
+      <li><input type="checkbox"><span class="step">Disconnect a connected provider.<span class="exp">Expected: status returns to disconnected; a sync/audit record exists.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- MODULES -->
+  <h2 id="modules">8 · Modules — Campaigns, Traffic, SEO, Website, Reports</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Campaigns: view synced campaign records (or the empty state when nothing is connected).<span class="exp">Expected: real records or a clean empty state — never fabricated metrics.</span></span></li>
+      <li><input type="checkbox"><span class="step">Traffic Genie: build a UTM link with the <a href="#demo-utm">demo values</a>.<span class="exp">Expected: a correctly-tagged URL is produced.</span></span></li>
+      <li><input type="checkbox"><span class="step">SEO &amp; GEO: run an audit using the <a href="#demo-seo">demo domain/keywords</a>.<span class="exp">Expected: opportunities/recommendations are saved.</span></span></li>
+      <li><input type="checkbox"><span class="step">Website: audit the <a href="#demo-website">demo landing page URL</a>.<span class="exp">Expected: a health/conversion score plus recommendations.</span></span></li>
+      <li><input type="checkbox"><span class="step">Reports: generate a report.<span class="exp">Expected: built from real data/saved outputs; PDF export works.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- HELP -->
+  <h2 id="help">9 · Help center (Text / Audio / Video)</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Open <b>Help</b> from the sidebar and pick a topic (e.g. Billing &amp; plans).<span class="exp">Expected: the topic list is grouped by category; the article renders on the <b>Text</b> tab.</span></span></li>
+      <li><input type="checkbox"><span class="step">With ElevenLabs configured, open the <b>Audio</b> tab.<span class="exp">Expected: "Preparing narration…", then an audio player; re-opening plays the <b>cached</b> file instantly.</span></span></li>
+      <li><input type="checkbox"><span class="step">Without an ElevenLabs key, open the Audio tab.<span class="exp">Expected: a clean "coming soon" state — no error.</span></span></li>
+      <li><input type="checkbox"><span class="step">Open the <b>Video</b> tab.<span class="exp">Expected: a "Coming soon" panel (labeled), no broken player.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- EMPTY STATES -->
+  <h2 id="empty">10 · Empty states</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">View Campaigns / Reports / Email before connecting anything.<span class="exp">Expected: helpful empty states with clear CTAs — <b>no fake charts or numbers</b>.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- MOBILE -->
+  <h2 id="mobile">11 · Mobile responsiveness</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Resize to a phone width (≈375px) across dashboard, billing, and help.<span class="exp">Expected: no horizontal scroll; bottom nav appears; tables/cards collapse gracefully.</span></span></li>
+      <li><input type="checkbox"><span class="step">On the Help page, confirm the two-pane layout stacks on mobile.<span class="exp">Expected: topic list above the article; tabs remain usable.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- SECURITY -->
+  <h2 id="security">12 · Security</h2>
+  <div class="card">
+    <ul class="checks">
+      <li><input type="checkbox"><span class="step">Call a workspace API route with no / another workspace's token.<span class="exp">Expected: <b>401 / 403</b> — auth + isolation enforced.</span></span></li>
+      <li><input type="checkbox"><span class="step">POST the PayPal webhook with a bad/missing signature.<span class="exp">Expected: <b>400</b>, nothing applied.</span></span></li>
+      <li><input type="checkbox"><span class="step">Confirm OAuth/provider tokens are never returned to the browser.<span class="exp">Expected: encrypted at rest; only status is exposed.</span></span></li>
+    </ul>
+  </div>
+
+  <!-- ================= DEMO DATA ================= -->
+  <h2 id="demo">Demo test data</h2>
+  <div class="banner">
+    <b>Sample QA input — not real customer data.</b> These blocks are for pasting <i>into</i> the app to exercise flows during testing. They are not product data, credentials, or real people. Replace any email/domain with your own sandbox values where needed.
+  </div>
+
+  <div class="demo">
+    <div class="dh"><span class="t">Auth — test account</span><button class="copy">Copy</button></div>
+    <pre>Email:    qa+demo@adgeniehq.test
+Password: Gr0wth-Test!2026</pre>
+  </div>
+
+  <div class="demo" id="demo-onboarding">
+    <div class="dh"><span class="t">Onboarding &amp; Growth DNA — business profile</span><button class="copy">Copy</button></div>
+    <pre>Business name:        Northwind Coffee Roasters
+Website URL:          https://example.com
+Industry:             Food &amp; Beverage (DTC e-commerce)
+Target audience:      Home-brew coffee enthusiasts, 28–45, US urban
+Offer/product:        Subscription of freshly roasted specialty coffee beans
+Monthly ad budget:    $2,000
+Primary goal:         Lead generation → paid subscriptions
+Geographic target:    United States
+Current ad platforms: Meta Ads, Google Ads
+Competitors:          Blue Bottle, Trade Coffee, Atlas Coffee Club
+Brand voice:          Warm, expert, a little playful
+Landing page URL:     https://example.com/subscribe
+Growth pain points:   High CPA on cold traffic; low landing-page conversion</pre>
+  </div>
+
+  <div class="demo">
+    <div class="dh"><span class="t">Campaign / creative — ad-copy brief</span><button class="copy">Copy</button></div>
+    <pre>Objective:  Lead generation
+Product:    Specialty coffee subscription (first bag 50% off)
+Audience:   Home-brew enthusiasts who buy premium beans
+Angle:      "Cafe-quality coffee at home, roasted this week"
+Tone:       Warm, expert, playful
+Deliver:    3 primary texts + 3 headlines for a Meta single-image ad</pre>
+  </div>
+
+  <div class="demo" id="demo-utm">
+    <div class="dh"><span class="t">Traffic Genie — UTM builder</span><button class="copy">Copy</button></div>
+    <pre>Destination URL: https://example.com/subscribe
+Source:          newsletter
+Medium:          email
+Campaign:        spring_launch_2026
+Content:         header_cta
+Term:            (leave blank)</pre>
+  </div>
+
+  <div class="demo" id="demo-seo">
+    <div class="dh"><span class="t">SEO &amp; GEO — audit inputs</span><button class="copy">Copy</button></div>
+    <pre>Domain to audit: https://example.com
+Seed keywords:   specialty coffee subscription, best coffee beans online,
+                 fresh roasted coffee delivery, single origin coffee subscription
+Target market:   United States</pre>
+  </div>
+
+  <div class="demo" id="demo-website">
+    <div class="dh"><span class="t">Website audit — landing page</span><button class="copy">Copy</button></div>
+    <pre>Landing page URL: https://example.com/subscribe</pre>
+  </div>
+
+  <div class="demo">
+    <div class="dh"><span class="t">Outreach / Blog / Social — sample topics</span><button class="copy">Copy</button></div>
+    <pre>Outreach prospect: editor@examplecoffeeblog.com — pitch a guest post
+Blog post topic:   "How to taste coffee like a pro: a 5-step home guide"
+Social post idea:  Behind-the-scenes reel of this week's roast + brew tip</pre>
+  </div>
+
+  <div class="demo" id="demo-paypal">
+    <div class="dh"><span class="t">Billing — PayPal Sandbox (no real credentials)</span><button class="copy">Copy</button></div>
+    <pre>1. Create sandbox accounts at https://developer.paypal.com → Sandbox → Accounts
+   (one BUSINESS = merchant, one PERSONAL = buyer).
+2. Create a Product + Billing Plans (monthly + annual) and copy the Plan IDs
+   into PAYPAL_PLAN_ID_STARTER / _PRO / _AGENCY (and *_ANNUAL).
+3. Set PAYPAL_ENVIRONMENT=sandbox and the sandbox CLIENT_ID / CLIENT_SECRET.
+4. Register the webhook → https://&lt;api-host&gt;/api/v1/billing/paypal/webhook and
+   copy its Webhook ID into PAYPAL_WEBHOOK_ID.
+5. At checkout, log in with the sandbox BUYER account to approve.
+6. Use Developer Dashboard → Webhooks → "Simulate" to fire
+   BILLING.SUBSCRIPTION.ACTIVATED / CANCELLED and verify the plan updates.
+Never use a real PayPal account or card for testing.</pre>
+  </div>
+
+  <div class="demo">
+    <div class="dh"><span class="t">Help center — ElevenLabs audio check</span><button class="copy">Copy</button></div>
+    <pre>Requires a PLATFORM key: ELEVENLABS_API_KEY + ELEVENLABS_DEFAULT_VOICE_ID.
+Test topic:  Help → "Billing &amp; plans" → Audio tab.
+Expect:      "Preparing narration…" on first open, then an audio player;
+             re-open the tab → the cached MP3 plays instantly (no re-generate).
+With no key: the Audio tab shows a clean "coming soon" state instead of an error.</pre>
+  </div>
+
+</main>
+<footer>
+  <a href="/">Home</a>
+  <a href="/guides.html">Guides</a>
+  <a href="/pricing">Pricing</a>
+  <div class="updated">AdGenieHQ — QA testing guide · Last updated July 2026</div>
+</footer>
+<script>
+  document.querySelectorAll("button.copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.closest(".demo").querySelector("pre");
+      var text = pre ? pre.innerText : "";
+      var done = function () {
+        var old = btn.textContent;
+        btn.textContent = "Copied ✓";
+        btn.classList.add("ok");
+        setTimeout(function () { btn.textContent = old; btn.classList.remove("ok"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, done);
+      } else {
+        var r = document.createRange(); r.selectNode(pre);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        try { document.execCommand("copy"); } catch (e) {}
+        s.removeAllRanges(); done();
+      }
+    });
+  });
+</script>
+</body>
+</html>

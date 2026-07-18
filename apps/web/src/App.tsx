@@ -64,6 +64,7 @@ const AbTestsPage = lazyPage(() => import("@/features/ab-tests/AbTestsPage"), "A
 const OutreachPage = lazyPage(() => import("@/features/outreach/OutreachPage"), "OutreachPage");
 const ProspectDetailPage = lazyPage(() => import("@/features/outreach/ProspectDetailPage"), "ProspectDetailPage");
 const GrowthDnaPage = lazyPage(() => import("@/features/growth-dna/GrowthDnaPage"), "GrowthDnaPage");
+const HelpPage = lazyPage(() => import("@/features/help/HelpPage"), "HelpPage");
 const IntegrationsPage = lazyPage(() => import("@/features/integrations/IntegrationsPage"), "IntegrationsPage");
 const OnboardingWizardPage = lazyPage(() => import("@/features/onboarding/OnboardingWizardPage"), "OnboardingWizardPage");
 const RecommendationDetailPage = lazyPage(() => import("@/features/recommendations/RecommendationDetailPage"), "RecommendationDetailPage");
@@ -189,6 +190,8 @@ export function App() {
                 <Route path="website" element={<WebsitePage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="reports/:reportId" element={<ReportDetailPage />} />
+                <Route path="help" element={<HelpPage />} />
+                <Route path="help/:topicId" element={<HelpPage />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>

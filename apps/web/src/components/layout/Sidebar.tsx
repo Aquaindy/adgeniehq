@@ -79,6 +79,7 @@ const navGroups: NavGroup[] = [
     heading: "Workspace",
     items: [
       { to: "/onboarding", label: "Onboarding" },
+      { to: "/help", label: "Help" },
       { to: "/settings", label: "Settings" },
     ],
   },

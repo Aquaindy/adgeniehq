@@ -111,6 +111,23 @@ class Settings(BaseSettings):
         default=180.0, alias="IMAGE_HTTP_TIMEOUT_SECONDS"
     )
 
+    # ElevenLabs text-to-speech — a PLATFORM key used to narrate the built-in
+    # Help/Knowledge-Base articles (not per-workspace). When the key or a default
+    # voice id is unset, the Help "Audio" tab degrades to a clean "coming soon"
+    # state instead of failing. Voice ids come from the ElevenLabs Voice Library.
+    elevenlabs_api_key: str = Field(default="", alias="ELEVENLABS_API_KEY")
+    elevenlabs_model: str = Field(
+        default="eleven_multilingual_v2", alias="ELEVENLABS_MODEL"
+    )
+    elevenlabs_default_voice_id: str = Field(
+        default="", alias="ELEVENLABS_DEFAULT_VOICE_ID"
+    )
+    # TTS synthesis of a full article can take a while, so it gets a generous
+    # timeout of its own (like image generation).
+    tts_http_timeout_seconds: float = Field(
+        default=180.0, alias="TTS_HTTP_TIMEOUT_SECONDS"
+    )
+
     # Object storage (any S3-compatible provider — Cloudflare R2, DO Spaces,
     # Wasabi, AWS S3) for uploaded + AI-generated images. Canonical names are
     # `S3_*` (the project-wide convention); the older `R2_*` names are accepted

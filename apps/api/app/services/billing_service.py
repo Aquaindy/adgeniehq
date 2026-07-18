@@ -1,9 +1,9 @@
-"""Billing orchestration: Paddle checkout/portal + webhook processing,
+"""Billing orchestration: PayPal checkout/portal + webhook processing,
 plan-limit enforcement, and usage tracking.
 
-Recurring subscriptions are billed exclusively through **Paddle** (Merchant of
-Record). One-off platform *fees* are a separate, provider-agnostic system (see
-`app.payments` / `fee_billing_service`)."""
+Recurring subscriptions are billed exclusively through **PayPal** (server-created
+subscription + redirect approval). One-off platform *fees* are a separate,
+provider-agnostic system (see `app.payments` / `fee_billing_service`)."""
 
 from __future__ import annotations
 
@@ -24,8 +24,9 @@ from app.billing.plans import (
 )
 from app.core.exceptions import AdGenieError
 from app.core.logging import get_logger
+from app.core.config import settings
 from app.core.superuser_context import is_superuser_request
-from app.integrations import paddle_billing
+from app.integrations import paypal_billing
 from app.models.billing_subscription import (
     BillingSubscription,
     SubscriptionSource,
@@ -66,7 +67,7 @@ def _ensure_subscription(db: Session, *, workspace_id: UUID) -> BillingSubscript
     if sub is not None:
         return sub
     # No subscription row yet → return an un-persisted free record purely for
-    # limit lookups. Paddle creates the real row on the first webhook.
+    # limit lookups. PayPal creates the real row on the first webhook.
     return BillingSubscription(
         workspace_id=workspace_id,
         plan_code="free",
@@ -386,17 +387,40 @@ def assert_within_llm_token_limit(db: Session, *, workspace_id: UUID) -> None:
 
 
 def subscription_provider() -> str:
-    """Which processor handles *recurring* subscriptions. Paddle (Merchant of
-    Record) is the only processor; returns "none" until it's configured."""
-    return "paddle" if paddle_billing.is_configured() else "none"
+    """Which processor handles *recurring* subscriptions. PayPal is the only
+    processor; returns "none" until it's configured."""
+    return "paypal" if paypal_billing.is_configured() else "none"
 
 
 # ---------------------------------------------------------------------------
-# Paddle checkout (client-side overlay — no server redirect URL)
+# PayPal checkout (server-created subscription + redirect approval)
 # ---------------------------------------------------------------------------
 
+# custom_id round-trips workspace/plan/interval through PayPal since its webhook
+# echoes it back on the subscription resource. Pipe-delimited, well under
+# PayPal's 127-char cap.
+_CUSTOM_SEP = "|"
 
-def create_paddle_checkout(
+
+def _encode_custom_id(workspace_id: UUID, plan_code: str, interval: str) -> str:
+    return _CUSTOM_SEP.join([str(workspace_id), plan_code, interval])
+
+
+def _decode_custom_id(custom_id: str | None) -> tuple[UUID | None, str | None, str | None]:
+    if not custom_id:
+        return None, None, None
+    parts = custom_id.split(_CUSTOM_SEP)
+    ws_raw = parts[0] if len(parts) > 0 else None
+    plan_code = parts[1] if len(parts) > 1 else None
+    interval = parts[2] if len(parts) > 2 else None
+    try:
+        workspace_id = UUID(str(ws_raw)) if ws_raw else None
+    except (ValueError, TypeError):
+        workspace_id = None
+    return workspace_id, plan_code, interval
+
+
+def create_paypal_checkout(
     db: Session,
     *,
     workspace: Workspace,
@@ -404,52 +428,38 @@ def create_paddle_checkout(
     plan_code: str,
     interval: str = "month",
 ) -> dict[str, Any]:
-    if not paddle_billing.is_configured():
-        raise BillingNotConfiguredError("Paddle billing is not configured.")
+    """Create a PayPal subscription and return `{approval_url}`. The caller
+    redirects the buyer there; activation is confirmed by the webhook."""
+    if not paypal_billing.is_configured():
+        raise BillingNotConfiguredError("PayPal billing is not configured.")
     get_plan(plan_code)  # validates the plan exists (raises UnknownPlanError)
-    price_id = paddle_billing.price_id_for_plan(plan_code, interval)
-    return {
-        "client_token": paddle_billing.client_token(),
-        "environment": paddle_billing.environment(),
-        "price_id": price_id,
-        "customer_email": user.email,
-        "custom_data": {
-            "workspace_id": str(workspace.id),
-            "plan_code": plan_code,
-            "interval": interval,
-        },
-    }
+    plan_id = paypal_billing.plan_id_for_plan(plan_code, interval)
+    base = settings.frontend_url.rstrip("/")
+    result = paypal_billing.create_subscription(
+        plan_id=plan_id,
+        subscriber_email=user.email,
+        custom_id=_encode_custom_id(workspace.id, plan_code, interval),
+        return_url=f"{base}/billing?checkout=success",
+        cancel_url=f"{base}/billing?checkout=cancelled",
+    )
+    return {"approval_url": result["approval_url"]}
 
 
-def paddle_management_url(db: Session, *, workspace_id: UUID) -> str:
+def paypal_management_url(db: Session, *, workspace_id: UUID) -> str:
     sub = (
         db.query(BillingSubscription)
         .filter(BillingSubscription.workspace_id == workspace_id)
         .first()
     )
-    if sub is None:
-        raise BillingNotConfiguredError("No Paddle subscription to manage yet.")
-    if sub.management_url:
-        return sub.management_url
-    # Paddle often omits management_urls from webhooks, so resolve it from the
-    # API on demand and cache it for next time.
-    if sub.external_subscription_id:
-        url = paddle_billing.fetch_subscription_management_url(
-            sub.external_subscription_id
-        )
-        if url:
-            sub.management_url = url
-            db.commit()
-            return url
-    raise BillingNotConfiguredError(
-        "No Paddle management link is available for this subscription yet. "
-        "If you need to cancel, use the link in your Paddle receipt email or "
-        "contact support."
-    )
+    if sub is None or not sub.external_subscription_id:
+        raise BillingNotConfiguredError("No PayPal subscription to manage yet.")
+    # PayPal has no per-customer hosted portal; the autopay list is where the
+    # buyer views + cancels. Stored on the row at activation time.
+    return sub.management_url or paypal_billing.management_url()
 
 
 # ---------------------------------------------------------------------------
-# Paddle webhook — idempotent, signature already verified by the route
+# PayPal webhook — idempotent, signature already verified by the route
 # ---------------------------------------------------------------------------
 
 
@@ -472,27 +482,28 @@ def _record_processed_event(
     return True
 
 
-def process_paddle_webhook(db: Session, event: dict[str, Any]) -> None:
-    event_id = event.get("event_id")
+def process_paypal_webhook(db: Session, event: dict[str, Any]) -> None:
+    event_id = event.get("id")
     event_type = event.get("event_type")
-    data = event.get("data") or {}
-    log.info("paddle.webhook", event_type=event_type, event_id=event_id)
+    resource = event.get("resource") or {}
+    log.info("paypal.webhook", event_type=event_type, event_id=event_id)
 
     if not event_id:
-        log.warning("paddle.webhook.no_event_id", event_type=event_type)
+        log.warning("paypal.webhook.no_event_id", event_type=event_type)
         return
     if not _record_processed_event(
-        db, provider="paddle", event_id=event_id, event_type=event_type
+        db, provider="paypal", event_id=event_id, event_type=event_type
     ):
-        log.info("paddle.webhook.duplicate", event_id=event_id)
+        log.info("paypal.webhook.duplicate", event_id=event_id)
         return
 
-    if event_type == "subscription.canceled":
-        _on_paddle_subscription_canceled(db, data)
-    elif event_type and event_type.startswith("subscription."):
-        _on_paddle_subscription_changed(db, data)
-    elif event_type in ("transaction.completed", "transaction.paid"):
-        _on_paddle_transaction_completed(db, data)
+    if event_type in ("BILLING.SUBSCRIPTION.CANCELLED", "BILLING.SUBSCRIPTION.EXPIRED"):
+        _on_paypal_subscription_canceled(db, resource)
+    elif event_type and event_type.startswith("BILLING.SUBSCRIPTION."):
+        # ACTIVATED / UPDATED / SUSPENDED / RE-ACTIVATED — reconcile the row.
+        _on_paypal_subscription_changed(db, resource)
+    elif event_type == "INVOICING.INVOICE.PAID":
+        _on_paypal_invoice_paid(db, resource)
 
     db.commit()
 
@@ -506,18 +517,7 @@ def _parse_iso(value: Any) -> datetime | None:
         return None
 
 
-def _paddle_workspace_id(data: dict[str, Any]) -> UUID | None:
-    custom = data.get("custom_data") or {}
-    raw = custom.get("workspace_id")
-    if not raw:
-        return None
-    try:
-        return UUID(str(raw))
-    except (ValueError, TypeError):
-        return None
-
-
-def _get_or_create_paddle_sub(
+def _get_or_create_paypal_sub(
     db: Session, *, workspace_id: UUID
 ) -> BillingSubscription:
     sub = (
@@ -527,67 +527,60 @@ def _get_or_create_paddle_sub(
     )
     if sub is None:
         sub = BillingSubscription(
-            workspace_id=workspace_id, plan_code="free", source=SubscriptionSource.PADDLE
+            workspace_id=workspace_id, plan_code="free", source=SubscriptionSource.PAYPAL
         )
         db.add(sub)
         db.flush()
     return sub
 
 
-def _on_paddle_subscription_changed(db: Session, data: dict[str, Any]) -> None:
-    workspace_id = _paddle_workspace_id(data)
+def _on_paypal_subscription_changed(db: Session, resource: dict[str, Any]) -> None:
+    workspace_id, custom_plan, _interval = _decode_custom_id(resource.get("custom_id"))
     if workspace_id is None:
-        log.warning("paddle.webhook.no_workspace", subscription_id=data.get("id"))
+        log.warning("paypal.webhook.no_workspace", subscription_id=resource.get("id"))
         return
 
-    sub = _get_or_create_paddle_sub(db, workspace_id=workspace_id)
-    sub.source = SubscriptionSource.PADDLE
-    sub.external_subscription_id = data.get("id")
+    sub = _get_or_create_paypal_sub(db, workspace_id=workspace_id)
+    sub.source = SubscriptionSource.PAYPAL
+    sub.external_subscription_id = resource.get("id")
 
-    items = data.get("items") or []
-    price_id = None
-    if items:
-        price_id = (items[0].get("price") or {}).get("id")
-    sub.external_price_id = price_id
-
-    custom = data.get("custom_data") or {}
+    plan_id = resource.get("plan_id")
+    sub.external_price_id = plan_id
     sub.plan_code = (
-        paddle_billing.plan_for_price_id(price_id)
-        or custom.get("plan_code")
+        paypal_billing.plan_for_plan_id(plan_id)
+        or custom_plan
         or sub.plan_code
         or "free"
     )
 
-    sub.status = paddle_billing.map_status(data.get("status"))
+    sub.status = paypal_billing.map_status(resource.get("status"))
 
-    period = data.get("current_billing_period") or {}
-    sub.current_period_start = _parse_iso(period.get("starts_at"))
-    sub.current_period_end = _parse_iso(period.get("ends_at"))
+    sub.current_period_start = _parse_iso(resource.get("start_time"))
+    billing_info = resource.get("billing_info") or {}
+    sub.current_period_end = _parse_iso(billing_info.get("next_billing_time"))
 
-    scheduled = data.get("scheduled_change") or {}
-    sub.cancel_at_period_end = bool(scheduled.get("action") == "cancel")
-
-    # Paddle's keys are `cancel` + `update_payment_method` (prefer the cancel
-    # deep-link for the manage button). `update` is kept for forward-compat.
-    # Often absent in webhooks — resolved on demand in paddle_management_url.
-    mgmt = data.get("management_urls") or {}
-    sub.management_url = (
-        mgmt.get("cancel")
-        or mgmt.get("update_payment_method")
-        or mgmt.get("update")
-        or sub.management_url
-    )
+    # PayPal signals a pending cancel via status; there's no separate
+    # cancel-at-period-end flag, so it stays False until the CANCELLED event.
+    sub.cancel_at_period_end = False
+    sub.management_url = paypal_billing.management_url()
 
 
-def _on_paddle_subscription_canceled(db: Session, data: dict[str, Any]) -> None:
-    workspace_id = _paddle_workspace_id(data)
-    if workspace_id is None:
-        return
-    sub = (
-        db.query(BillingSubscription)
-        .filter(BillingSubscription.workspace_id == workspace_id)
-        .first()
-    )
+def _on_paypal_subscription_canceled(db: Session, resource: dict[str, Any]) -> None:
+    workspace_id, _plan, _interval = _decode_custom_id(resource.get("custom_id"))
+    sub = None
+    if workspace_id is not None:
+        sub = (
+            db.query(BillingSubscription)
+            .filter(BillingSubscription.workspace_id == workspace_id)
+            .first()
+        )
+    if sub is None and resource.get("id"):
+        # Fall back to the subscription id if custom_id was stripped.
+        sub = (
+            db.query(BillingSubscription)
+            .filter(BillingSubscription.external_subscription_id == resource.get("id"))
+            .first()
+        )
     if sub is None:
         return
     sub.status = SubscriptionStatus.CANCELED
@@ -595,22 +588,22 @@ def _on_paddle_subscription_canceled(db: Session, data: dict[str, Any]) -> None:
     sub.cancel_at_period_end = False
 
 
-def _on_paddle_transaction_completed(db: Session, data: dict[str, Any]) -> None:
-    """A Paddle transaction settled. If it corresponds to one of our fee
-    invoices (matched by the stored transaction id), confirm it paid. Recurring
-    subscription transactions won't match a fee invoice and are a no-op here."""
-    txn_id = data.get("id")
-    if not txn_id:
+def _on_paypal_invoice_paid(db: Session, resource: dict[str, Any]) -> None:
+    """A PayPal *fee* invoice (System B — Invoicing API) was paid. Reconcile it
+    against our fee ledger. Subscription payments don't come through here."""
+    invoice_obj = resource.get("invoice") or resource
+    invoice_id = invoice_obj.get("id")
+    if not invoice_id:
         return
     from app.models.fee_invoice import FeeInvoice
     from app.services import fee_billing_service
 
     invoice = (
         db.query(FeeInvoice)
-        .filter(FeeInvoice.external_id == txn_id, FeeInvoice.provider == "paddle")
+        .filter(FeeInvoice.external_id == invoice_id, FeeInvoice.provider == "paypal")
         .first()
     )
     if invoice is not None:
         fee_billing_service.confirm_invoice_payment(
-            db, invoice=invoice, confirmation_ref=txn_id
+            db, invoice=invoice, confirmation_ref=invoice_id
         )
