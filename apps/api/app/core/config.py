@@ -116,9 +116,7 @@ class Settings(BaseSettings):
     # voice id is unset, the Help "Audio" tab degrades to a clean "coming soon"
     # state instead of failing. Voice ids come from the ElevenLabs Voice Library.
     elevenlabs_api_key: str = Field(default="", alias="ELEVENLABS_API_KEY")
-    elevenlabs_model: str = Field(
-        default="eleven_multilingual_v2", alias="ELEVENLABS_MODEL"
-    )
+    elevenlabs_model: str = Field(default="eleven_v3", alias="ELEVENLABS_MODEL")
     elevenlabs_default_voice_id: str = Field(
         default="gs0tAILXbY5DNrJrsM6F", alias="ELEVENLABS_DEFAULT_VOICE_ID"
     )

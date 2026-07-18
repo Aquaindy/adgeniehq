@@ -214,9 +214,10 @@ function AudioTab({
     enabled: audioSupported,
     // One quiet retry smooths over a transient blip before we surface an error.
     retry: 1,
-    // Poll only while a narration is being generated.
+    // Poll only while a narration is being generated. Tight enough to pick up
+    // "ready" promptly once synthesis finishes, without hammering the API.
     refetchInterval: (query) =>
-      query.state.data?.status === "generating" ? 2500 : false,
+      query.state.data?.status === "generating" ? 1500 : false,
   });
 
   const start = useMutation({
@@ -267,8 +268,9 @@ function AudioTab({
     return (
       <div className="flex flex-col gap-3 py-2">
         <p className="text-sm text-slate-600">Listen to this article:</p>
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <audio controls preload="none" src={audio.data.url} className="w-full max-w-lg">
+        {/* Preload once ready so the play button is instant (the MP3 is small
+            and already generated). eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <audio controls preload="auto" src={audio.data.url} className="w-full max-w-lg">
           Your browser doesn&apos;t support audio playback.
         </audio>
         <p className="text-xs text-slate-400">Narrated with ElevenLabs AI voices.</p>
