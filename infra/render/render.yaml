@@ -269,4 +269,4 @@ services:
         value: max-age=63072000; includeSubDomains
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' https://cdn.paddle.com https://*.paddle.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' data: https://rsms.me; img-src 'self' data: blob: https:; connect-src 'self' https://api.adgeniehq.com https://*.paddle.com; frame-src https://*.paddle.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
+        value: "default-src 'self'; script-src 'self' https://cdn.paddle.com https://*.paddle.com https://accounts.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://rsms.me; font-src 'self' data: https://rsms.me; img-src 'self' data: blob: https:; connect-src 'self' https://api.adgeniehq.com https://*.paddle.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://*.paddle.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'; frame-ancestors 'none'"
